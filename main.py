@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QLabel, QStyleFactory, QApplication, QMainWindow, QS
 from api.custom_error import FileNotFoundException, UndefinedErrorException
 from custom_ui.column_selection_view import ColumnSelectionView
 from custom_ui.heuristic_graph_ui.heuristic_graph_view import HeuristicGraphView
+from custom_ui.fuzzy_graph_ui.fuzzy_graph_view import FuzzyGraphView
 from custom_ui.start_view import StartView
 from custom_ui.dot_editor_view import DotEditorView
 from custom_ui.d3_html_view import D3HTMLView
@@ -30,6 +31,7 @@ class MainWindow(QMainWindow):
         # Add the experimental interactive HTMLView
         # IF IT IS DECIDED THIS FUNCTIONALITY IS UNNECESSARY: simply ctrl + f [htmlView] and delete all code involving it.
         self.htmlView = D3HTMLView(self)
+
         # Export view
         self.exportView = ExportView(self)
 
@@ -51,9 +53,9 @@ class MainWindow(QMainWindow):
         self.algorithmViews.append(self.heuristicGraphView)
 
         # This is a placeholder for future algorithm views. DELETE OR REPLACE IT
-        self.heuristicGraphView2 = BottomOperationInterfaceWrapper(
-            self, HeuristicGraphView(self, 'saves/1/'), self.algorithms)
-        self.algorithmViews.append(self.heuristicGraphView2)
+        self.fuzzyGraphView = BottomOperationInterfaceWrapper(
+            self, FuzzyGraphView(self, 'saves/1/'), self.algorithms)
+        self.algorithmViews.append(self.fuzzyGraphView)
 
         # Add a view widget for the default view
         self.startView = BottomOperationInterfaceWrapper(
@@ -232,7 +234,7 @@ class MainWindow(QMainWindow):
         # It is important to shut down the html server.
         self.htmlView.clear()
         self.heuristicGraphView.clear()
-        self.heuristicGraphView2.clear()
+        #TODO self.fuzzyGraphView.clear()
         super().closeEvent(event)
 
 
