@@ -13,7 +13,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.initialized = False
 
         self.default_significance = 1.0
-        self.significane = self.default_significance
+        self.significance = self.default_significance
         self.default_correlation = 0.3
         self.correlation = self.default_correlation
 
@@ -40,14 +40,11 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.corr_slider = CustomQSlider(self.__corr_slider_changed, Qt.Vertical)
         self.corr_slider.setRange(self.min_correlation, self.max_correlation)
-        self.corr_slider.setValue(self.min_correlation)
+        self.corr_slider.setValue(self.max_correlation)
 
         slider_layout = QHBoxLayout()
         slider_layout.addWidget(self.sign_slider)
         slider_layout.addWidget(self.corr_slider)
-
-        # TODO move it to mine_and_draw later
-        self.__set_slider_values(self.max_significance, self.min_correlation)
 
         self.saveProject_button = SaveProjectButton(self.parent, self.saveFolder, self.getModel)
         self.export_button = ExportButton(self.parent)
@@ -70,19 +67,47 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.saveProject_button.load_filename(filename)
         self.FuzzyGraphController.startMining(cases)
+        self.initialized = True
+        self.__set_slider_values(self.default_significance, self.default_correlation)
+        self.graph_widget.start_server()
+
+        filename = self.workingDirectory + '.dot'
+        self.graph_widget.set_source(filename)
+        try:
+            self.graph_widget.reload()
+        except FileNotFoundException as e:
+            print(e.message)
+
         # TODO DELETE it
-        #self.graph_widget.start_server()
 
     def __sign_slider_changed(self, value):
         self.sign_slider.setText(f"Significance Value: {value/100:.2f}")
-        self.significane = value/100
+        self.significance = value/100
+
+        # it will try to update model, but model not existin yet
+        if not self.initialized:
+            return
+        print("Changing signification value")
+        #self.__redraw()
 
         # TODO mine and draw after changing signification value
     def __corr_slider_changed(self, value):
         self.corr_slider.setText(f"Correlation Value: {value/100:.2f}")
         self.correlation = value/100
 
-        # TODO mine and draw after changing correlation value
+        if not self.initialized:
+            return
+        print("Changing correlation value")
+        #self.__redraw()
+
+    def __redraw(self):
+        self.FuzzyGraphController.mine_and_draw(self.significance, self.correlation)
+        filename = self.workingDirectory + '.dot'
+        self.graph_widget.set_source(filename)
+        try:
+            self.graph_widget.reload()
+        except FileNotFoundException as e:
+            print(e.message)
     def __set_slider_values(self, sign, correlation):
         # set text
         self.sign_slider.setText(f"Significance Value: {sign:.2f}")

@@ -17,7 +17,8 @@ class FuzzyMining():
         #graph.node(str(node), label=str(node) + "\n" + str(node_freq), width=str(w), height=str(h), shape="octagon", style="filled", fillcolor="#6495ED", color="black")
 
     def create_graph_with_graphviz(self, significance, correlation):
-        graph = Digraph
+        #self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
+        graph = Digraph()
         cluster = DensityDistributionClusterAlgorithm(list(self.appearance_activities.values()))
         """ if we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
          after using cluster.sorted_data we get a sorted array[123, 234, 345, 433, 456]
@@ -31,20 +32,56 @@ class FuzzyMining():
         for node in self.events:
             node_freq = self.appearance_activities.get(node)
             node_width = freq_labels_sorted[nodes_sorted.index(node_freq)]/2 + self.min_node_size
-            node_height = node_width/2
-
-            graph.node(str(node), label= str(node) + "\n" + str(node_freq), width = str(node_width), height = str(node_height), shape = "box", style = "octagon", fillcolor="#6495ED")
+            node_height = node_width/3
+            # chatgpt asked how to change fontcolor just for node_freq
+            graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width), height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
+            #graph.node(str(node), label= str(node)+"\n" + str(node_freq), width = str(node_width), height = str(node_height), shape = "octagon", style = "filled", fillcolor='#6495ED')
 
             # TODO cluster the edge thickness based on frequency
+        #self.filtered_events = calculate_significance_dependency(significance).keys()
+        for i in range(len(self.events)):
+            for j in range(len(self.events)):
+                if self.correlation_of_nodes[i][j] >= correlation:
+                    edge_thickness = 0.1
+                    graph.edge(str(self.events[i]), str(self.events[j]), penwidth = str(edge_thickness), label=str("{:.2f}".format(float(self.correlation_of_nodes[i][j]))))
 
+        graph.node("start", label="start", shape='doublecircle', style='filled', fillcolor='green')
+        for node in self.__get_first_nodes():
+            graph.edge("start", str(node), penwidth=str(0.1))
+
+        graph.node("end", label="end", shape = 'doublecircle', style='filled', fillcolor='red')
+        for node in self.__get_end_nodes():
+            graph.edge(str(node),"end", penwidth=str(0.1))
+
+        return graph
+    #checks first element of each row(hr)
+    def __get_first_nodes(self):
+        start_nodes =[]
+        for case in self.cases:
+            if case[0] not in start_nodes:
+                start_nodes.append(case[0])
+
+        return start_nodes
+
+    def __get_end_nodes(self):
+        end_nodes = []
+        for case in self.cases:
+            last_node_index = len(case)-1
+            if case[last_node_index] not in end_nodes:
+                end_nodes.append(case[last_node_index])
+        return end_nodes
+    """ to calculate the signification, we have to divide each nodes appearance by the most frequently node number
+        asked ChatGpt how to do this"""
     def __calculate_significance(self):
         # find the most frequently node from of all events
         max_value = max(self.appearance_activities.values())
-
-        """ to calculate the signification, we have to divide each nodes appearance by the most frequently node number
-        asked ChatGpt how to do this"""
-        dict = {key: value / max_value for key, value in self.appearance_activities.items()}
+        dict = {}
+        #dict = {key: value / max_value for key, value in self.appearance_activities.items()}
+        for key, value in self.appearance_activities.items():
+            new_sign = value/max_value
+            dict[key] = new_sign
         return dict
+
     def __filter_all_events(self):
         dic = {}
         for trace in self.cases:
@@ -79,7 +116,7 @@ class FuzzyMining():
 
     def __create_correlation_dependency_matrix(self):
         # create a matrix with the same shape and fill it with zeros
-        significance_matrix = np.zeros(self.succession_matrix.shape)
+        correlation_matrix = np.zeros(self.succession_matrix.shape)
         y = 0
         for row in self.succession_matrix:
             # find max value on each row
@@ -90,27 +127,31 @@ class FuzzyMining():
             for i in row:
                 # divide each value by max value
                 if i == 0 and self.succession_matrix[y][x] == 0:
-                    significance_matrix[y][x] = 0.0
+                    correlation_matrix[y][x] = 0.0
                 else:
-                    significance_matrix[y][x] = self.succession_matrix[y][x]/sum_of_outgoing_edges
+                    correlation_matrix[y][x] = self.succession_matrix[y][x]/sum_of_outgoing_edges
                 x+=1
             y+=1
 
-        return significance_matrix
+        return correlation_matrix
 
-    def calculate_correlation_dependency_matrix(self, correlation):
+
+    """
+    def __calculate_correlation_dependency_matrix(self, correlation):
         dependency_matrix = np.zeros(self.succession_matrix.shape)
         y = 0
         for row in self.correlation_of_nodes:
             x = 0
             for i in row:
-                    if self.correlation_of_nodes[y][x]>= correlation:
-                        dependency_matrix[y][x]+=1
-                    x += 1
+                if self.correlation_of_nodes[y][x]>= correlation:
+                    dependency_matrix[y][x]+=1
+                x += 1
             y += 1
 
         return dependency_matrix
+        """
 
+    #get just nodes which are >= significance (parameter)
     def calculate_significance_dependency(self, significance):
         dict={}
         keys = list(self.significance_of_nodes.keys())

@@ -6,10 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="fd178517-898c-403a-aabf-555b76b2e78a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/custom_ui/d3_html_widget.py" beforeDir="false" afterPath="$PROJECT_DIR$/custom_ui/d3_html_widget.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/custom_ui/heuristic_graph_ui/heuristic_graph_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/custom_ui/heuristic_graph_ui/heuristic_graph_view.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py" beforeDir="false" afterPath="$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -128,7 +126,11 @@
       <workItem from="1704831004796" duration="1167000" />
       <workItem from="1704841708375" duration="2042000" />
       <workItem from="1704843762166" duration="7464000" />
-      <workItem from="1704854055630" duration="29410000" />
+      <workItem from="1704854055630" duration="35130000" />
+      <workItem from="1704944140834" duration="339000" />
+      <workItem from="1704944806547" duration="145000" />
+      <workItem from="1704944960665" duration="2879000" />
+      <workItem from="1704947871817" duration="14494000" />
     </task>
     <servers />
   </component>
@@ -198,16 +200,6 @@
           <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
           <line>83</line>
           <option name="timeStamp" value="19" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>119</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>121</line>
-          <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
@@ -426,27 +418,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>47</line>
-          <option name="timeStamp" value="223" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>54</line>
-          <option name="timeStamp" value="231" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>57</line>
+          <line>94</line>
           <option name="timeStamp" value="232" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>58</line>
-          <option name="timeStamp" value="233" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>66</line>
+          <line>103</line>
           <option name="timeStamp" value="234" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -496,18 +473,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>39</line>
+          <line>73</line>
           <option name="timeStamp" value="271" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>45</line>
+          <line>78</line>
           <option name="timeStamp" value="272" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>46</line>
-          <option name="timeStamp" value="273" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
@@ -521,7 +493,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
-          <line>85</line>
+          <line>110</line>
           <option name="timeStamp" value="277" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -606,16 +578,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/custom_ui/d3_html_widget.py</url>
-          <line>69</line>
-          <option name="timeStamp" value="300" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/custom_ui/d3_html_widget.py</url>
-          <line>71</line>
-          <option name="timeStamp" value="301" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/custom_ui/d3_html_widget.py</url>
           <line>64</line>
           <option name="timeStamp" value="302" />
         </line-breakpoint>
@@ -696,63 +658,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>31</line>
-          <option name="timeStamp" value="318" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>32</line>
-          <option name="timeStamp" value="319" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>33</line>
-          <option name="timeStamp" value="320" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>34</line>
-          <option name="timeStamp" value="321" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
           <line>36</line>
           <option name="timeStamp" value="322" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>54</line>
-          <option name="timeStamp" value="323" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>52</line>
-          <option name="timeStamp" value="324" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>50</line>
-          <option name="timeStamp" value="325" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>60</line>
-          <option name="timeStamp" value="326" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>61</line>
-          <option name="timeStamp" value="327" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>64</line>
-          <option name="timeStamp" value="328" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>65</line>
-          <option name="timeStamp" value="329" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
@@ -781,32 +688,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
-          <line>56</line>
-          <option name="timeStamp" value="348" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/heuristic_mining.py</url>
           <line>131</line>
           <option name="timeStamp" value="349" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>79</line>
-          <option name="timeStamp" value="357" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>98</line>
+          <line>135</line>
           <option name="timeStamp" value="365" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>48</line>
-          <option name="timeStamp" value="366" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>77</line>
+          <line>114</line>
           <option name="timeStamp" value="367" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -816,22 +708,22 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>41</line>
+          <line>76</line>
           <option name="timeStamp" value="384" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>111</line>
+          <line>150</line>
           <option name="timeStamp" value="385" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>101</line>
+          <line>140</line>
           <option name="timeStamp" value="386" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>100</line>
+          <line>138</line>
           <option name="timeStamp" value="387" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -841,67 +733,42 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>121</line>
+          <line>162</line>
           <option name="timeStamp" value="396" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>113</line>
+          <line>154</line>
           <option name="timeStamp" value="397" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>114</line>
+          <line>155</line>
           <option name="timeStamp" value="398" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>115</line>
+          <line>156</line>
           <option name="timeStamp" value="399" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>118</line>
+          <line>159</line>
           <option name="timeStamp" value="400" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>120</line>
+          <line>161</line>
           <option name="timeStamp" value="401" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>116</line>
+          <line>157</line>
           <option name="timeStamp" value="402" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_controller.py</url>
-          <line>12</line>
-          <option name="timeStamp" value="404" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_controller.py</url>
-          <line>16</line>
-          <option name="timeStamp" value="405" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_controller.py</url>
-          <line>17</line>
-          <option name="timeStamp" value="406" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>103</line>
-          <option name="timeStamp" value="407" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>109</line>
-          <option name="timeStamp" value="412" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
-          <line>119</line>
+          <line>160</line>
           <option name="timeStamp" value="414" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -914,12 +781,154 @@
           <line>151</line>
           <option name="timeStamp" value="416" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>82</line>
+          <option name="timeStamp" value="437" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>118</line>
+          <option name="timeStamp" value="441" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>119</line>
+          <option name="timeStamp" value="452" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>77</line>
+          <option name="timeStamp" value="460" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>76</line>
+          <option name="timeStamp" value="461" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>75</line>
+          <option name="timeStamp" value="462" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>73</line>
+          <option name="timeStamp" value="463" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>68</line>
+          <option name="timeStamp" value="465" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>78</line>
+          <option name="timeStamp" value="466" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>19</line>
+          <option name="timeStamp" value="467" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>20</line>
+          <option name="timeStamp" value="468" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="469" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>27</line>
+          <option name="timeStamp" value="470" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>28</line>
+          <option name="timeStamp" value="471" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>32</line>
+          <option name="timeStamp" value="474" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>80</line>
+          <option name="timeStamp" value="480" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>71</line>
+          <option name="timeStamp" value="481" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/d3_html_widget.py</url>
+          <line>57</line>
+          <option name="timeStamp" value="482" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/heuristic_graph_ui/heuristic_graph_view.py</url>
+          <line>74</line>
+          <option name="timeStamp" value="483" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mining_algorithms/fuzzy_mining.py</url>
+          <line>45</line>
+          <option name="timeStamp" value="500" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/heuristic_graph_ui/heuristic_graph_view.py</url>
+          <line>101</line>
+          <option name="timeStamp" value="501" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/heuristic_graph_ui/heuristic_graph_view.py</url>
+          <line>136</line>
+          <option name="timeStamp" value="502" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>102</line>
+          <option name="timeStamp" value="509" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>103</line>
+          <option name="timeStamp" value="510" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>104</line>
+          <option name="timeStamp" value="511" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>99</line>
+          <option name="timeStamp" value="512" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/custom_ui/fuzzy_graph_ui/fuzzy_graph_view.py</url>
+          <line>89</line>
+          <option name="timeStamp" value="515" />
+        </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Process_Mining_Visualization$heuristic_graph_view.coverage" NAME="heuristic_graph_view Coverage Results" MODIFIED="1702482535192" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/custom_ui/heuristic_graph_ui" />
-    <SUITE FILE_PATH="coverage/Process_Mining_Visualization$run.coverage" NAME="run Coverage Results" MODIFIED="1704933918929" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:\MyDesktop\All\Uni\2023WS\Bachelorarbeit\Projekt\Process-Mining-Visualization" />
+    <SUITE FILE_PATH="coverage/Process_Mining_Visualization$run.coverage" NAME="run Coverage Results" MODIFIED="1704962751688" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:\MyDesktop\All\Uni\2023WS\Bachelorarbeit\Projekt\Process-Mining-Visualization" />
     <SUITE FILE_PATH="coverage/Process_Mining_Visualization$main.coverage" NAME="main Coverage Results" MODIFIED="1700651576006" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="D:\MyDesktop\All\Uni\2023WS\Bachelorarbeit\Projekt\Process-Mining-Visualization" />
   </component>
 </project>
