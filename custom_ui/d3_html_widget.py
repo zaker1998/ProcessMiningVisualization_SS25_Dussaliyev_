@@ -1,6 +1,6 @@
 from api.custom_error import FileNotFoundException
 from custom_ui.server_thread import ServerThread
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QLabel, QPushButton
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl, pyqtSignal,QObject
 from flask import Flask
@@ -24,10 +24,18 @@ class HTMLWidget(QWidget):
         self.react_signal.connect(self.react)
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.browser)
+
+        """self.label = QLabel("Hello, this is label!")
+        self.button = QPushButton("Click me")
+        self.button.clicked.connect(self.on_button_click)
+        self.main_layout.addWidget(self.label)
+        self.main_layout.addWidget(self.button)"""
+
         
         self.setLayout(self.main_layout)
         
-
+    def on_button_click(self):
+        print("Button clicked")
     # CALL BEFORE USAGE
     def start_server(self, port = 8050):
         if self.state == True:

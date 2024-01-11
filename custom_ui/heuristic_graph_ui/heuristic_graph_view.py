@@ -42,6 +42,7 @@ class HeuristicGraphView(QWidget, AlgorithmViewInterface):
         slider_layout = QHBoxLayout()
         slider_layout.addWidget(self.freq_slider)
         slider_layout.addWidget(self.thresh_slider)
+        slider_layout.addWidget(self.thresh_slider)
 
         self.saveProject_button = SaveProjectButton(self.parent,self.saveFolder,self.getModel)
         self.export_button = ExportButton(self.parent)
