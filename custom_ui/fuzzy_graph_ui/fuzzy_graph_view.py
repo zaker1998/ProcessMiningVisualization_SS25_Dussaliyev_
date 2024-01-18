@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFileDialog, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame, QTextEdit
+from PyQt5.QtWidgets import QFileDialog, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame, QTextEdit, QToolBox, QSpacerItem, QSizePolicy
 from api.custom_error import FileNotFoundException
 from custom_ui.fuzzy_graph_ui.fuzzy_graph_controller import FuzzyGraphController
 from custom_ui.algorithm_view_interface import AlgorithmViewInterface
@@ -14,20 +14,40 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.default_significance = 1.0
         self.significance = self.default_significance
-        self.default_correlation = 0.3
+
+        #TODO delete correlation we dont need it
+        self.default_correlation = 0.1
         self.correlation = self.default_correlation
+
+        self.default_edge_cutoff = 0.4
+        self.edge_cutoff = self.default_edge_cutoff
+
+        self.default_utility_ration = 0.5
+        self.utility_ratio = self.default_utility_ration
 
         self.max_significance = 100
         self.min_significance = 0
+
+        #TODO delete correlation
         self.max_correlation = 100
         self.min_correlation = 0
 
+        self.max_edge_cutoff = 100
+        self.min_edge_cutoff = 0
+
+        self.max_utility_ratio = 100
+        self.min_utility_ratio = 0
+
         self.saveFolder = saveFolder
         self.workingDirectory = workingDirectory # directory where graphviz file is stored for display and export
-        self.FuzzyGraphController = FuzzyGraphController(workingDirectory, self.default_significance, self.default_correlation)
+        self.FuzzyGraphController = FuzzyGraphController(workingDirectory, self.significance, self.edge_cutoff,self.utility_ratio)
 
         self.graphviz_graph = None
         self.graph_widget = HTMLWidget(parent)
+
+        tool_box = QToolBox()
+        option1_significance_widget = QWidget()
+        option2_edge_filtering_widget = QWidget()
 
         slider_frame = QFrame()
         slider_frame.setFrameShape(QFrame.StyledPanel)
@@ -38,27 +58,51 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.sign_slider.setRange(self.min_significance, self.max_significance)
         self.sign_slider.setValue(self.min_significance)
 
-        self.corr_slider = CustomQSlider(self.__corr_slider_changed, Qt.Vertical)
-        self.corr_slider.setRange(self.min_correlation, self.max_correlation)
-        self.corr_slider.setValue(self.max_correlation)
+        self.edge_cutoff_slider = CustomQSlider(self.__edge_cutoff_slider_changed, Qt.Vertical)
+        self.edge_cutoff_slider.setRange(self.min_edge_cutoff, self.max_edge_cutoff)
+        self.edge_cutoff_slider.setValue(self.min_edge_cutoff)
 
-        slider_layout = QHBoxLayout()
+        self.utility_slider = CustomQSlider(self.__utility_slider_changed, Qt.Vertical)
+        self.utility_slider.setRange(self.min_utility_ratio, self.max_utility_ratio)
+        self.utility_slider.setValue(self.min_utility_ratio)
+
+        slider_layout = QHBoxLayout(option1_significance_widget)
         slider_layout.addWidget(self.sign_slider)
-        slider_layout.addWidget(self.corr_slider)
+
+        slider_layout1 = QHBoxLayout(option2_edge_filtering_widget)
+        slider_layout1.addWidget(self.edge_cutoff_slider)
+        slider_layout1.addWidget(self.utility_slider)
+
+        tool_box.addItem(option1_significance_widget, "Significance cutoff")
+        tool_box.addItem(option2_edge_filtering_widget, "Edge filtering")
 
         self.saveProject_button = SaveProjectButton(self.parent, self.saveFolder, self.getModel)
         self.export_button = ExportButton(self.parent)
 
+        # fist separating line
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+
+        # second separating line
+        line1 = QFrame()
+        line1.setFrameShape(QFrame.HLine)
+        line1.setFrameShadow(QFrame.Sunken)
+
         slider_frame_layout = QVBoxLayout()
-        slider_frame_layout.addWidget(QLabel("Fuzzy Mining Modifiers", alignment=Qt.AlignCenter))
-        slider_frame_layout.addLayout(slider_layout)
+        slider_frame_layout.addWidget(QLabel("Fuzzy Mining Modifiers", styleSheet="color: blue;", alignment=Qt.AlignCenter))
+        slider_frame_layout.addWidget(line)
+        slider_frame_layout.addSpacing(20)
+        slider_frame_layout.addWidget(tool_box, stretch=1)
+        slider_frame_layout.addSpacing(20)
+        slider_frame_layout.addWidget(line1)
         slider_frame_layout.addWidget(self.saveProject_button)
         slider_frame_layout.addWidget(self.export_button)
 
         slider_frame.setLayout(slider_frame_layout)
 
         main_layout = QHBoxLayout(self)
-        main_layout.addWidget(self.graph_widget, stretch=3)
+        main_layout.addWidget(self.graph_widget, stretch=4)
         main_layout.addWidget(slider_frame, stretch=1)
 
         self.setLayout(main_layout)
@@ -68,7 +112,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.saveProject_button.load_filename(filename)
         self.FuzzyGraphController.startMining(cases)
         self.initialized = True
-        self.__set_slider_values(self.default_significance, self.default_correlation)
+        self.__set_slider_values(self.default_significance, self.edge_cutoff, self.utility_ratio)
         self.graph_widget.start_server()
 
         filename = self.workingDirectory + '.dot'
@@ -91,31 +135,42 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         #self.__redraw()
 
         # TODO mine and draw after changing signification value
-    def __corr_slider_changed(self, value):
-        self.corr_slider.setText(f"Correlation Value: {value/100:.2f}")
-        self.correlation = value/100
+    def __edge_cutoff_slider_changed(self, value):
+        self.edge_cutoff_slider.setText(f"Cutoff: {value/100:.2f}")
+        self.edge_cutoff = value/100
 
         if not self.initialized:
             return
-        print("Changing correlation value")
+        print("Changing cutoff value")
         #self.__redraw()
 
+    def __utility_slider_changed(self, value):
+        self.utility_slider.setText(f"Utility: {value / 100:.2f}")
+        self.utility_ratio = value / 100
+
+        if not self.initialized:
+            return
+        print("Changing utility ration value")
+        # self.__redraw()
+
     def __redraw(self):
-        self.FuzzyGraphController.mine_and_draw(self.significance, self.correlation)
+        self.FuzzyGraphController.mine_and_draw(self.significance, self.edge_cutoff, self.edge_cutoff)
         filename = self.workingDirectory + '.dot'
         self.graph_widget.set_source(filename)
         try:
             self.graph_widget.reload()
         except FileNotFoundException as e:
             print(e.message)
-    def __set_slider_values(self, sign, correlation):
+    def __set_slider_values(self, sign, cutoff, utility):
         # set text
-        self.sign_slider.setText(f"Significance Value: {sign:.2f}")
-        self.corr_slider.setText(f"Correlation Value: {correlation:.2f}")
+        self.sign_slider.setText(f"Significance: {sign:.2f}")
+        self.edge_cutoff_slider.setText(f"Cutoff: {cutoff:.2f}")
+        self.utility_slider.setText(f"Utility: {utility:.2f}")
 
         # set value
         self.sign_slider.setValue(int(sign*100))
-        self.corr_slider.setValue(int(correlation*100))
+        self.edge_cutoff_slider.setValue(int(cutoff*100))
+        self.utility_slider.setValue(int(utility * 100))
     def getModel(self):
         return self.FuzzyGraphController.getModel()
     def generate_dot(self):
@@ -132,5 +187,6 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
     def clear(self):
         self.graph_widget.clear()
         self.default_significance = 1
-        self.default_correlation = 0.5
+        self.default_edge_cutoff = 0.5
+        self.default_utility_ration = 0.5
         self.zoom_factor = 1.0

@@ -16,7 +16,7 @@ class FuzzyMining():
         # style of clusterd nodes
         #graph.node(str(node), label=str(node) + "\n" + str(node_freq), width=str(w), height=str(h), shape="octagon", style="filled", fillcolor="#6495ED", color="black")
 
-    def create_graph_with_graphviz(self, significance, correlation):
+    def create_graph_with_graphviz(self, significance, edge_cutoff, utility_ratio):
         #self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
         graph = Digraph()
         cluster = DensityDistributionClusterAlgorithm(list(self.appearance_activities.values()))
@@ -41,7 +41,8 @@ class FuzzyMining():
         #self.filtered_events = calculate_significance_dependency(significance).keys()
         for i in range(len(self.events)):
             for j in range(len(self.events)):
-                if self.correlation_of_nodes[i][j] >= correlation:
+                #TODO delete correlation value- hardcoded:
+                if self.correlation_of_nodes[i][j] >= 0.3:
                     edge_thickness = 0.1
                     graph.edge(str(self.events[i]), str(self.events[j]), penwidth = str(edge_thickness), label=str("{:.2f}".format(float(self.correlation_of_nodes[i][j]))))
 
