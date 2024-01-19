@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame, QTextEdit, QToolBox, QSpacerItem, QSizePolicy
 from api.custom_error import FileNotFoundException
 from custom_ui.fuzzy_graph_ui.fuzzy_graph_controller import FuzzyGraphController
@@ -111,18 +111,14 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.saveProject_button.load_filename(filename)
         self.FuzzyGraphController.startMining(cases)
+
+        self.graph_widget.start_server()
         self.initialized = True
         self.__set_slider_values(self.default_significance, self.edge_cutoff, self.utility_ratio)
-        self.graph_widget.start_server()
-
-        filename = self.workingDirectory + '.dot'
-        self.graph_widget.set_source(filename)
-        try:
-            self.graph_widget.reload()
-        except FileNotFoundException as e:
-            print(e.message)
-
-        # TODO DELETE it
+        # I have added a Qtimer, because while I was debuging the code it was trying to write the new value and redrawing
+        # the new graph at the same time
+        QTimer.singleShot(500, self.__redraw)
+        #self.__redraw()
 
     def __sign_slider_changed(self, value):
         self.sign_slider.setText(f"Significance Value: {value/100:.2f}")
@@ -131,10 +127,11 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         # it will try to update model, but model not existin yet
         if not self.initialized:
             return
-        print("Changing signification value")
-        #self.__redraw()
 
-        # TODO mine and draw after changing signification value
+        print("Changing signification value")
+        # mine and draw after changing signification value
+        self.__redraw()
+
     def __edge_cutoff_slider_changed(self, value):
         self.edge_cutoff_slider.setText(f"Cutoff: {value/100:.2f}")
         self.edge_cutoff = value/100
@@ -151,10 +148,10 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         if not self.initialized:
             return
         print("Changing utility ration value")
-        # self.__redraw()
+        #self.__redraw()
 
     def __redraw(self):
-        self.FuzzyGraphController.mine_and_draw(self.significance, self.edge_cutoff, self.edge_cutoff)
+        self.graphviz_graph = self.FuzzyGraphController.mine_and_draw(self.significance, self.edge_cutoff, self.utility_ratio)
         filename = self.workingDirectory + '.dot'
         self.graph_widget.set_source(filename)
         try:

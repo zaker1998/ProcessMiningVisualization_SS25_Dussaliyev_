@@ -119,7 +119,6 @@ class HeuristicGraphView(QWidget, AlgorithmViewInterface):
         
         # Redraw graph when value changes
         self.min_frequency = value
-
         self.__mine_and_draw()
     
     def __thresh_slider_changed(self, value):
