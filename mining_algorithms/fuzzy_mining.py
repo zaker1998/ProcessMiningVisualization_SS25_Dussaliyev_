@@ -11,6 +11,7 @@ class FuzzyMining():
         self.succession_matrix = self.__create_succession_matrix()
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()
         self.significance_of_nodes = self.__calculate_significance()
+        self.significance_matrix = self.__calculate_significance_matrix(self.significance_of_nodes)
         #self.dependency_matrix = self.calculate_dependency_matrix()
 
         # style of clusterd nodes
@@ -34,7 +35,8 @@ class FuzzyMining():
             node_width = freq_labels_sorted[nodes_sorted.index(node_freq)]/2 + self.min_node_size
             node_height = node_width/3
             # chatgpt asked how to change fontcolor just for node_freq
-            graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width), height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
+            graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width),
+                       height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
             #graph.node(str(node), label= str(node)+"\n" + str(node_freq), width = str(node_width), height = str(node_height), shape = "octagon", style = "filled", fillcolor='#6495ED')
 
             # TODO cluster the edge thickness based on frequency
@@ -42,9 +44,14 @@ class FuzzyMining():
         for i in range(len(self.events)):
             for j in range(len(self.events)):
                 #TODO delete correlation value- hardcoded:
-                if self.correlation_of_nodes[i][j] >= 0.3:
+                """if self.correlation_of_nodes[i][j] >= 0.3:
                     edge_thickness = 0.1
-                    graph.edge(str(self.events[i]), str(self.events[j]), penwidth = str(edge_thickness), label=str("{:.2f}".format(float(self.correlation_of_nodes[i][j]))))
+                    graph.edge(str(self.events[i]), str(self.events[j]), penwidth=str(edge_thickness),
+                               label=str("{:.2f}".format(float(self.correlation_of_nodes[i][j]))))"""
+                if self.correlation_of_nodes[i][j] >= 0.5 and self.significance_matrix[i][j] > significance:
+                    edge_thickness = 0.1
+                    graph.edge(str(self.events[i]), str(self.events[j]), penwidth = str(edge_thickness),
+                               label=str("{:.2f}".format(float(self.correlation_of_nodes[i][j]))))
 
         graph.node("start", label="start", shape='doublecircle', style='filled', fillcolor='green')
         for node in self.__get_first_nodes():
@@ -92,7 +99,7 @@ class FuzzyMining():
         # list of all unique activities
         activities = list(dic.keys())
 
-        # returns activities "a", "b" ... and dic: a: 4, a has 4-appearances
+        # returns activities "a", "b" ... and dic: a: 4, a has 4-appearances ...
         return activities, dic
     def __create_succession_matrix(self):
         """ 2D matrix a, b, c => 3x3 matrix example below
@@ -162,3 +169,10 @@ class FuzzyMining():
             if values[i] >= significance:
                 dict[keys[i]] = values[i]
         return dict
+
+    def __calculate_significance_matrix(self, significance_values):
+        ret_matrix = np.array(self.succession_matrix)
+        significance_each_row = np.array(list(significance_values.values()))
+        for i in range(ret_matrix.shape[1]):
+            ret_matrix[:, i] = significance_each_row
+        return ret_matrix
