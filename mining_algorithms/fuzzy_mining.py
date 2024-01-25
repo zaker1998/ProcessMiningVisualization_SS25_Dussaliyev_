@@ -14,9 +14,6 @@ class FuzzyMining():
         self.significance_of_nodes = self.__calculate_significance()
         self.node_significance_matrix = self.__calculate_node_significance_matrix(self.significance_of_nodes)
 
-        # style of clusterd nodes
-        #graph.node(str(node), label=str(node) + "\n" + str(node_freq), width=str(w), height=str(h), shape="octagon", style="filled", fillcolor="#6495ED", color="black")
-
     """
          If we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
          after using cluster.sorted_data we get a sorted array[123, 234, 345, 433, 456]
@@ -29,14 +26,15 @@ class FuzzyMining():
         cluster = DensityDistributionClusterAlgorithm(list(self.appearance_activities.values()))
         nodes_sorted = list(cluster.sorted_data)
         freq_labels_sorted = list(cluster.labels_sorted_data)
-
+        print("Sign: " + str(significance))
         # 1 Rule remove less significant and less correlated nodes
         self.corr_after_first_rule, self.sign_after_first_rule = self.__calculate_first_rule(self.events, self.correlation_of_nodes, self.node_significance_matrix, significance)
-        # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are REMOVED
+        # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are not included
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
-        self.clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(self.corr_after_first_rule, self.sign_after_first_rule, significance)
+        clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(self.corr_after_first_rule, self.sign_after_first_rule, significance)
+        self.__get_clustered_nodes_to_print(graph, clustered_nodes_after_sec_rule)
 
         # read all event_nodes and create
         for node in nodes_after_first_rule:
@@ -91,7 +89,7 @@ class FuzzyMining():
                 # incoming edges
                 #sec_possib = self.events[j] + self.events[i]
                 # TODO put self.minimum_correlation instead of using hard coding
-                if corr_after_first_rule[i][j] >= 0.2 or corr_after_first_rule[j][i] >= 0.2:
+                if corr_after_first_rule[i][j] >= self.minimum_correlation or corr_after_first_rule[j][i] >= self.minimum_correlation:
                     events_to_cluster.add(self.events[i])
                     events_to_cluster.add(self.events[j])
                     something_to_cluster = True
@@ -106,12 +104,20 @@ class FuzzyMining():
     def __permutation_exists(self, current_cluster, main_cluster_list):
         sorted_cluster = sorted(current_cluster.split('-'))
 
-
         for cluster in main_cluster_list:
             cluster_events = cluster.split('-')
             if sorted_cluster == sorted(cluster_events):
                 return True
         return False
+    def __get_clustered_nodes_to_print(self, graph, nodes):
+        counter = 1
+        for cluster in nodes:
+            cluster_events = cluster.split('-')
+            name = str(len(cluster_events)) + ' Elments'
+            string_cluster = 'Cluster ' + str(counter)
+            graph.node(str(cluster), label=str(string_cluster) + "\n" + str(name), width=str(1.5), height=str(1.0), shape="octagon", style="filled", fillcolor='#6495ED')
+            counter += 1
+
     def __calculate_significant_nodes(self, corr_after_first_rule):
         # this function will be called after checking sign >= sign_slider therefore all nodes which are
         # not >= sign_slider will be replaced with -1. Therefor in this function will be checked if corr == -1
@@ -137,7 +143,7 @@ class FuzzyMining():
                 # these nodes are less significant and lowly correlated therefore have to be removed if
                 # self.node_significance[i][j] < significance and self.correlation_of_nodes[i][j] < correlation and not self correlation
                 # Ignore self correlation nodes for now
-                if (correlation_of_nodes[i][j] < 0.2 and correlation_of_nodes[j][i] < 0.2
+                if (correlation_of_nodes[i][j] < self.minimum_correlation and correlation_of_nodes[j][i] < self.minimum_correlation
                         and significance_of_nodes[i][j] < significance):
                     counter += 1
                 #if correlation_of_nodes[i][j] < self.minimum_correlation:
