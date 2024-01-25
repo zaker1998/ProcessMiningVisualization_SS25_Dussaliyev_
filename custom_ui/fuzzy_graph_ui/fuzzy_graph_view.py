@@ -12,12 +12,8 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.parent = parent
         self.initialized = False
 
-        self.default_significance = 1.0
+        self.default_significance = 0.13
         self.significance = self.default_significance
-
-        #TODO delete correlation we dont need it
-        self.default_correlation = 0.1
-        self.correlation = self.default_correlation
 
         self.default_edge_cutoff = 0.4
         self.edge_cutoff = self.default_edge_cutoff
@@ -27,10 +23,6 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.max_significance = 100
         self.min_significance = 0
-
-        #TODO delete correlation
-        self.max_correlation = 100
-        self.min_correlation = 0
 
         self.max_edge_cutoff = 100
         self.min_edge_cutoff = 0
@@ -183,7 +175,8 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         return
     def clear(self):
         self.graph_widget.clear()
-        self.default_significance = 1
+        # this values w
+        self.default_significance = 0.7
         self.default_edge_cutoff = 0.5
         self.default_utility_ration = 0.5
         self.zoom_factor = 1.0

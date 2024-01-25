@@ -2,7 +2,7 @@ from mining_algorithms.fuzzy_mining import FuzzyMining
 from api.pickle_save import pickle_load
 
 class FuzzyGraphController():
-    def __init__(self, workingDirectory, default_significance = 1.0, default_edge_cutoff = 0.4, default_utility_ration = 0.5):
+    def __init__(self, workingDirectory, default_significance = 0.0, default_edge_cutoff = 0.4, default_utility_ration = 0.5):
         super().__init__()
         self.model = None
         self.workingDirectory = workingDirectory
