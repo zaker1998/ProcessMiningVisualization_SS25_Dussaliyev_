@@ -48,15 +48,15 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.sign_slider = CustomQSlider(self.__sign_slider_changed, Qt.Vertical)
         self.sign_slider.setRange(self.min_significance, self.max_significance)
-        self.sign_slider.setValue(self.min_significance)
+        #self.sign_slider.setValue(self.min_significance)
 
         self.edge_cutoff_slider = CustomQSlider(self.__edge_cutoff_slider_changed, Qt.Vertical)
         self.edge_cutoff_slider.setRange(self.min_edge_cutoff, self.max_edge_cutoff)
-        self.edge_cutoff_slider.setValue(self.min_edge_cutoff)
+        #self.edge_cutoff_slider.setValue(self.min_edge_cutoff)
 
         self.utility_slider = CustomQSlider(self.__utility_slider_changed, Qt.Vertical)
         self.utility_slider.setRange(self.min_utility_ratio, self.max_utility_ratio)
-        self.utility_slider.setValue(self.min_utility_ratio)
+        #self.utility_slider.setValue(self.min_utility_ratio)
 
         slider_layout = QHBoxLayout(option1_significance_widget)
         slider_layout.addWidget(self.sign_slider)
@@ -176,7 +176,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
     def clear(self):
         self.graph_widget.clear()
         # this values w
-        self.default_significance = 0.7
-        self.default_edge_cutoff = 0.5
-        self.default_utility_ration = 0.5
+        #self.default_significance = 0.7
+        #self.default_edge_cutoff = 0.5
+        #self.default_utility_ration = 0.5
         self.zoom_factor = 1.0

@@ -13,6 +13,7 @@ class FuzzyMining():
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()
         self.significance_of_nodes = self.__calculate_significance()
         self.node_significance_matrix = self.__calculate_node_significance_matrix(self.significance_of_nodes)
+        self.clustered_nodes = None
 
     """
          If we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
@@ -34,21 +35,34 @@ class FuzzyMining():
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
         clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(self.corr_after_first_rule, self.sign_after_first_rule, significance)
-        self.__get_clustered_nodes_to_print(graph, clustered_nodes_after_sec_rule)
+        print("Clustered nodes: " + str(clustered_nodes_after_sec_rule))
+        list_of_clustered_nodes = self.__convert_clustered_nodes_to_list(clustered_nodes_after_sec_rule)
+        print(list_of_clustered_nodes)
+
+        # update correlation and significance after clustering
+        sign_after_sec_rule = self.__update_significance_matrix(self.sign_after_first_rule, clustered_nodes_after_sec_rule)
+        print(sign_after_sec_rule)
+
+        # print clustered nodes
+        self.__add_clustered_nodes_to_graph(graph, clustered_nodes_after_sec_rule)
+        # what is already clustered is not a normal node
+        self.__add_normal_nodes_to_graph(graph, nodes_after_first_rule, list_of_clustered_nodes, self.appearance_activities)
 
         # read all event_nodes and create
-        for node in nodes_after_first_rule:
+        """for node in nodes_after_first_rule:
+            if node in list_of_clustered_nodes:
+                continue
             node_freq = self.appearance_activities.get(node)
             node_width = freq_labels_sorted[nodes_sorted.index(node_freq)]/2 + self.min_node_size
             node_height = node_width/3
             # chatgpt asked how to change fontcolor just for node_freq
             graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width),
-                       height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
+                       height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')"""
             #graph.node(str(node), label= str(node)+"\n" + str(node_freq), width = str(node_width), height = str(node_height), shape = "octagon", style = "filled", fillcolor='#6495ED')
 
             # TODO cluster the edge thickness based on frequency
         #self.filtered_events = calculate_significance_dependency(significance).keys()
-        for i in range(len(self.events)):
+        """for i in range(len(self.events)):
             for j in range(len(self.events)):
                 # these nodes have to be preserved(contained in model) if self.node_significance_matrix[i][j] >= significance
                 # these nodes have to be aggregated (clustered) if self.correlation_of_nodes[i][j] >= 0.5 and self.node_significance[i][j] < significance:
@@ -57,28 +71,75 @@ class FuzzyMining():
                     edge_thickness = 0.1
                     graph.edge(str(self.events[i]), str(self.events[j]), penwidth = str(edge_thickness),
                                label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-
+"""
         graph.node("start", label="start", shape='doublecircle', style='filled', fillcolor='green')
         # TODO find new method to find start node and end node
-        for node in nodes_after_first_rule:
-            graph.edge("start", str(node), penwidth=str(0.1))
+        #for node in nodes_after_first_rule:
+        #    graph.edge("start", str(node), penwidth=str(0.1))
 
         graph.node("end", label="end", shape = 'doublecircle', style='filled', fillcolor='red')
-        for node in nodes_after_first_rule:
-            graph.edge(str(node),"end", penwidth=str(0.1))
+        #for node in nodes_after_first_rule:
+        #    graph.edge(str(node),"end", penwidth=str(0.1))
 
         return graph
+    def __add_normal_nodes_to_graph(self, graph, nodes_after_first_rule, list_of_clustered_nodes, appearance_activities):
+        min_node_size = 1.5
+        cluster = DensityDistributionClusterAlgorithm(list(appearance_activities.values()))
+        nodes_sorted = list(cluster.sorted_data)
+        freq_labels_sorted = list(cluster.labels_sorted_data)
+        for node in nodes_after_first_rule:
+            if node not in list_of_clustered_nodes:
+                node_freq = appearance_activities.get(node)
+                node_width = freq_labels_sorted[nodes_sorted.index(node_freq)] / 2 + min_node_size
+                node_height = node_width / 3
+                # chatgpt asked how to change fontcolor just for node_freq
+                graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width),
+                           height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
+        return graph
+    def __convert_clustered_nodes_to_list(self, clustered_nodes):
+        ret_nodes = []
+        for event in clustered_nodes:
+            cluster_events = event.split('-')
+            for node in cluster_events:
+                if node not in ret_nodes:
+                    ret_nodes.append(node)
+        #result_list = [event for sublist in clustered_nodes for word in sublist for event in word.split('-')]
+        return ret_nodes
+    def __update_significance_matrix(self, sign_after_first_rule, clustered_nodes_after_sec_rule):
+        # go through each cluster
+        # 1. find average sum of significance e.g. sig_a+sig_b/2
+        # 2. don't change correlation, but consider current cluster as one node(a-b)
+        for event in clustered_nodes_after_sec_rule:
+            cluster_events = event.split('-')
+            sign_after_first_rule = self.__calculate_sign_for_events(sign_after_first_rule, cluster_events)
+        return sign_after_first_rule
+    def __calculate_sign_for_events(self, significance_matrix, cluster_events):
+        events_size = len(cluster_events)
+        if events_size == 0:
+            return significance_matrix
+        sum = 0.0
+        for i in range(len(self.events)):
+            if self.events[i] in cluster_events:
+                sum += significance_matrix[i][0]
+        # put new sign for each row
+        new_value = round(sum/events_size, 2)
+        for i in range(len(self.events)):
+            if self.events[i] in cluster_events:
+                for j in range(len(self.events)):
+                    significance_matrix[i][j] = new_value
+        return significance_matrix
 
     def __calculate_clustered_nodes(self, corr_after_first_rule, sign_after_first_rule, significance):
         main_cluster_list = []
         less_sign_nodes = []
+        global_clustered_nodes = set()
         for a in range(len(self.events)):
             # 1. Find less significant nodes
             if sign_after_first_rule[a][0] < significance and self.events[a] not in less_sign_nodes:
                 less_sign_nodes.append(self.events[a])
         # 2. Find clusters of less significant nodes:
         for i in range(len(self.events)):
-            if self.events[i] not in less_sign_nodes:
+            if self.events[i] not in less_sign_nodes or self.events[i] in global_clustered_nodes:
                 continue
             events_to_cluster = set()
             something_to_cluster = False
@@ -91,15 +152,24 @@ class FuzzyMining():
                 # TODO put self.minimum_correlation instead of using hard coding
                 if corr_after_first_rule[i][j] >= self.minimum_correlation or corr_after_first_rule[j][i] >= self.minimum_correlation:
                     events_to_cluster.add(self.events[i])
-                    events_to_cluster.add(self.events[j])
-                    something_to_cluster = True
+                    global_clustered_nodes.add(self.events[i])
+                    if self.events[j] not in global_clustered_nodes:
+                        events_to_cluster.add(self.events[j])
+                        global_clustered_nodes.add((self.events[j]))
+                        something_to_cluster = True
 
             if something_to_cluster:
+                # special case if already all correlated nodes with current node clustered with other nodes, cluster
+                # current node just by itself, it means all nodes already in global_clustered_nodes but not current node !
+
                 # join events from set
                 cluster = '-'.join(sorted(events_to_cluster))
                 # check if permutation in cluster(true/false)
                 if not self.__permutation_exists(cluster, main_cluster_list):
                     main_cluster_list.append(cluster)
+            # add current node as cluster, special case - all correlated nodes already clustered!
+            else:
+                main_cluster_list.append(self.events[i])
         return main_cluster_list
     def __permutation_exists(self, current_cluster, main_cluster_list):
         sorted_cluster = sorted(current_cluster.split('-'))
@@ -109,7 +179,7 @@ class FuzzyMining():
             if sorted_cluster == sorted(cluster_events):
                 return True
         return False
-    def __get_clustered_nodes_to_print(self, graph, nodes):
+    def __add_clustered_nodes_to_graph(self, graph, nodes):
         counter = 1
         for cluster in nodes:
             cluster_events = cluster.split('-')
