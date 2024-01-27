@@ -6,7 +6,7 @@ class FuzzyMining():
     def __init__(self, cases):
         self.cases = cases
         self.min_node_size = 1.5
-        self.minimum_correlation = 0.2
+        self.minimum_correlation = 0.7
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_activities = self.__filter_all_events()
         self.succession_matrix = self.__create_succession_matrix()
@@ -43,11 +43,11 @@ class FuzzyMining():
         # significance after clustering
         sign_after_sec_rule = self.__update_significance_matrix(self.sign_after_first_rule, clustered_nodes_after_sec_rule)
         print(sign_after_sec_rule)
-        sign_dict = self.__get_significance_dict_after_clustering(sign_after_sec_rule)
-        print("Sign after: " + str(sign_dict))
+        self.sign_dict = self.__get_significance_dict_after_clustering(sign_after_sec_rule)
+        print("Sign after: " + str(self.sign_dict))
 
         # print clustered nodes
-        self.__add_clustered_nodes_to_graph(graph, clustered_nodes_after_sec_rule, sign_dict)
+        self.__add_clustered_nodes_to_graph(graph, clustered_nodes_after_sec_rule, self.sign_dict)
         # what is already clustered is not a normal node
         self.__add_normal_nodes_to_graph(graph, nodes_after_first_rule, list_of_clustered_nodes, self.appearance_activities)
 
@@ -106,8 +106,11 @@ class FuzzyMining():
                 node_freq = appearance_activities.get(node)
                 node_width = freq_labels_sorted[nodes_sorted.index(node_freq)] / 2 + min_node_size
                 node_height = node_width / 3
+
+                node_sign = self.sign_dict.get(node)
+
                 # chatgpt asked how to change fontcolor just for node_freq
-                graph.node(str(node), label=f'<{node}<br/><font color="red">{node_freq}</font>>', width=str(node_width),
+                graph.node(str(node), label=f'<{node}<br/><font color="red">{node_sign}</font>>', width=str(node_width),
                            height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
         return graph
     def __convert_clustered_nodes_to_list(self, clustered_nodes):
@@ -332,22 +335,6 @@ class FuzzyMining():
             y+=1
 
         return correlation_matrix
-
-
-    """
-    def __calculate_correlation_dependency_matrix(self, correlation):
-        dependency_matrix = np.zeros(self.succession_matrix.shape)
-        y = 0
-        for row in self.correlation_of_nodes:
-            x = 0
-            for i in row:
-                if self.correlation_of_nodes[y][x]>= correlation:
-                    dependency_matrix[y][x]+=1
-                x += 1
-            y += 1
-
-        return dependency_matrix
-        """
 
     #get just nodes which are >= significance (parameter)
     def calculate_significance_dependency(self, significance):
