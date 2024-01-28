@@ -1,9 +1,12 @@
 from graphviz import Digraph
 import numpy as np
+import logging
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 
 class FuzzyMining():
     def __init__(self, cases):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
         self.cases = cases
         self.min_node_size = 1.5
         self.minimum_correlation = 0.7
@@ -33,6 +36,8 @@ class FuzzyMining():
         self.corr_after_first_rule, self.sign_after_first_rule = self.__calculate_first_rule(self.events, self.correlation_of_nodes, self.node_significance_matrix, significance)
         # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are not included
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
+        print("singrrr-->" + str(self.sign_after_first_rule))
+        print("crr-->" + str(self.corr_after_first_rule))
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
         clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(nodes_after_first_rule, self.corr_after_first_rule, self.sign_after_first_rule, significance)
@@ -48,6 +53,9 @@ class FuzzyMining():
 
         # print clustered nodes
         self.__add_clustered_nodes_to_graph(graph, clustered_nodes_after_sec_rule, self.sign_dict)
+
+        # normal nodes
+        #normal_nodes_after_sec_rule = self.__calculate_normal_nodes()
         # what is already clustered is not a normal node
         self.__add_normal_nodes_to_graph(graph, nodes_after_first_rule, list_of_clustered_nodes, self.appearance_activities)
 
@@ -60,8 +68,12 @@ class FuzzyMining():
                     if self.events[i] in list_of_clustered_nodes and self.events[j] in list_of_clustered_nodes:
                         current_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[i])
                         next_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[j])
+                        # remove self-loops from clustered nodes
+                        if current_cluster == next_cluster:
+                            continue
                         graph.edge(current_cluster, str(next_cluster), penwidth = str(edge_thickness),
                                label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
+                        self.logger.info("Writing an edge cluster->cluster")
                         print("cluster -> cluster")
 
                     # cluster -> node
@@ -154,7 +166,7 @@ class FuzzyMining():
         global_clustered_nodes = set()
         for a in range(len(self.events)):
             # 1. Find less significant nodes
-            if sign_after_first_rule[a][0] < significance and self.events[a] not in less_sign_nodes and self.events[a] in nodes_after_first_rule:
+            if sign_after_first_rule[a][0] < significance and sign_after_first_rule[a][0] != -1:
                 less_sign_nodes.append(self.events[a])
         # 2. Find clusters of less significant nodes:
         for i in range(len(self.events)):
@@ -215,8 +227,10 @@ class FuzzyMining():
         ret_sign_nodes = []
         for i in range(len(self.events)):
             for j in range(len(self.events)):
+                print("checking if " + str(corr_after_first_rule[i][j]) + " is == -1 for " + str(self.events[i]))
                 if corr_after_first_rule[i][j] != -1 and self.events[i] not in ret_sign_nodes:
                     ret_sign_nodes.append(self.events[i])
+        print("sign-rr-> " + str(ret_sign_nodes))
         return ret_sign_nodes
     # __cluster_based_on_significance_dependency
     def __calculate_first_rule(self, events, correlation_of_nodes, significance_of_nodes, significance):
@@ -252,7 +266,7 @@ class FuzzyMining():
         correlation_of_nodes[:, indices_to_replace] = value_to_replace
 
         significance_of_nodes[indices_to_replace, :] = value_to_replace
-        significance_of_nodes[:, indices_to_replace] = value_to_replace
+        #significance_of_nodes[:, indices_to_replace] = value_to_replace
 
         return correlation_of_nodes, significance_of_nodes
 

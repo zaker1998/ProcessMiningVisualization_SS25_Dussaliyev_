@@ -12,7 +12,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.parent = parent
         self.initialized = False
 
-        self.default_significance = 0.0
+        self.default_significance = 0.48
         self.significance = self.default_significance
 
         self.default_edge_cutoff = 0.4
