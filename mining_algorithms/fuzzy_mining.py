@@ -35,7 +35,7 @@ class FuzzyMining():
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
-        clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(self.corr_after_first_rule, self.sign_after_first_rule, significance)
+        clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(nodes_after_first_rule, self.corr_after_first_rule, self.sign_after_first_rule, significance)
         print("Clustered nodes: " + str(clustered_nodes_after_sec_rule))
         list_of_clustered_nodes = self.__convert_clustered_nodes_to_list(clustered_nodes_after_sec_rule)
         print(list_of_clustered_nodes)
@@ -139,20 +139,22 @@ class FuzzyMining():
             if self.events[i] in cluster_events:
                 sum += significance_matrix[i][0]
         # put new sign for each row
-        new_value = round(sum/events_size, 2)
+        new_value = format(sum/events_size, '.2f')
         for i in range(len(self.events)):
             if self.events[i] in cluster_events:
                 for j in range(len(self.events)):
                     significance_matrix[i][j] = new_value
+
+        print("putting new value: " + str(new_value))
         return significance_matrix
 
-    def __calculate_clustered_nodes(self, corr_after_first_rule, sign_after_first_rule, significance):
+    def __calculate_clustered_nodes(self, nodes_after_first_rule, corr_after_first_rule, sign_after_first_rule, significance):
         main_cluster_list = []
         less_sign_nodes = []
         global_clustered_nodes = set()
         for a in range(len(self.events)):
             # 1. Find less significant nodes
-            if sign_after_first_rule[a][0] < significance and self.events[a] not in less_sign_nodes:
+            if sign_after_first_rule[a][0] < significance and self.events[a] not in less_sign_nodes and self.events[a] in nodes_after_first_rule:
                 less_sign_nodes.append(self.events[a])
         # 2. Find clusters of less significant nodes:
         for i in range(len(self.events)):
@@ -279,7 +281,7 @@ class FuzzyMining():
         dict = {}
         #dict = {key: value / max_value for key, value in self.appearance_activities.items()}
         for key, value in self.appearance_activities.items():
-            new_sign = round(value/max_value, 2)
+            new_sign = format(value/max_value, '.2f')
             dict[key] = new_sign
         return dict
 
@@ -330,7 +332,7 @@ class FuzzyMining():
                 if i == 0 and self.succession_matrix[y][x] == 0:
                     correlation_matrix[y][x] = 0.0
                 else:
-                    correlation_matrix[y][x] = round(self.succession_matrix[y][x]/sum_of_outgoing_edges, 2)
+                    correlation_matrix[y][x] = format(self.succession_matrix[y][x]/sum_of_outgoing_edges, '.2f')
                 x+=1
             y+=1
 
