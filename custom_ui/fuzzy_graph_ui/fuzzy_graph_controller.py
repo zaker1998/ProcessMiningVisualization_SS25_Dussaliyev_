@@ -22,8 +22,7 @@ class FuzzyGraphController():
         return graph
     def loadModel(self, file_path):
         self.model = pickle_load(file_path)
-        # TODO
-        return  file_path
+        self.mine_and_draw(0.0, 0.4, 0.5)
+        return file_path
     def getModel(self):
-        # TODO logic of Fuzzy Miner
         return self.model

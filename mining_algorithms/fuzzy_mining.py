@@ -1,16 +1,13 @@
 from graphviz import Digraph
 import numpy as np
-import logging
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 
 
 class FuzzyMining():
     def __init__(self, cases):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
         self.cases = cases
         self.min_node_size = 1.5
-        self.minimum_correlation = 0.7
+        self.minimum_correlation = 0.22
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_activities = self.__filter_all_events()
         self.succession_matrix = self.__create_succession_matrix()
@@ -69,12 +66,39 @@ class FuzzyMining():
         self.__add_normal_nodes_to_graph(graph, nodes_after_first_rule, self.list_of_clustered_nodes,
                                          self.appearance_activities)
 
-        self.__add_edges_to_graph(graph, self.list_of_clustered_nodes, clustered_nodes_after_sec_rule)
+        self.__add_edges_to_graph(graph, clustered_nodes_after_sec_rule)
 
         return graph
+    def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case):
+        edge_thickness = 0.1
+        for pair, value in edges.items():
+            current_cluster = pair[0]
+            next_cluster = pair[1]
+            print(f"Pair: {current_cluster} -> {next_cluster}, Value: {value}")
+            if node_to_node_case:
+                graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
+                           label=str(value))
+            else:
+                graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
+                       label=str(value), color='red')
+    def __add_edges_to_graph(self, graph, clustered_nodes_after_sec_rule):
+        (node_to_cluster_edge,
+         cluster_to_node_edge,
+         cluster_to_cluster_edge,
+         node_to_node_edge) = self.__calculate_avg_correlation_for_clustered_nodes(self.corr_after_first_rule, clustered_nodes_after_sec_rule)
 
-    def __add_edges_to_graph(self, graph, list_of_clustered_nodes, clustered_nodes_after_sec_rule):
-        ret1, ret2, ret3, ret4 = self.__calculate_avg_correlation_for_clustered_nodes(self.corr_after_first_rule, clustered_nodes_after_sec_rule)
+        self.__add_edges_to_graph_for_each_method(node_to_cluster_edge, graph, False)
+        self.__add_edges_to_graph_for_each_method(cluster_to_node_edge, graph, False)
+        self.__add_edges_to_graph_for_each_method(cluster_to_cluster_edge, graph, False)
+        self.__add_edges_to_graph_for_each_method(node_to_node_edge, graph, True)
+
+        # add node to node edges
+
+
+
+        """ 
+        # Going to use for writing on thesis, how I found avg instead of printing each relation out
+        
         for i in range(len(self.events)):
             for j in range(len(self.events)):
                 # not sure if this is the right solution for showing edges for each node/cluster
@@ -107,58 +131,60 @@ class FuzzyMining():
                     else:
                         graph.edge(self.events[i], str(self.events[j]), penwidth=str(edge_thickness),
                                    label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-                        print("node -> node")
-
+                        print("node -> node")             
+        """
     def __calculate_avg_correlation_for_clustered_nodes(self, correlation_after_first_rule, clustered_nodes):
         ret_node_to_cluster_edge = {}
         ret_cluster_to_node_edge = {}
         ret_cluster_to_cluster_edge = {}
         ret_node_to_node_edge = {}
-        # for cluster -> node, cluster -> cluster
-        print("Clustered nodes: " + str(clustered_nodes))
 
+        ret_node_to_cluster_edge_counter = {}
+        ret_cluster_to_node_edge_counter = {}
+        ret_cluster_to_cluster_edge_counter = {}
+
+        # for cluster -> node, cluster -> cluster
         for i in range(len(self.events)):
             for j in range(len(self.events)):
                 # self loops will be removed
                 if self.events[i] == self.events[j]:
                     continue
                 # current_cluster --> node
-                if self.events[i] in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1:
-                    print("current_cluster --> node")
+                if self.events[i] in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
                     current_cluster = self.__get_cluster_where_node(self.events[i], clustered_nodes)
-                    print(str(self.events[i]) + " from current_cluster: " + str(current_cluster) + " to node --> " + str(self.events[j]) + " = " + str(correlation_after_first_rule[i][j]))
                     pair = (current_cluster, self.events[j])
                     if pair in ret_cluster_to_node_edge:
                         ret_cluster_to_node_edge[pair] += correlation_after_first_rule[i][j]
+                        ret_cluster_to_node_edge_counter[pair] += 1
                     else:
                         ret_cluster_to_node_edge[pair] = correlation_after_first_rule[i][j]
+                        ret_cluster_to_node_edge_counter[pair] = 1
                 # current_cluster --> cluster
-                elif self.events[i] in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and self.events[j]:
-                    print("current_cluster --> cluster")
+                elif self.events[i] in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and self.events[j] and correlation_after_first_rule[i][j] > 0:
                     current_cluster = self.__get_cluster_where_node(self.events[i], clustered_nodes)
                     next_cluster = self.__get_cluster_where_node(self.events[j], clustered_nodes)
                     # not in same cluster
                     if current_cluster == next_cluster:
-                        print(str(self.events[i]) + " and " + str(self.events[j]) + " are in same cluster!")
                         continue
-                    print(str(self.events[i]) + " from current_cluster: " + str(current_cluster) + " to cluster --> " + str(next_cluster) + " = " + str(correlation_after_first_rule[i][j]))
                     pair = (current_cluster, next_cluster)
                     if pair in ret_cluster_to_cluster_edge:
                         ret_cluster_to_cluster_edge[pair] += correlation_after_first_rule[i][j]
+                        ret_cluster_to_cluster_edge_counter[pair] += 1
                     else:
                         ret_cluster_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
+                        ret_cluster_to_cluster_edge_counter[pair] = 1
                 # node --> current_cluster
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1:
-                    print("node --> current_cluster")
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
                     next_cluster = self.__get_cluster_where_node(self.events[j], clustered_nodes)
                     pair = (self.events[i], next_cluster)
                     if pair in ret_node_to_cluster_edge:
                         ret_node_to_cluster_edge[pair] += correlation_after_first_rule[i][j]
+                        ret_node_to_cluster_edge_counter[pair] += 1
                     else:
                         ret_node_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
+                        ret_node_to_cluster_edge_counter[pair] = 1
                 # node ---> node
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1:
-                    print("node ---> node")
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
                     pair = (self.events[i], self.events[j])
                     if pair in ret_node_to_node_edge:
                         ret_node_to_node_edge[pair] += correlation_after_first_rule[i][j]
@@ -170,8 +196,26 @@ class FuzzyMining():
         print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge))
         print("node_to_node: " + str(ret_node_to_node_edge))
 
-        return ret_node_to_cluster_edge, ret_cluster_to_node_edge, ret_cluster_to_cluster_edge, ret_node_to_node_edge
+        print("node_to_cluster: " + str(ret_node_to_cluster_edge_counter))
+        print("cluster_to_node: " + str(ret_cluster_to_node_edge_counter))
+        print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge_counter))
 
+        node_to_cluster_avg = self.__calculate_avg(ret_node_to_cluster_edge, ret_node_to_cluster_edge_counter)
+        cluster_to_node_avg = self.__calculate_avg(ret_cluster_to_node_edge, ret_cluster_to_node_edge_counter)
+        cluster_to_cluster_avg = self.__calculate_avg(ret_cluster_to_cluster_edge, ret_cluster_to_cluster_edge_counter)
+
+        print("node_to_cluster_avg--" + str(node_to_cluster_avg))
+        print("cluster_to_node_avg--" + str(cluster_to_node_avg))
+        print("cluster_to_cluster_avg--" + str(cluster_to_cluster_avg))
+
+        return node_to_cluster_avg, cluster_to_node_avg, cluster_to_cluster_avg, ret_node_to_node_edge
+
+    def __calculate_avg(self, ret_node_to_cluster_edge, ret_node_to_cluster_edge_counter):
+        result = {}
+        for pair in ret_node_to_cluster_edge:
+            result[pair] = round(ret_node_to_cluster_edge[pair] / ret_node_to_cluster_edge_counter[pair], 2)
+
+        return result
     def __get_cluster_where_node(self, character, clustered_nodes):
         for cluster in clustered_nodes:
             if character in cluster:
