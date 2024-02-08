@@ -2,6 +2,7 @@ numpy
 pandas
 graphviz
 matplotlib
+PyQtWebEngine
 PyQt5
 ddcal
 dash
