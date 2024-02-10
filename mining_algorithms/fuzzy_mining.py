@@ -37,8 +37,8 @@ class FuzzyMining():
         self.corr_after_first_rule, self.sign_after_first_rule = self.__calculate_first_rule(self.events, self.correlation_of_nodes, self.node_significance_matrix, significance)
         # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are not included
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
-        print("singrrr-->" + "\n" + str(self.sign_after_first_rule))
-        print("crr-->" + "\n" + str(self.corr_after_first_rule))
+        print("sign_after_first_rule-->" + "\n" + str(self.sign_after_first_rule))
+        print("corr_after_first_rule-->" + "\n" + str(self.corr_after_first_rule))
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
         clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(nodes_after_first_rule, self.corr_after_first_rule, self.sign_after_first_rule, significance)
@@ -50,7 +50,7 @@ class FuzzyMining():
         sign_after_sec_rule = self.__update_significance_matrix(self.sign_after_first_rule, clustered_nodes_after_sec_rule)
         print(sign_after_sec_rule)
         self.sign_dict = self.__get_significance_dict_after_clustering(sign_after_sec_rule)
-        print("Sign after: " + str(self.sign_dict))
+        print("avg_Significance after clustering: " + str(self.sign_dict))
 
         # print clustered nodes
         self.__add_clustered_nodes_to_graph(graph, clustered_nodes_after_sec_rule, self.sign_dict)
@@ -95,6 +95,8 @@ class FuzzyMining():
         normalised_util = np.round((util_matrix - min_value)/(max_value-min_value), 2)
 
         print("normalised_util: \n" + str(normalised_util))
+
+        #
     def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case):
         edge_thickness = 0.1
         for pair, value in edges.items():
