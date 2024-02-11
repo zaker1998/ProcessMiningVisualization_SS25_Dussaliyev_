@@ -123,8 +123,8 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         #self.__redraw()
 
     def __sign_slider_changed(self, value):
-        #sign_meaning_text = "Events which are more frequently"
-        #self.sign_slider.setToolTip(sign_meaning_text)
+        sign_meaning_text = "Significance measures the frequency of events that are observed more frequently and are therefore considered more significant"
+        self.sign_slider.setToolTip(sign_meaning_text)
 
         self.sign_slider.setText(f"Sign.: {value/100:.2f}")
         self.significance = value/100
@@ -138,6 +138,9 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.__redraw()
 
     def __corr_slider_changed(self, value):
+        corr_meaning_text = "Correlation measures how closely related two events following one another are"
+        self.corr_slider.setToolTip(corr_meaning_text)
+
         self.corr_slider.setText(f"Corr.: {value/100:.2f}")
         self.correlation = value/100
 
@@ -150,6 +153,9 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.__redraw()
 
     def __edge_cutoff_slider_changed(self, value):
+        edge_cutoff_meaning_text = "The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges"
+        self.edge_cutoff_slider.setToolTip(edge_cutoff_meaning_text)
+
         self.edge_cutoff_slider.setText(f"Cutoff: {value/100:.2f}")
         self.edge_cutoff = value/100
 
@@ -159,6 +165,9 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         #self.__redraw()
 
     def __utility_slider_changed(self, value):
+        utility_meaning_text = "A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges"
+        self.utility_slider.setToolTip(utility_meaning_text)
+
         self.utility_slider.setText(f"Utility: {value / 100:.2f}")
         self.utility_ratio = value / 100
 

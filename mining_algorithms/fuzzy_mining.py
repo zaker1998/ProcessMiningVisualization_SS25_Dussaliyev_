@@ -209,7 +209,7 @@ class FuzzyMining():
                         ret_node_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
                         ret_node_to_cluster_edge_counter[pair] = 1
                 # node ---> node
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > self.minimum_correlation:
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
                     pair = (self.events[i], self.events[j])
                     if pair in ret_node_to_node_edge:
                         ret_node_to_node_edge[pair] += correlation_after_first_rule[i][j]
