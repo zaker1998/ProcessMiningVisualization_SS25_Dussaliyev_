@@ -7,7 +7,7 @@ class FuzzyMining():
     def __init__(self, cases):
         self.cases = cases
         self.min_node_size = 1.5
-        self.minimum_correlation = 0.7
+        self.minimum_correlation = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_activities = self.__filter_all_events()
         self.succession_matrix = self.__create_succession_matrix()
@@ -25,7 +25,8 @@ class FuzzyMining():
          minimum value starts with 0.0 and the greatest value has 5.0 in this case [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
     """
 
-    def create_graph_with_graphviz(self, significance, edge_cutoff, utility_ratio):
+    def create_graph_with_graphviz(self, significance, correlation, edge_cutoff, utility_ratio):
+        self.minimum_correlation = correlation
         # self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
         graph = Digraph()
         cluster = DensityDistributionClusterAlgorithm(list(self.appearance_activities.values()))
@@ -208,7 +209,7 @@ class FuzzyMining():
                         ret_node_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
                         ret_node_to_cluster_edge_counter[pair] = 1
                 # node ---> node
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > self.minimum_correlation:
                     pair = (self.events[i], self.events[j])
                     if pair in ret_node_to_node_edge:
                         ret_node_to_node_edge[pair] += correlation_after_first_rule[i][j]
