@@ -95,6 +95,9 @@ class FuzzyMining():
 
         normalised_util = np.round((util_matrix - min_value)/(max_value-min_value), 2)
 
+        # dividing by 0 will give nan, therefore if this is the case replace NaN values with 0
+        normalised_util = np.nan_to_num(normalised_util, nan=0)
+
         print("normalised_util: \n" + str(normalised_util))
 
         #

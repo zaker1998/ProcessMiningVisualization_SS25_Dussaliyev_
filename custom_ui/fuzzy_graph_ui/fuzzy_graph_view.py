@@ -12,16 +12,16 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.parent = parent
         self.initialized = False
 
-        self.default_significance = 1.0
+        self.default_significance = 0.0
         self.significance = self.default_significance
 
-        self.default_correlation = 0.7
+        self.default_correlation = 0.0
         self.correlation = self.default_correlation
 
-        self.default_edge_cutoff = 0.4
+        self.default_edge_cutoff = 0.0
         self.edge_cutoff = self.default_edge_cutoff
 
-        self.default_utility_ration = 0.5
+        self.default_utility_ration = 0.0
         self.utility_ratio = self.default_utility_ration
 
         self.max_significance = 100
@@ -121,7 +121,27 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         # the new graph at the same time
         QTimer.singleShot(500, self.__redraw)
         #self.__redraw()
+    def loadModel(self):
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(None, "Select file", self.saveFolder, "Pickle files (*.pickle)")
+            if not file_path:
+                return -1
+            filename = self.FuzzyGraphController.loadModel(file_path)
+            if filename == -1:
+                return -1
+        except TypeError as e:
+            message = "FuzzyGraphView loadModel(): Error: Something went wrong while loading an existing model."
+            print(str(e))
+            self.parent.show_pop_up_message(message, 6000)
+            return -1
 
+        self.saveProject_button.load_filename(filename)
+
+        # TODO what values do I have to give for sliders
+
+        self.graph_widget.start_server()
+        self.initialized = True
+        self.__redraw()
     def __sign_slider_changed(self, value):
         sign_meaning_text = "Significance measures the frequency of events that are observed more frequently and are therefore considered more significant"
         self.sign_slider.setToolTip(sign_meaning_text)
@@ -199,16 +219,28 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
     def getModel(self):
         return self.FuzzyGraphController.getModel()
     def generate_dot(self):
-        if not self.__ensure_graphviz_graph_exists():
+        if not self.__check_if_graph_exists():
             return
         self.graphviz_graph.render(self.workingDirectory, format = 'dot')
         prit("fuzzy_graph_view: DOT generated")
+        return
+    def __check_if_graph_exists(self):
+        if not  self.graphviz_graph:
+            return False
+        return True
     def generate_svg(self):
+        if not self.__check_if_graph_exists():
+            return
+        self.graphviz_graph.render(self.workingDirectory, format = 'svg')
+        print("fuzzy_graph_view: SVG generated")
         return
     def generate_png(self):
+        if not self.__check_if_graph_exists():
+            return
+        self.graphviz_graph.render(self.workingDirectory, format = 'png')
+        print("fuzzy_graph_view: PNG generated")
         return
-    def loadModel(self):
-        return
+
     def clear(self):
         self.graph_widget.clear()
         # this values w
