@@ -17,6 +17,11 @@ class FuzzyMining():
         self.clustered_nodes = None
         self.sign_dict = None
 
+        self.significance = None
+        self.correlation = None
+        self.edge_cutoff = None
+        self.utility_ratio = None
+
     """  
         Info about DensityDistributionClusterAlgorithm DDCAL:
          If we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
@@ -26,6 +31,11 @@ class FuzzyMining():
     """
 
     def create_graph_with_graphviz(self, significance, correlation, edge_cutoff, utility_ratio):
+        self.significance = significance
+        self.correlation = correlation
+        self.edge_cutoff = edge_cutoff
+        self.utility_ratio = utility_ratio
+
         self.minimum_correlation = correlation
         # self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
         graph = Digraph()
@@ -35,20 +45,26 @@ class FuzzyMining():
         print("Sign: " + str(significance))
         print("Succession: " + "\n" + str(self.succession_matrix))
         # 1 Rule remove less significant and less correlated nodes
-        self.corr_after_first_rule, self.sign_after_first_rule = self.__calculate_first_rule(self.events, self.correlation_of_nodes, self.node_significance_matrix, significance)
+        self.corr_after_first_rule, self.sign_after_first_rule = self.__calculate_first_rule(self.events,
+                                                                                             self.correlation_of_nodes,
+                                                                                             self.node_significance_matrix,
+                                                                                             significance)
         # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are not included
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
         print("sign_after_first_rule-->" + "\n" + str(self.sign_after_first_rule))
         print("corr_after_first_rule-->" + "\n" + str(self.corr_after_first_rule))
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
-        clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(nodes_after_first_rule, self.corr_after_first_rule, self.sign_after_first_rule, significance)
+        clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(nodes_after_first_rule,
+                                                                          self.corr_after_first_rule,
+                                                                          self.sign_after_first_rule, significance)
         print("Clustered nodes: " + str(clustered_nodes_after_sec_rule))
         self.list_of_clustered_nodes = self.__convert_clustered_nodes_to_list(clustered_nodes_after_sec_rule)
         print(self.list_of_clustered_nodes)
 
         # significance after clustering
-        sign_after_sec_rule = self.__update_significance_matrix(self.sign_after_first_rule, clustered_nodes_after_sec_rule)
+        sign_after_sec_rule = self.__update_significance_matrix(self.sign_after_first_rule,
+                                                                clustered_nodes_after_sec_rule)
         print(sign_after_sec_rule)
         self.sign_dict = self.__get_significance_dict_after_clustering(sign_after_sec_rule)
         print("avg_Significance after clustering: " + str(self.sign_dict))
@@ -75,6 +91,7 @@ class FuzzyMining():
         # if >= | > edge_cutoff setvalue of normalised util (NU) else -1 or check how to do it
 
         return graph
+
     def __calculate_sign_and_corr_after_ur(self, utility_ratio, sign_after_first_rule, corr_after_first_rule):
         print("111-printing utility ratio value \n" + str(utility_ratio))
         print("111-printing significance \n" + str(sign_after_first_rule))
@@ -93,7 +110,7 @@ class FuzzyMining():
         max_value = np.max(util_matrix)
         print("Max value: \n" + str(max_value))
 
-        normalised_util = np.round((util_matrix - min_value)/(max_value-min_value), 2)
+        normalised_util = np.round((util_matrix - min_value) / (max_value - min_value), 2)
 
         # dividing by 0 will give nan, therefore if this is the case replace NaN values with 0
         normalised_util = np.nan_to_num(normalised_util, nan=0)
@@ -101,6 +118,7 @@ class FuzzyMining():
         print("normalised_util: \n" + str(normalised_util))
 
         #
+
     def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case):
         edge_thickness = 0.1
         for pair, value in edges.items():
@@ -112,12 +130,14 @@ class FuzzyMining():
                            label=str(value))
             else:
                 graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
-                       label=str(value), color='red')
+                           label=str(value), color='red')
+
     def __add_edges_to_graph(self, graph, clustered_nodes_after_sec_rule):
         (node_to_cluster_edge,
          cluster_to_node_edge,
          cluster_to_cluster_edge,
-         node_to_node_edge) = self.__calculate_avg_correlation_for_clustered_nodes(self.corr_after_first_rule, clustered_nodes_after_sec_rule)
+         node_to_node_edge) = self.__calculate_avg_correlation_for_clustered_nodes(self.corr_after_first_rule,
+                                                                                   clustered_nodes_after_sec_rule)
 
         self.__add_edges_to_graph_for_each_method(node_to_cluster_edge, graph, False)
         self.__add_edges_to_graph_for_each_method(cluster_to_node_edge, graph, False)
@@ -178,7 +198,9 @@ class FuzzyMining():
                 if self.events[i] == self.events[j]:
                     continue
                 # current_cluster --> node
-                if self.events[i] in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
+                if self.events[i] in self.list_of_clustered_nodes and self.events[
+                    j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and \
+                        correlation_after_first_rule[i][j] > 0:
                     current_cluster = self.__get_cluster_where_node(self.events[i], clustered_nodes)
                     pair = (current_cluster, self.events[j])
                     if pair in ret_cluster_to_node_edge:
@@ -188,7 +210,8 @@ class FuzzyMining():
                         ret_cluster_to_node_edge[pair] = correlation_after_first_rule[i][j]
                         ret_cluster_to_node_edge_counter[pair] = 1
                 # current_cluster --> cluster
-                elif self.events[i] in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and self.events[j] and correlation_after_first_rule[i][j] > 0:
+                elif self.events[i] in self.list_of_clustered_nodes and self.events[
+                    j] in self.list_of_clustered_nodes and self.events[j] and correlation_after_first_rule[i][j] > 0:
                     current_cluster = self.__get_cluster_where_node(self.events[i], clustered_nodes)
                     next_cluster = self.__get_cluster_where_node(self.events[j], clustered_nodes)
                     # not in same cluster
@@ -202,7 +225,9 @@ class FuzzyMining():
                         ret_cluster_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
                         ret_cluster_to_cluster_edge_counter[pair] = 1
                 # node --> current_cluster
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[
+                    j] in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and \
+                        correlation_after_first_rule[i][j] > 0:
                     next_cluster = self.__get_cluster_where_node(self.events[j], clustered_nodes)
                     pair = (self.events[i], next_cluster)
                     if pair in ret_node_to_cluster_edge:
@@ -212,7 +237,9 @@ class FuzzyMining():
                         ret_node_to_cluster_edge[pair] = correlation_after_first_rule[i][j]
                         ret_node_to_cluster_edge_counter[pair] = 1
                 # node ---> node
-                elif self.events[i] not in self.list_of_clustered_nodes and self.events[j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and correlation_after_first_rule[i][j] > 0:
+                elif self.events[i] not in self.list_of_clustered_nodes and self.events[
+                    j] not in self.list_of_clustered_nodes and correlation_after_first_rule[i][j] != -1 and \
+                        correlation_after_first_rule[i][j] > 0:
                     pair = (self.events[i], self.events[j])
                     if pair in ret_node_to_node_edge:
                         ret_node_to_node_edge[pair] += correlation_after_first_rule[i][j]
@@ -244,11 +271,13 @@ class FuzzyMining():
             result[pair] = round(ret_node_to_cluster_edge[pair] / ret_node_to_cluster_edge_counter[pair], 2)
 
         return result
+
     def __get_cluster_where_node(self, character, clustered_nodes):
         for cluster in clustered_nodes:
             if character in cluster:
                 return cluster
         return None
+
     def __get_clustered_node(self, list_of_clustered_nodes, event):
         for cluster in list_of_clustered_nodes:
             cluster_events = cluster.split('-')
@@ -436,6 +465,7 @@ class FuzzyMining():
 
     """ to calculate the signification, we have to divide each nodes appearance by the most frequently node number
         asked ChatGpt how to do this"""
+
     def __calculate_significance(self):
         # find the most frequently node from of all events
         max_value = max(self.appearance_activities.values())
@@ -501,9 +531,22 @@ class FuzzyMining():
             y += 1
 
         return correlation_matrix
+
     def __calculate_node_significance_matrix(self, significance_values):
         ret_matrix = np.array(self.succession_matrix)
         significance_each_row = np.array(list(significance_values.values()))
         for i in range(ret_matrix.shape[1]):
             ret_matrix[:, i] = significance_each_row
         return ret_matrix
+
+    def get_significance(self):
+        return self.significance
+
+    def get_correlation(self):
+        return self.correlation
+
+    def get_edge_cutoff(self):
+        return self.edge_cutoff
+
+    def get_utility_ratio(self):
+        return self.utility_ratio

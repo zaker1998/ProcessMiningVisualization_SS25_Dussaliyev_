@@ -22,7 +22,20 @@ class FuzzyGraphController():
         return graph
     def loadModel(self, file_path):
         self.model = pickle_load(file_path)
-        self.mine_and_draw(0.0, 0.5, 0.4, 0.5)
+        self.mine_and_draw(self.get_significance(), self.get_correlation(), self.get_edge_cutoff(), self.get_utility_ratio())
         return file_path
+
     def getModel(self):
         return self.model
+
+    def get_significance(self):
+        return self.model.get_significance()
+
+    def get_correlation(self):
+        return self.model.get_correlation()
+
+    def get_edge_cutoff(self):
+        return self.model.get_edge_cutoff()
+
+    def get_utility_ratio(self):
+        return self.model.get_utility_ratio()

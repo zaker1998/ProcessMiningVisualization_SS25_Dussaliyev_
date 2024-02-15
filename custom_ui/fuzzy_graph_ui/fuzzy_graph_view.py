@@ -138,7 +138,12 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.saveProject_button.load_filename(filename)
 
         # TODO what values do I have to give for sliders
+        self.significance = self.FuzzyGraphController.get_significance()
+        self.correlation = self.FuzzyGraphController.get_correlation()
+        self.edge_cutoff = self.FuzzyGraphController.get_edge_cutoff()
+        self.utility_ratio = self.FuzzyGraphController.get_utility_ratio()
 
+        self.__set_slider_values(self.significance, self.correlation, self.edge_cutoff, self.utility_ratio)
         self.graph_widget.start_server()
         self.initialized = True
         self.__redraw()
