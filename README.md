@@ -5,12 +5,14 @@ Implementation of a desktop app for importing event logs, mining and visualizing
 This project is at version 0.1.0
 Ready for use. Hopefully no severe bugs.
 
-# Install virtual environment if already not installed
+The Heuristic Miner and Fuzzy Miner algorithms have been implemented.
+
+# Ensure the virtual environment is installed. If it hasn't been already run command:
 ```
 pip install virtualenv
 ```
 
-# Activate a virtual environment
+# Activate the virtual environment
 Navigate to the main folder check the folder name (in this case venv, second parameter), then run:
 ```
 python -m venv venv
