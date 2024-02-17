@@ -37,7 +37,8 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.min_utility_ratio = 0
 
         self.saveFolder = saveFolder
-        self.workingDirectory = workingDirectory # directory where graphviz file is stored for display and export
+        # directory where graphviz file is stored for display and export
+        self.workingDirectory = workingDirectory
         self.FuzzyGraphController = FuzzyGraphController(workingDirectory, self.significance, self.edge_cutoff,self.utility_ratio)
 
         self.graphviz_graph = None
@@ -54,18 +55,23 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.sign_slider = CustomQSlider(self.__sign_slider_changed, Qt.Vertical)
         self.sign_slider.setRange(self.min_significance, self.max_significance)
-        #self.sign_slider.setValue(self.min_significance)
+        sign_meaning_text = "Significance measures the frequency of events that are observed more frequently and are therefore considered more significant"
+        self.sign_slider.setToolTip(sign_meaning_text)
 
         self.corr_slider = CustomQSlider(self.__corr_slider_changed, Qt.Vertical)
         self.corr_slider.setRange(self.min_correlation, self.max_correlation)
+        corr_meaning_text = "Correlation measures how closely related two events following one another are"
+        self.corr_slider.setToolTip(corr_meaning_text)
 
         self.edge_cutoff_slider = CustomQSlider(self.__edge_cutoff_slider_changed, Qt.Vertical)
         self.edge_cutoff_slider.setRange(self.min_edge_cutoff, self.max_edge_cutoff)
-        #self.edge_cutoff_slider.setValue(self.min_edge_cutoff)
+        edge_cutoff_meaning_text = "The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges"
+        self.edge_cutoff_slider.setToolTip(edge_cutoff_meaning_text)
 
         self.utility_slider = CustomQSlider(self.__utility_slider_changed, Qt.Vertical)
         self.utility_slider.setRange(self.min_utility_ratio, self.max_utility_ratio)
-        #self.utility_slider.setValue(self.min_utility_ratio)
+        utility_meaning_text = "A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges"
+        self.utility_slider.setToolTip(utility_meaning_text)
 
         slider_layout = QHBoxLayout(option1_significance_widget)
         slider_layout.addWidget(self.sign_slider)
@@ -137,7 +143,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
 
         self.saveProject_button.load_filename(filename)
 
-        # TODO what values do I have to give for sliders
+        # set values for each slider from the loaded graph
         self.significance = self.FuzzyGraphController.get_significance()
         self.correlation = self.FuzzyGraphController.get_correlation()
         self.edge_cutoff = self.FuzzyGraphController.get_edge_cutoff()
@@ -148,9 +154,6 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.initialized = True
         self.__redraw()
     def __sign_slider_changed(self, value):
-        sign_meaning_text = "Significance measures the frequency of events that are observed more frequently and are therefore considered more significant"
-        self.sign_slider.setToolTip(sign_meaning_text)
-
         self.sign_slider.setText(f"Sign.: {value/100:.2f}")
         self.significance = value/100
 
@@ -163,43 +166,32 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.__redraw()
 
     def __corr_slider_changed(self, value):
-        corr_meaning_text = "Correlation measures how closely related two events following one another are"
-        self.corr_slider.setToolTip(corr_meaning_text)
-
         self.corr_slider.setText(f"Corr.: {value/100:.2f}")
         self.correlation = value/100
 
-        # it will try to update model, but model not existing yet
         if not self.initialized:
             return
 
         print("Changing correlation value")
-        # mine and draw after changing correlation value
         self.__redraw()
 
     def __edge_cutoff_slider_changed(self, value):
-        edge_cutoff_meaning_text = "The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges"
-        self.edge_cutoff_slider.setToolTip(edge_cutoff_meaning_text)
-
         self.edge_cutoff_slider.setText(f"Cutoff: {value/100:.2f}")
         self.edge_cutoff = value/100
 
         if not self.initialized:
             return
         print("Changing cutoff value")
-        #self.__redraw()
+        self.__redraw()
 
     def __utility_slider_changed(self, value):
-        utility_meaning_text = "A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges"
-        self.utility_slider.setToolTip(utility_meaning_text)
-
         self.utility_slider.setText(f"Utility: {value / 100:.2f}")
         self.utility_ratio = value / 100
 
         if not self.initialized:
             return
         print("Changing utility ration value")
-        #self.__redraw()
+        self.__redraw()
 
     def __redraw(self):
         self.graphviz_graph = self.FuzzyGraphController.mine_and_draw(self.significance, self.correlation, self.edge_cutoff, self.utility_ratio)
@@ -230,7 +222,7 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         prit("fuzzy_graph_view: DOT generated")
         return
     def __check_if_graph_exists(self):
-        if not  self.graphviz_graph:
+        if not self.graphviz_graph:
             return False
         return True
     def generate_svg(self):

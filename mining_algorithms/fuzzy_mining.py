@@ -110,12 +110,13 @@ class FuzzyMining():
         max_value = np.max(util_matrix)
         print("Max value: \n" + str(max_value))
 
-        normalised_util = np.round((util_matrix - min_value) / (max_value - min_value), 2)
+        if max_value != 0 and min_value != 0:
+            normalised_util = np.round((util_matrix - min_value) / (max_value - min_value), 2)
 
-        # dividing by 0 will give nan, therefore if this is the case replace NaN values with 0
-        normalised_util = np.nan_to_num(normalised_util, nan=0)
+            # dividing by 0 will give nan, therefore if this is the case replace NaN values with 0
+            normalised_util = np.nan_to_num(normalised_util, nan=0)
 
-        print("normalised_util: \n" + str(normalised_util))
+            print("normalised_util: \n" + str(normalised_util))
 
         #
 
