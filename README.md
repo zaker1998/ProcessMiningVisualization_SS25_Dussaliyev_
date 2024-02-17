@@ -7,13 +7,14 @@ Ready for use. Hopefully no severe bugs.
 
 The Heuristic Miner and Fuzzy Miner algorithms have been implemented.
 
-# Ensure the virtual environment is installed. If it hasn't been already run command:
+# Ensure the virtual environment is installed. If it hasn't been already then:
+Create a new directory, e.g env and install the virtual environment using command:
 ```
 pip install virtualenv
 ```
 
 # Activate the virtual environment
-Navigate to the main folder check the folder name (in this case venv, second parameter), then run:
+Navigate to the main directory and confirm its name (in this case, 'venv', the second parameter), then execute:
 ```
 python -m venv venv
 ```
