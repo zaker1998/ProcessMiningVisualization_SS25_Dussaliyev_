@@ -5,6 +5,22 @@ Implementation of a desktop app for importing event logs, mining and visualizing
 This project is at version 0.1.0
 Ready for use. Hopefully no severe bugs.
 
+# Install virtual environment if already not installed
+```
+pip install virtualenv
+```
+
+# Activate a virtual environment
+Navigate to the main folder check the folder name (in this case venv, second parameter), then run:
+```
+python -m venv venv
+```
+
+Move to venv/Scripts/ then activate virtual environment(Windows) using command: 
+```
+source activate
+```
+
 # Requirements
 Python version 3.10.7 ----- Older versions likely to work as well, but not tested.
 Download Python from www.python.org
@@ -29,7 +45,6 @@ Other required Python libraries are in requirements.txt and can be installed wit
 ```
 pip install -r requirements.txt
 ```
-
 
 # Usage Interface
 Open a CMD in THIS folder and type 
