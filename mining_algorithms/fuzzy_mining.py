@@ -49,6 +49,19 @@ class FuzzyMining():
                                                                                              self.correlation_of_nodes,
                                                                                              self.node_significance_matrix,
                                                                                              significance)
+
+        # Edge Filtering
+
+        # 1-first rule of edge filtering - multiply each correlation and significance node with utility ration
+        # util= ur*(correlation+significance)
+        # returns  removed_indices = [[0 4], [1 2]]
+        list_of_filtered_edges = self.__find_removed_edges_after_edge_filtering(utility_ratio, edge_cutoff, self.sign_after_first_rule,
+                                                       self.corr_after_first_rule)
+        # 2-second rule of edge filtering - then find normalised util
+        # NU = (util-MinU)/(MaxU-MinU)
+        # 3-third rule of edge filtering - then check which values are greater than cutoff value
+        # if >= | > edge_cutoff setvalue of normalised util (NU) else -1 or check how to do it
+
         # returns a list of significant nodes e.g ['a', 'b', 'd'], not relevant nodes are not included
         nodes_after_first_rule = self.__calculate_significant_nodes(self.corr_after_first_rule)
         print("sign_after_first_rule-->" + "\n" + str(self.sign_after_first_rule))
@@ -77,20 +90,17 @@ class FuzzyMining():
         self.__add_normal_nodes_to_graph(graph, nodes_after_first_rule, self.list_of_clustered_nodes,
                                          self.appearance_activities)
 
-        self.__add_edges_to_graph(graph, clustered_nodes_after_sec_rule)
+        list_of_filtered_edges_as_node = self.__get_as_node_removed_indices(list_of_filtered_edges)
 
-        # Edge Filtering
+        self.__add_edges_to_graph(graph, clustered_nodes_after_sec_rule, list_of_filtered_edges_as_node)
 
-        # 1-first rule of edge filtering - multiply each correlation and significance node with utility ration
-        # util= ur*(correlation+significance)
-        self.__calculate_edge_filtering(utility_ratio, edge_cutoff, self.sign_after_first_rule, self.corr_after_first_rule, self.list_of_clustered_nodes)
-        # 2-second rule of edge filtering - then find normalised util
-        # NU = (util-MinU)/(MaxU-MinU)
-
-        # 3-third rule of edge filtering - then check which values are greater than cutoff value
-        # if >= | > edge_cutoff setvalue of normalised util (NU) else -1 or check how to do it
 
         return graph
+    def __get_as_node_removed_indices(self, list_of_filtered_edges):
+        removed_nodes = []
+        for i, j in list_of_filtered_edges:
+            removed_nodes.append([self.events[i], self.events[j]])
+        return removed_nodes
     def __find_min_and_max_util_value(self, array):
         max_values = {}
         min_values = {}
@@ -109,7 +119,7 @@ class FuzzyMining():
         print("Maxx------: " + str(max_values))
         print("Minn------: " + str(min_values))
         return min_values, max_values
-    def __calculate_edge_filtering(self, utility_ratio, edge_cutoff, sign_after_first_rule, corr_after_first_rule, clustered_nodes_list):
+    def __find_removed_edges_after_edge_filtering(self, utility_ratio, edge_cutoff, sign_after_first_rule, corr_after_first_rule):
 
         util_matrix = np.zeros((len(self.events), len(self.events)))
 
@@ -118,18 +128,14 @@ class FuzzyMining():
             # if util ratio and edge cutoff are zero dont calculate util_matrix
             if utility_ratio == 0.0 and edge_cutoff == 0.0:
                 break
-            # 1 calculate util matrix
-
-            # 2 find min and max for each column
-
             # min_values, max_values = self.__find_min_and_max_util_value(util_matrix)
             for j in range(len(self.events)):
                 # self loop will not be considered
                 if i == j:
                     continue
                 # if one of them is clustered continue
-                if self.events[i] in clustered_nodes_list or self.events[j] in clustered_nodes_list:
-                    continue
+                #if self.events[i] in clustered_nodes_list or self.events[j] in clustered_nodes_list:
+                #    continue
                 # check if removes by Rule 3 low sign and low correlation
                 # when removed correlation and significance of node will be -1
                 if sign_after_first_rule[i][j] == -1 or corr_after_first_rule[i][j] == -1:
@@ -154,10 +160,14 @@ class FuzzyMining():
 
         print("calculate normalised util. ")
 
-        normalised_util_matrix = self.__calculate_normalised_util(util_matrix, edge_cutoff, minU, maxU, utility_ratio)
+        normalised_util_matrix = self.__calculate_normalised_util(util_matrix, edge_cutoff, minU, maxU, utility_ratio, corr_after_first_rule)
+        removed_indices = []
+        if not np.all(normalised_util_matrix == 0):
+            removed_indices = np.argwhere((corr_after_first_rule > 0.0) & (normalised_util_matrix == 0.0))
+        print("removed_indices = " + str(removed_indices))
+        return removed_indices
 
-
-    def __calculate_normalised_util(self, util_matrix, edge_cutoff, minU, maxU, utility_ratio):
+    def __calculate_normalised_util(self, util_matrix, edge_cutoff, minU, maxU, utility_ratio, corr_after_first_rule):
         normalised_matrix = np.zeros((len(self.events), len(self.events)))
 
         for i in range(len(self.events)):
@@ -179,7 +189,7 @@ class FuzzyMining():
                 else:
                     new_val = np.round((numerator / denominator), 2)
 
-                if not np.isnan(new_val) and new_val >= edge_cutoff and new_val > 0.0:
+                if not np.isnan(new_val) and new_val >= edge_cutoff and new_val > 0.0 and corr_after_first_rule[i][j] > 0:
                     normalised_matrix[i][j] = new_val
                 else:
                     normalised_matrix[i][j] = 0.0
@@ -187,30 +197,34 @@ class FuzzyMining():
                 #print("i = " + str(i) + "-" + str(self.events[i]) + " j = " + str(j) + "-" + str(self.events[j]) + " min_val = " + str(min_val) + " max_val = " + str(max_val) + " normalised_val = " + str(normalised_matrix[i][j]))
         print("normalised_matrix = \n" + str(normalised_matrix))
         return normalised_matrix
-    def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case):
+    def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case, list_of_filtered_edges):
         edge_thickness = 0.1
         for pair, value in edges.items():
             current_cluster = pair[0]
             next_cluster = pair[1]
-            print(f"Pair: {current_cluster} -> {next_cluster}, Value: {value}")
+            #print(f"Pair: {current_cluster} -> {next_cluster}, Value: {value}")
             if node_to_node_case:
+                # check if probably node-node is removes using edge filtering
+                #print("yes - " + str(current_cluster)+ "->" + str(next_cluster) + " is in list_of_removed")
+                if [current_cluster, next_cluster] in list_of_filtered_edges:
+                    continue
                 graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
                            label=str(value))
             else:
                 graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
                            label=str(value), color='red')
 
-    def __add_edges_to_graph(self, graph, clustered_nodes_after_sec_rule):
+    def __add_edges_to_graph(self, graph, clustered_nodes_after_sec_rule, list_of_filtered_edges):
         (node_to_cluster_edge,
          cluster_to_node_edge,
          cluster_to_cluster_edge,
          node_to_node_edge) = self.__calculate_avg_correlation_for_clustered_nodes(self.corr_after_first_rule,
                                                                                    clustered_nodes_after_sec_rule)
 
-        self.__add_edges_to_graph_for_each_method(node_to_cluster_edge, graph, False)
-        self.__add_edges_to_graph_for_each_method(cluster_to_node_edge, graph, False)
-        self.__add_edges_to_graph_for_each_method(cluster_to_cluster_edge, graph, False)
-        self.__add_edges_to_graph_for_each_method(node_to_node_edge, graph, True)
+        self.__add_edges_to_graph_for_each_method(node_to_cluster_edge, graph, False, list_of_filtered_edges)
+        self.__add_edges_to_graph_for_each_method(cluster_to_node_edge, graph, False, list_of_filtered_edges)
+        self.__add_edges_to_graph_for_each_method(cluster_to_cluster_edge, graph, False, list_of_filtered_edges)
+        self.__add_edges_to_graph_for_each_method(node_to_node_edge, graph, True, list_of_filtered_edges)
 
     def __calculate_avg_correlation_for_clustered_nodes(self, correlation_after_first_rule, clustered_nodes):
         ret_node_to_cluster_edge = {}
@@ -450,7 +464,7 @@ class FuzzyMining():
         ret_sign_nodes = []
         for i in range(len(self.events)):
             for j in range(len(self.events)):
-                print("checking if " + str(corr_after_first_rule[i][j]) + " is == -1 for " + str(self.events[i]))
+                #print("checking if " + str(corr_after_first_rule[i][j]) + " is == -1 for " + str(self.events[i]))
                 if corr_after_first_rule[i][j] != -1 and self.events[i] not in ret_sign_nodes:
                     ret_sign_nodes.append(self.events[i])
         print("sign-rr-> " + str(ret_sign_nodes))
