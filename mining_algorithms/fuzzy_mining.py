@@ -83,7 +83,7 @@ class FuzzyMining():
 
         # 1-first rule of edge filtering - multiply each correlation and significance node with utility ration
         # util= ur*(correlation+significance)
-        self.__calculate_sign_and_corr_after_ur(utility_ratio, self.sign_after_first_rule, self.corr_after_first_rule)
+        self.__calculate_edge_filtering(utility_ratio, edge_cutoff, self.sign_after_first_rule, self.corr_after_first_rule, self.list_of_clustered_nodes)
         # 2-second rule of edge filtering - then find normalised util
         # NU = (util-MinU)/(MaxU-MinU)
 
@@ -91,35 +91,102 @@ class FuzzyMining():
         # if >= | > edge_cutoff setvalue of normalised util (NU) else -1 or check how to do it
 
         return graph
+    def __find_min_and_max_util_value(self, array):
+        max_values = {}
+        min_values = {}
+        for i in range(array.shape[1]):
+            column_values = array[:, i]
+            non_zero_values = column_values[column_values != 0]
 
-    def __calculate_sign_and_corr_after_ur(self, utility_ratio, sign_after_first_rule, corr_after_first_rule):
+            column_max = np.max(column_values)
+            if len(non_zero_values) > 0:
+                column_min = np.min(non_zero_values)
+            else:
+                column_min = np.inf
+
+            max_values[self.events[i]] = column_max
+            min_values[self.events[i]] = column_min
+        print("Maxx------: " + str(max_values))
+        print("Minn------: " + str(min_values))
+        return min_values, max_values
+    def __calculate_edge_filtering(self, utility_ratio, edge_cutoff, sign_after_first_rule, corr_after_first_rule, clustered_nodes_list):
+
+        util_matrix = np.zeros((len(self.events), len(self.events)))
+
+        # just node-node will be checked
+        for i in range(len(self.events)):
+            # if util ratio and edge cutoff are zero dont calculate util_matrix
+            if utility_ratio == 0.0 and edge_cutoff == 0.0:
+                break
+            # 1 calculate util matrix
+
+            # 2 find min and max for each column
+
+            # min_values, max_values = self.__find_min_and_max_util_value(util_matrix)
+            for j in range(len(self.events)):
+                # self loop will not be considered
+                if i == j:
+                    continue
+                # if one of them is clustered continue
+                if self.events[i] in clustered_nodes_list or self.events[j] in clustered_nodes_list:
+                    continue
+                # check if removes by Rule 3 low sign and low correlation
+                # when removed correlation and significance of node will be -1
+                if sign_after_first_rule[i][j] == -1 or corr_after_first_rule[i][j] == -1:
+                    continue
+
+                # if not clustered and not removed check for edge filtering
+                val = np.round(sign_after_first_rule[i][j] * utility_ratio + (1-utility_ratio) * corr_after_first_rule[i][j], 2)
+                print("calculating util matriX " + str(self.events[i]) + " -> " + str(self.events[j]) + " value " + str(val))
+                print("sign[i][j]= " + str(sign_after_first_rule[i][j]) + " corr[j][i]= "  + str(corr_after_first_rule[i][j]) + " value " + str(val))
+                util_matrix[i][j] = np.round(sign_after_first_rule[i][j] * utility_ratio + (1-utility_ratio) * corr_after_first_rule[i][j], 2)
+
+            # find minU and maxU for each column
+
+        minU, maxU = self.__find_min_and_max_util_value(util_matrix)
+
         print("111-printing utility ratio value \n" + str(utility_ratio))
         print("111-printing significance \n" + str(sign_after_first_rule))
-        sign_array = np.round(np.array(sign_after_first_rule) * utility_ratio, 2)
-        print("after ur significance \n" + str(sign_array))
+
         print("111-printing correlation \n" + str(corr_after_first_rule))
-        corr_array = np.round(np.array(corr_after_first_rule) * utility_ratio, 2)
-        print("after ur correlation \n" + str(corr_array))
 
-        util_matrix = sign_array + corr_array
-        util_matrix[corr_array == 0] = 0
-        print("Util matrix: \n" + str(util_matrix))
+        print("Util Matrix-----> \n" + str(util_matrix))
 
-        min_value = np.min(util_matrix)
-        print("Min value: \n" + str(min_value))
-        max_value = np.max(util_matrix)
-        print("Max value: \n" + str(max_value))
+        print("calculate normalised util. ")
 
-        if max_value != 0 and min_value != 0:
-            normalised_util = np.round((util_matrix - min_value) / (max_value - min_value), 2)
+        normalised_util_matrix = self.__calculate_normalised_util(util_matrix, edge_cutoff, minU, maxU, utility_ratio)
 
-            # dividing by 0 will give nan, therefore if this is the case replace NaN values with 0
-            normalised_util = np.nan_to_num(normalised_util, nan=0)
 
-            print("normalised_util: \n" + str(normalised_util))
+    def __calculate_normalised_util(self, util_matrix, edge_cutoff, minU, maxU, utility_ratio):
+        normalised_matrix = np.zeros((len(self.events), len(self.events)))
 
-        #
+        for i in range(len(self.events)):
+            if edge_cutoff == 0 and utility_ratio == 0:
+                break
+            for j in range(len(self.events)):
+                if i == j:
+                    continue
+                util_value = util_matrix[i][j]
+                min_val = minU[self.events[j]]
+                max_val = maxU[self.events[j]]
 
+                numerator = util_value - min_val
+                denominator = max_val - min_val
+
+                # divide by 0 or 0 divided by a number will be assigned with 0
+                if numerator == 0 or denominator == 0:
+                    new_val = 0.0
+                else:
+                    new_val = np.round((numerator / denominator), 2)
+
+                if not np.isnan(new_val) and new_val >= edge_cutoff and new_val > 0.0:
+                    normalised_matrix[i][j] = new_val
+                else:
+                    normalised_matrix[i][j] = 0.0
+
+                #print("i = " + str(i) + "-" + str(self.events[i]) + " j = " + str(j) + "-" + str(self.events[j]) + " min_val = " + str(min_val) + " max_val = " + str(max_val) + " normalised_val = " + str(normalised_matrix[i][j]))
+        print("normalised_matrix = \n" + str(normalised_matrix))
+        return normalised_matrix
     def __add_edges_to_graph_for_each_method(self, edges, graph, node_to_node_case):
         edge_thickness = 0.1
         for pair, value in edges.items():
@@ -144,43 +211,6 @@ class FuzzyMining():
         self.__add_edges_to_graph_for_each_method(cluster_to_node_edge, graph, False)
         self.__add_edges_to_graph_for_each_method(cluster_to_cluster_edge, graph, False)
         self.__add_edges_to_graph_for_each_method(node_to_node_edge, graph, True)
-
-        # Going to use for writing on thesis, how I found avg instead of printing each relation out
-        """
-        for i in range(len(self.events)):
-            for j in range(len(self.events)):
-                # not sure if this is the right solution for showing edges for each node/cluster
-                if self.corr_after_first_rule[i][j] > 0.0:
-                    edge_thickness = 0.1
-                    # cluster -> cluster
-                    if self.events[i] in list_of_clustered_nodes and self.events[j] in list_of_clustered_nodes:
-                        current_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[i])
-                        next_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[j])
-                        # remove self-loops from clustered nodes
-                        if current_cluster == next_cluster:
-                            continue
-                        graph.edge(current_cluster, str(next_cluster), penwidth=str(edge_thickness),
-                                   label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-                        print("cluster -> cluster")
-
-                    # cluster -> node
-                    elif self.events[i] in list_of_clustered_nodes and self.events[j] not in list_of_clustered_nodes:
-                        current_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[i])
-                        graph.edge(current_cluster, str(self.events[j]), penwidth=str(edge_thickness),
-                                   label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-                        print("cluster -> node")
-                    # node -> cluster
-                    elif self.events[i] not in list_of_clustered_nodes and self.events[j] in list_of_clustered_nodes:
-                        next_cluster = self.__get_clustered_node(clustered_nodes_after_sec_rule, self.events[j])
-                        graph.edge(self.events[i], str(next_cluster), penwidth=str(edge_thickness),
-                                   label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-                        print("node -> cluster")
-                    # node -> node
-                    else:
-                        graph.edge(self.events[i], str(self.events[j]), penwidth=str(edge_thickness),
-                                   label=str("{:.2f}".format(self.corr_after_first_rule[i][j])))
-                        print("node -> node")             
-        """
 
     def __calculate_avg_correlation_for_clustered_nodes(self, correlation_after_first_rule, clustered_nodes):
         ret_node_to_cluster_edge = {}
