@@ -215,16 +215,16 @@ class FuzzyGraphView(QWidget, AlgorithmViewInterface):
         self.utility_slider.setValue(int(utility * 100))
     def getModel(self):
         return self.FuzzyGraphController.getModel()
-    def generate_dot(self):
-        if not self.__check_if_graph_exists():
-            return
-        self.graphviz_graph.render(self.workingDirectory, format = 'dot')
-        prit("fuzzy_graph_view: DOT generated")
-        return
     def __check_if_graph_exists(self):
         if not self.graphviz_graph:
             return False
         return True
+    def generate_dot(self):
+        if not self.__check_if_graph_exists():
+            return
+        self.graphviz_graph.render(self.workingDirectory, format = 'dot')
+        print("fuzzy_graph_view: DOT generated")
+        return
     def generate_svg(self):
         if not self.__check_if_graph_exists():
             return

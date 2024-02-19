@@ -2,7 +2,6 @@ from graphviz import Digraph
 import numpy as np
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 
-
 class FuzzyMining():
     def __init__(self, cases):
         self.cases = cases
@@ -143,8 +142,8 @@ class FuzzyMining():
 
                 # if not clustered and not removed check for edge filtering
                 val = np.round(sign_after_first_rule[i][j] * utility_ratio + (1-utility_ratio) * corr_after_first_rule[i][j], 2)
-                print("calculating util matriX " + str(self.events[i]) + " -> " + str(self.events[j]) + " value " + str(val))
-                print("sign[i][j]= " + str(sign_after_first_rule[i][j]) + " corr[j][i]= "  + str(corr_after_first_rule[i][j]) + " value " + str(val))
+                #print("calculating util matriX " + str(self.events[i]) + " -> " + str(self.events[j]) + " value " + str(val))
+                #print("sign[i][j]= " + str(sign_after_first_rule[i][j]) + " corr[j][i]= "  + str(corr_after_first_rule[i][j]) + " value " + str(val))
                 util_matrix[i][j] = np.round(sign_after_first_rule[i][j] * utility_ratio + (1-utility_ratio) * corr_after_first_rule[i][j], 2)
 
             # find minU and maxU for each column
@@ -156,7 +155,7 @@ class FuzzyMining():
 
         print("111-printing correlation \n" + str(corr_after_first_rule))
 
-        print("Util Matrix-----> \n" + str(util_matrix))
+        #print("Util Matrix-----> \n" + str(util_matrix))
 
         print("calculate normalised util. ")
 
@@ -164,7 +163,7 @@ class FuzzyMining():
         removed_indices = []
         if not np.all(normalised_util_matrix == 0):
             removed_indices = np.argwhere((corr_after_first_rule > 0.0) & (normalised_util_matrix == 0.0))
-        print("removed_indices = " + str(removed_indices))
+        print("removed_indices = \n" + str(removed_indices))
         return removed_indices
 
     def __calculate_normalised_util(self, util_matrix, edge_cutoff, minU, maxU, utility_ratio, corr_after_first_rule):
