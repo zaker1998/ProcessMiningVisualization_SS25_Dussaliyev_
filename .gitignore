@@ -1,5 +1,6 @@
 # Project files specific to certain IDE e.g. PyCharm
 .idea/
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -11,7 +12,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+# Important to ignore build/ directory. The build custom components are stored in build/ directory.
+# build/
 develop-eggs/
 dist/
 downloads/
@@ -29,6 +31,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+node_modules/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
