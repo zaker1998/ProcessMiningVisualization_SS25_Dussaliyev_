@@ -6,11 +6,13 @@ class DFG:
         self.edges: dict[tuple[str | int, str | int], int] = dict()
         self.build_graph_from_log(log)
 
-    def build_graph_from_log(self, log: list[list[str]]) -> None:
+    def _build_graph_from_log(self, log: list[list[str]]) -> None:
         # TODO: Implement this method
         pass
 
-    def add_edge(self, source: str | int, destination: str | int) -> None:
+    def add_edge(
+        self, source: str | int, destination: str | int, weight: int = 1
+    ) -> None:
         if source not in self.nodes:
             self.nodes.add(source)
 
@@ -18,9 +20,9 @@ class DFG:
             self.nodes.add(destination)
 
         if (source, destination) in self.edges:
-            self.edges[(source, destination)] += 1
+            self.edges[(source, destination)] += weight
         else:
-            self.edges[(source, destination)] = 1
+            self.edges[(source, destination)] = weight
 
     def add_node(self, node: str | int) -> None:
         self.nodes.add(node)

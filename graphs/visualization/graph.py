@@ -41,7 +41,7 @@ class Edge:
         source: str | int,
         destination: str | int,
         weight: int = 1,
-        edge_attributes: dict[str, str | int] = None,
+        edge_attributes: dict[str, str] = None,
     ) -> None:
         self.source = source
         self.destination = destination
