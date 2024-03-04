@@ -7,6 +7,7 @@ class DFG:
         self.build_graph_from_log(log)
 
     def build_graph_from_log(self, log: list[list[str]]) -> None:
+        # TODO: Implement this method
         pass
 
     def add_edge(self, source: str | int, destination: str | int) -> None:
