@@ -8,17 +8,17 @@ class Node:
         label: str = "",
         data: dict[str, str | int] = None,
     ) -> None:
-        self.id = id
+        self.id: str = str(id)
         if label:
-            self.label = label
+            self.label: str = label
         else:
-            self.label = str(id)
-        self._data = data
+            self.label: str = str(id)
+        self._data: dict[str, str | int] = data
 
     def get_label(self) -> str:
         return self.label
 
-    def get_id(self) -> str | int:
+    def get_id(self) -> str:
         return self.id
 
     def get_data(self) -> dict[str, str | int]:
@@ -37,11 +37,11 @@ class Edge:
         destination: str | int,
         weight: int = 1,
     ) -> None:
-        self.source = source
-        self.destination = destination
+        self.source = str(source)
+        self.destination = str(destination)
         self.weight = weight
 
-    def get_edge(self) -> tuple[str | int, str | int, int]:
+    def get_edge(self) -> tuple[str, str, int]:
         return (self.source, self.destination, self.weight)
 
 
@@ -53,13 +53,13 @@ class BaseGraph:
         global_node_attributes: dict[str, str] = None,
         global_edge_attributes: dict[str, str] = None,
     ) -> None:
-        self.directed = directed
-        self.nodes = {}
-        self.edges = {}
+        self.directed: bool = directed
+        self.nodes: dict[str, Node] = {}
+        self.edges: dict[tuple[str, str], Edge] = {}
 
-        __graph_attributes = graph_attributes or {}
-        __global_node_attributes = global_node_attributes or {}
-        __global_edge_attributes = global_edge_attributes or {}
+        __graph_attributes: dict[str, str] = graph_attributes or {}
+        __global_node_attributes: dict[str, str] = global_node_attributes or {}
+        __global_edge_attributes: dict[str, str] = global_edge_attributes or {}
 
         self.graph = (
             graphviz.Digraph(**graph_attributes)
@@ -80,12 +80,12 @@ class BaseGraph:
         if self.contains_node(id):
             # TODO: Add logging and use own exception types
             raise ValueError(f"Node with id {id} already exists.")
-        node = Node(id, label, data, node_attributes)
+        node = Node(id, label, data)
         self.nodes[node.get_id()] = node
 
         __node_attributes = node_attributes or {}
 
-        self.graph.node(str(id), node.get_label(), **__node_attributes)
+        self.graph.node(node.get_id(), node.get_label(), **__node_attributes)
 
     def add_edge(
         self,
@@ -94,19 +94,19 @@ class BaseGraph:
         weight: int = 1,
         edge_attributes: dict[str, str] = None,
     ) -> None:
-        if source_id not in self.nodes:
-            nodes[source_id] = Node(source_id)
+        if str(source_id) not in self.nodes:
+            nodes[str(source_id)] = Node(source_id)
 
-        if target_id not in self.nodes:
-            nodes[target_id] = Node(target_id)
+        if str(target_id) not in self.nodes:
+            nodes[str(target_id)] = Node(target_id)
 
-        edge = Edge(source_id, target_id, weight, edge_attributes)
+        edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
 
         __edge_attributes = edge_attributes or {}
         self.graph.edge(
-            str(edge.source),
-            str(edge.destination),
+            edge.source,
+            edge.destination,
             label=str(edge.weight),
             **__edge_attributes,
         )
@@ -115,26 +115,24 @@ class BaseGraph:
         if not self.contains_node(id):
             # TODO: Add logging and use own exception types
             raise ValueError(f"Node with id {id} does not exist.")
-        return self.nodes[id]
+        return self.nodes[str(id)]
 
     def get_edge(self, source: str | int, destination: str | int) -> Edge:
         if not self.contains_edge(source, destination):
             # TODO: Add logging and use own exception types
             raise ValueError(f"Edge from {source} to {destination} does not exist.")
             # TODO: add result for undirected graph
-        return self.edges[(source, destination)]
+        return self.edges[(str(source), str(destination))]
 
     def contains_node(self, id: str | int) -> bool:
-        return id in self.nodes
+        return str(id) in self.nodes
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
+        edge = (str(source), str(destination))
         if self.directed:
-            return (source, destination) in self.edges
+            return edge in self.edges
         else:
-            return (source, destination) in self.edges or (
-                destination,
-                source,
-            ) in self.edges
+            return edge in self.edges or edge[::-1] in self.edges
 
     def get_nodes(self) -> list[Node]:
         return list(self.nodes.values())
