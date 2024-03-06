@@ -13,7 +13,7 @@ class Node:
             self.label: str = label
         else:
             self.label: str = str(id)
-        self._data: dict[str, str | int] = data
+        self.__data: dict[str, str | int] = data
 
     def get_label(self) -> str:
         return self.label
@@ -22,12 +22,12 @@ class Node:
         return self.id
 
     def get_data(self) -> dict[str, str | int]:
-        return self._data
+        return self.__data
 
     def get_data_from_key(self, key: str) -> str | int:
-        if key not in self._data:
+        if key not in self.__data:
             return None
-        return self._data[key]
+        return self.__data[key]
 
 
 class Edge:
@@ -61,12 +61,9 @@ class BaseGraph:
         __global_node_attributes: dict[str, str] = global_node_attributes or {}
         __global_edge_attributes: dict[str, str] = global_edge_attributes or {}
 
-        self.graph = (
-            graphviz.Digraph(**graph_attributes)
-            if directed
-            else graphviz.Graph(**graph_attributes)
-        )
+        self.graph = graphviz.Digraph() if directed else graphviz.Graph()
 
+        self.graph.attr("graph", **__graph_attributes)
         self.graph.attr("node", **__global_node_attributes)
         self.graph.attr("edge", **__global_edge_attributes)
 
@@ -142,3 +139,6 @@ class BaseGraph:
 
     def get_graphviz_string(self) -> str:
         return self.graph.source
+
+    def export_graph(self, filename: str, format: str = "png") -> None:
+        self.graph.render(filename, format=format)
