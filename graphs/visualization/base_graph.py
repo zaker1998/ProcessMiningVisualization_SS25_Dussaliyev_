@@ -26,6 +26,8 @@ class Node:
 
     def get_data_from_key(self, key: str) -> str | int:
         if key not in self.__data:
+            # Throw exception instead of none? Or return default value? Should be consitant throughout the code
+            # own design decision!!
             return None
         return self.__data[key]
 
@@ -92,10 +94,13 @@ class BaseGraph:
         edge_attributes: dict[str, str] = None,
     ) -> None:
         if str(source_id) not in self.nodes:
-            nodes[str(source_id)] = Node(source_id)
+            self.nodes[str(source_id)] = Node(source_id)
 
         if str(target_id) not in self.nodes:
-            nodes[str(target_id)] = Node(target_id)
+            self.nodes[str(target_id)] = Node(target_id)
+
+        if self.contains_edge(source_id, target_id):
+            raise ValueError(f"Edge from {source_id} to {target_id} already exists.")
 
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
