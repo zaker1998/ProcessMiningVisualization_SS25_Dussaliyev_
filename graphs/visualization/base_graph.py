@@ -146,4 +146,4 @@ class BaseGraph:
         return self.graph.source
 
     def export_graph(self, filename: str, format: str = "png") -> None:
-        self.graph.render(filename, format=format)
+        self.graph.render(filename, format=format, cleanup=True)
