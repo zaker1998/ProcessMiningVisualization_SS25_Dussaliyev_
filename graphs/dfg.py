@@ -22,6 +22,10 @@ class DFG:
     def add_edge(
         self, source: str | int, destination: str | int, weight: int = 1
     ) -> None:
+
+        if weight <= 0:
+            raise ValueError("Weight must be a positive integer.")
+
         if source not in self.nodes:
             self.nodes.add(source)
 
