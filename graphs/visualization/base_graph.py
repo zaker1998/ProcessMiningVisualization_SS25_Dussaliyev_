@@ -1,6 +1,7 @@
 import graphviz
 
 
+# TODO: Consistent behaviour if node or edge already exists or if something is not found. Either exceptions or return None. Own design decision
 class Node:
     def __init__(
         self,
