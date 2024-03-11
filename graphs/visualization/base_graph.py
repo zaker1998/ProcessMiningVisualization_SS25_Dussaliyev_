@@ -3,18 +3,19 @@ import graphviz
 
 # TODO: Consistent behaviour if node or edge already exists or if something is not found. Either exceptions or return None. Own design decision
 class Node:
+
     def __init__(
         self,
         id: str | int,
         label: str = "",
-        data: dict[str, str | int] = None,
+        data: dict[str, str | int | float] = None,
     ) -> None:
         self.id: str = str(id)
         if label:
             self.label: str = label
         else:
             self.label: str = str(id)
-        self.__data: dict[str, str | int] = data
+        self.__data: dict[str, str | int | float] = data
 
     def get_label(self) -> str:
         return self.label
@@ -22,10 +23,10 @@ class Node:
     def get_id(self) -> str:
         return self.id
 
-    def get_data(self) -> dict[str, str | int]:
+    def get_data(self) -> dict[str, str | int | float]:
         return self.__data
 
-    def get_data_from_key(self, key: str) -> str | int:
+    def get_data_from_key(self, key: str) -> str | int | float:
         if key not in self.__data:
             # Throw exception instead of none? Or return default value? Should be consitant throughout the code
             # own design decision!!
@@ -66,7 +67,7 @@ class BaseGraph:
         self,
         id: str | int,
         label: str = "",
-        data: dict[str, str | int] = None,
+        data: dict[str, str | int | float] = None,
         **node_attributes: dict[str, str],
     ) -> None:
         if self.contains_node(id):
