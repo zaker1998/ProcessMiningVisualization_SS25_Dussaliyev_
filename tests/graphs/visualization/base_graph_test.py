@@ -94,8 +94,8 @@ class TestBaseGraph(unittest.TestCase):
 
         nodes = graph.nodes
         self.assertEqual(len(nodes), 2)
-        self.assertEqual(nodes.keys().__contains__("1"), True)
-        self.assertEqual(nodes.keys().__contains__("2"), True)
+        self.assertTrue(nodes.keys().__contains__("1"))
+        self.assertTrue(nodes.keys().__contains__("2"))
 
     def test_adding_edges_to_graph_with_weight(self):
         graph = BaseGraph()

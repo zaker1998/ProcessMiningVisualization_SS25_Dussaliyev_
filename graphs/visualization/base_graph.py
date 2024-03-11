@@ -52,30 +52,22 @@ class BaseGraph:
     def __init__(
         self,
         directed: bool = True,
-        graph_attributes: dict[str, str] = None,
-        global_node_attributes: dict[str, str] = None,
-        global_edge_attributes: dict[str, str] = None,
+        **graph_attributes: dict[str, str],
     ) -> None:
         self.directed: bool = directed
         self.nodes: dict[str, Node] = {}
         self.edges: dict[tuple[str, str], Edge] = {}
 
-        __graph_attributes: dict[str, str] = graph_attributes or {}
-        __global_node_attributes: dict[str, str] = global_node_attributes or {}
-        __global_edge_attributes: dict[str, str] = global_edge_attributes or {}
-
         self.graph = graphviz.Digraph() if directed else graphviz.Graph()
 
-        self.graph.attr("graph", **__graph_attributes)
-        self.graph.attr("node", **__global_node_attributes)
-        self.graph.attr("edge", **__global_edge_attributes)
+        self.graph.attr("graph", **graph_attributes)
 
     def add_node(
         self,
         id: str | int,
         label: str = "",
         data: dict[str, str | int] = None,
-        node_attributes: dict[str, str] = None,
+        **node_attributes: dict[str, str],
     ) -> None:
         if self.contains_node(id):
             # TODO: Add logging and use own exception types
@@ -83,16 +75,14 @@ class BaseGraph:
         node = Node(id, label, data)
         self.nodes[node.get_id()] = node
 
-        __node_attributes = node_attributes or {}
-
-        self.graph.node(node.get_id(), node.get_label(), **__node_attributes)
+        self.graph.node(node.get_id(), node.get_label(), **node_attributes)
 
     def add_edge(
         self,
         source_id: str | int,
         target_id: str | int,
         weight: int = 1,
-        edge_attributes: dict[str, str] = None,
+        **edge_attributes: dict[str, str],
     ) -> None:
         if str(source_id) not in self.nodes:
             self.nodes[str(source_id)] = Node(source_id)
@@ -106,12 +96,11 @@ class BaseGraph:
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
 
-        __edge_attributes = edge_attributes or {}
         self.graph.edge(
             edge.source,
             edge.destination,
             label=str(edge.weight),
-            **__edge_attributes,
+            **edge_attributes,
         )
 
     def get_node(self, id: str | int) -> Node:

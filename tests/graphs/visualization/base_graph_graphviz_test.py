@@ -11,10 +11,6 @@ def get_edge_strings(graphviz_string):
     return re.findall(r"\w+ -> \w+ \[.*\]", graphviz_string)
 
 
-def get_node_attributes(graphviz_string):
-    return re.findall(r"node \[.*\]", graphviz_string)[0]
-
-
 class TestBaseGraphGraphvizConverstion(unittest.TestCase):
     def test_directed_graph_to_graphviz_conversion(self):
         graph = BaseGraph()
@@ -60,38 +56,18 @@ class TestBaseGraphGraphvizConverstion(unittest.TestCase):
         graph = BaseGraph()
         colors = ["red", "green", "blue"]
 
-        graph.add_node(1, label="node1", node_attributes={"color": "red"})
-        graph.add_node(2, label="node2", node_attributes={"color": "green"})
-        graph.add_node(3, label="node3", node_attributes={"color": "blue"})
+        graph.add_node(1, label="node1", color="red")
+        graph.add_node(2, label="node2", color="green")
+        graph.add_node(3, label="node3", color="blue")
         graphviz_string = graph.get_graphviz_string()
         nodes_string = get_node_strings(graphviz_string)
         for node, color in zip(graph.get_nodes(), colors):
             self.assertIn(f"{node.id} [label={node.label} color={color}]", nodes_string)
 
-    def test_graph_conversion_with_global_node_attributes(self):
-        node_attr = {"color": "red"}
-        graph = BaseGraph(global_node_attributes=node_attr)
-        graphviz_string = graph.get_graphviz_string()
-        node_attr_string = get_node_attributes(graphviz_string)
-        self.assertEqual(node_attr_string, f"node [color={node_attr['color']}]")
-
-    def test_graph_conversion_with_global_and_individual_node_attributes(self):
-        node_attr = {"color": "red"}
-        graph = BaseGraph(global_node_attributes=node_attr)
-        graph.add_node(1, label="node1", node_attributes={"color": "blue"})
-        graph.add_node(2, label="node2")
-        graphviz_string = graph.get_graphviz_string()
-        nodes_string = get_node_strings(graphviz_string)
-
-        self.assertIn(f"node [color={node_attr['color']}]", nodes_string)
-        self.assertIn("1 [label=node1 color=blue]", nodes_string)
-        self.assertIn("2 [label=node2]", nodes_string)
-
     def test_graph_conversion_with_graph_attributes(self):
-        graph_attr = {"rankdir": "LR"}
-        graph = BaseGraph(graph_attributes=graph_attr)
+        graph = BaseGraph(rankdir="LR")
         graphviz_string = graph.get_graphviz_string()
-        self.assertIn(f"graph [rankdir={graph_attr['rankdir']}]", graphviz_string)
+        self.assertIn(f"graph [rankdir=LR]", graphviz_string)
 
     def test_graph_conversion_with_edges(self):
         graph = BaseGraph()
@@ -108,9 +84,9 @@ class TestBaseGraphGraphvizConverstion(unittest.TestCase):
     def test_graph_conversion_with_edges_and_attributes(self):
         graph = BaseGraph()
         colors = ["red", "green", "blue"]
-        graph.add_edge(1, 2, edge_attributes={"color": "red"})
-        graph.add_edge(2, 3, edge_attributes={"color": "green"})
-        graph.add_edge(3, 1, edge_attributes={"color": "blue"})
+        graph.add_edge(1, 2, color="red")
+        graph.add_edge(2, 3, color="green")
+        graph.add_edge(3, 1, color="blue")
         graphviz_string = graph.get_graphviz_string()
         edges_string = get_edge_strings(graphviz_string)
         for edge, color in zip(graph.get_edges(), colors):
@@ -118,20 +94,6 @@ class TestBaseGraphGraphvizConverstion(unittest.TestCase):
                 f"{edge.source} -> {edge.destination} [label=1 color={color}]",
                 edges_string,
             )
-
-    def test_graph_conversion_with_global_edge_attributes(self):
-        edge_attr = {"color": "red"}
-        graph = BaseGraph(global_edge_attributes=edge_attr)
-        graph.add_edge(1, 2)
-        graph.add_edge(2, 3, edge_attributes={"color": "green"})
-        graphviz_string = graph.get_graphviz_string()
-        edges_string = get_edge_strings(graphviz_string)
-        self.assertEqual(
-            f"edge [color={edge_attr['color']}]",
-            re.findall(r"edge \[.*\]", graphviz_string)[0],
-        )
-        self.assertIn(f"1 -> 2 [label=1]", edges_string)
-        self.assertIn(f"2 -> 3 [label=1 color=green]", edges_string)
 
 
 if __name__ == "__main__":
