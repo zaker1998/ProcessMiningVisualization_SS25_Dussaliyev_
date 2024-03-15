@@ -32,8 +32,8 @@ class FuzzyGraph(BaseGraph):
         self,
         source: str,
         destination: str,
-        weight: int,
         size: float,
+        weight: int = None,
     ) -> None:
         super().add_edge(source, destination, weight, penwidth=str(size))
 

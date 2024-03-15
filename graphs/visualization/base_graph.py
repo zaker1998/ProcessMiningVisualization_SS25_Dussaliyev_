@@ -96,11 +96,15 @@ class BaseGraph:
 
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
+        if weight == None:
+            label = ""
+        else:
+            label = str(weight)
 
         self.graph.edge(
             edge.source,
             edge.destination,
-            label=str(edge.weight),
+            label=label,
             **edge_attributes,
         )
 
