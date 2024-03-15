@@ -8,29 +8,31 @@ class HeuristicGraph(BaseGraph):
         super().__init__(rankdir="TB")
 
     def add_event(
+        self,
         title: str,
         frequency: int,
         size: tuple[int, int],
         **event_data: dict[str, str | int | float],
     ) -> None:
         event_data["frequency"] = frequency
-        label = f"{title} \n {frequency}"
         width, height = size
+        label = f"{title}\n{frequency}"
         super().add_node(
             id=title,
             label=label,
             data=event_data,
-            width=width,
-            height=height,
+            width=str(width),
+            height=str(height),
             shape="box",
             style="rounded, filled",
             fillcolor="lightblue",
         )
 
     def add_edge(
+        self,
         source: str,
         destination: str,
         weight: int,
         size: float,
     ) -> None:
-        super().add_edge(source, destination, weight, penwidth=size)
+        super().add_edge(source, destination, weight, penwidth=str(size))
