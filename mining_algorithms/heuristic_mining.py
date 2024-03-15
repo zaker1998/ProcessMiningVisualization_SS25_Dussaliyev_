@@ -76,11 +76,11 @@ class HeuristicMining:
         graph.add_start_node()
 
         for node in self.__get_start_nodes():
-            graph.add_edge("start", node, size=0.1)
+            graph.add_edge("Start", node, size=0.1)
 
         graph.add_end_node()
         for node in self.__get_end_nodes():
-            graph.add_edge(node, "end", size=0.1)
+            graph.add_edge(node, "End", size=0.1)
 
         return graph
 

@@ -28,24 +28,6 @@ class HeuristicGraph(BaseGraph):
             # fillcolor="lightblue",
         )
 
-    def add_start_node(self, title: str = "start") -> None:
-        super().add_node(
-            id=title,
-            label=title,
-            shape="circle",
-            style="filled",
-            fillcolor="green",
-        )
-
-    def add_end_node(self, title: str = "end") -> None:
-        super().add_node(
-            id=title,
-            label=title,
-            shape="doublecircle",
-            style="filled",
-            fillcolor="red",
-        )
-
     def add_edge(
         self,
         source: str,
