@@ -48,7 +48,7 @@ class FuzzyGraph(BaseGraph):
         cluster_data["frequency"] = frequency
         cluster_data["nodes"] = merged_nodes
         width, height = size
-        label = f"{cluster_name} \n {len(merged_nodes)} Elements \n {frequency}"
+        label = f"{cluster_name}\n{len(merged_nodes)} Elements\n{frequency}"
         super().add_node(
             id=cluster_name,
             label=label,
