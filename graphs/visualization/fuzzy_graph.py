@@ -12,7 +12,7 @@ class FuzzyGraph(BaseGraph):
         title: str,
         frequency: int,
         size: tuple[int, int],
-        **event_data: dict[str, str | int | float],
+        **event_data,
     ) -> None:
         event_data["frequency"] = frequency
         label = f"{title}\n{frequency}"
@@ -28,7 +28,7 @@ class FuzzyGraph(BaseGraph):
             fillcolor="#FDFFF5",
         )
 
-    def add_edge(
+    def create_edge(
         self,
         source: str,
         destination: str,

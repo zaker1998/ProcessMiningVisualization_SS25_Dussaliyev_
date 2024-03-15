@@ -67,7 +67,7 @@ class HeuristicMining:
                             ]
                             + self.min_edge_thickness
                         )
-                    graph.add_edge(
+                    graph.create_edge(
                         self.events[i],
                         self.events[j],
                         weight=int(self.succession_matrix[i][j]),
@@ -75,12 +75,10 @@ class HeuristicMining:
                     )
         graph.add_start_node()
 
-        for node in self.__get_start_nodes():
-            graph.add_edge("Start", node, size=0.1)
+        graph.add_starting_edges(self.__get_start_nodes())
 
         graph.add_end_node()
-        for node in self.__get_end_nodes():
-            graph.add_edge(node, "End", size=0.1)
+        graph.add_ending_edges(self.__get_end_nodes())
 
         return graph
 

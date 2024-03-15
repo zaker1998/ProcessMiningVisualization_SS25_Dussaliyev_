@@ -12,7 +12,7 @@ class HeuristicGraph(BaseGraph):
         title: str,
         frequency: int,
         size: tuple[int, int],
-        **event_data: dict[str, str | int | float],
+        **event_data,
     ) -> None:
         event_data["frequency"] = frequency
         width, height = size
@@ -28,7 +28,8 @@ class HeuristicGraph(BaseGraph):
             # fillcolor="lightblue",
         )
 
-    def add_edge(
+    # Rename
+    def create_edge(
         self,
         source: str,
         destination: str,
@@ -36,3 +37,9 @@ class HeuristicGraph(BaseGraph):
         weight: int = None,
     ) -> None:
         super().add_edge(source, destination, weight, penwidth=str(size))
+
+    def add_starting_edges(self, start_nodes: list[str]) -> None:
+        super().add_starting_edges(start_nodes, penwidth="0.1")
+
+    def add_ending_edges(self, end_nodes: list[str]) -> None:
+        super().add_ending_edges(end_nodes, penwidth="0.1")

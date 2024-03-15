@@ -53,7 +53,7 @@ class BaseGraph:
     def __init__(
         self,
         directed: bool = True,
-        **graph_attributes: dict[str, str],
+        **graph_attributes,
     ) -> None:
         self.directed: bool = directed
         self.nodes: dict[str, Node] = {}
@@ -68,7 +68,7 @@ class BaseGraph:
         id: str | int,
         label: str = "",
         data: dict[str, str | int | float] = None,
-        **node_attributes: dict[str, str],
+        **node_attributes,
     ) -> None:
         if self.contains_node(id):
             # TODO: Add logging and use own exception types
@@ -78,28 +78,64 @@ class BaseGraph:
 
         self.graph.node(node.get_id(), node.get_label(), **node_attributes)
 
-    def add_start_node(
-        self, id: str | int = "Start", **node_attributes: dict[str, str]
-    ) -> None:
+    def add_start_node(self, id: str = "Start", **node_attributes) -> None:
         if node_attributes:
             self.add_node(id, **node_attributes)
         else:
             self.add_node(id, shape="circle", style="filled", fillcolor="green")
 
-    def add_end_node(
-        self, id: str | int = "End", **node_attributes: dict[str, str]
-    ) -> None:
+    def add_end_node(self, id: str = "End", **node_attributes) -> None:
         if node_attributes:
             self.add_node(id, **node_attributes)
         else:
             self.add_node(id, shape="doublecircle", style="filled", fillcolor="red")
 
+    def add_starting_edges(
+        self,
+        nodes: list[str | int],
+        starting_node: str = "Start",
+        weights: list[int] = None,
+        **edge_attributes,
+    ) -> None:
+        if not nodes:
+            return
+
+        for node in nodes:
+            if weights:
+                self.add_edge(
+                    starting_node,
+                    node,
+                    weights[nodes.index(node)],
+                    **edge_attributes,
+                )
+            else:
+                self.add_edge(starting_node, node, **edge_attributes)
+
+    def add_ending_edges(
+        self,
+        nodes: list[str | int],
+        ending_node: str = "End",
+        weights: list[int] = None,
+        **edge_attributes,
+    ) -> None:
+        if not nodes:
+            return
+
+        for node in nodes:
+            if weights:
+                self.add_edge(
+                    node, ending_node, weights[nodes.index(node)], **edge_attributes
+                )
+            else:
+                self.add_edge(node, ending_node, weight=None, **edge_attributes)
+
+    # Need better naming to not collide with the add_edge method from inheritance
     def add_edge(
         self,
         source_id: str | int,
         target_id: str | int,
         weight: int = 1,
-        **edge_attributes: dict[str, str],
+        **edge_attributes,
     ) -> None:
         if str(source_id) not in self.nodes:
             self.nodes[str(source_id)] = Node(source_id)
