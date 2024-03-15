@@ -24,8 +24,8 @@ class HeuristicGraph(BaseGraph):
             width=str(width),
             height=str(height),
             shape="box",
-            style="rounded, filled",
-            fillcolor="lightblue",
+            style="rounded",  # , filled",
+            # fillcolor="lightblue",
         )
 
     def add_start_node(self, title: str = "start") -> None:
