@@ -48,14 +48,14 @@ class FuzzyGraph(BaseGraph):
         cluster_data["frequency"] = frequency
         cluster_data["nodes"] = merged_nodes
         width, height = size
-        label = f"{cluster_name}\n{len(merged_nodes)} Elements\n{frequency}"
+        label = f"{cluster_name}\n{len(merged_nodes)} Elements\n~{frequency}"
         super().add_node(
             id=cluster_name,
             label=label,
             data=cluster_data,
-            shape="polygon",
+            shape="octagon",
             style="filled",
-            fillcolor="blue",
+            fillcolor="#6495ED",
             width=str(width),
             height=str(height),
         )

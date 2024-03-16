@@ -88,7 +88,9 @@ class BaseGraph:
         if node_attributes:
             self.add_node(id, **node_attributes)
         else:
-            self.add_node(id, shape="circle", style="filled, bold", fillcolor="red")
+            self.add_node(
+                id, shape="doublecircle", style="filled, bold", fillcolor="red"
+            )
 
     def add_starting_edges(
         self,
