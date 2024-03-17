@@ -15,7 +15,7 @@ import networkx as nx
 
 
 class TestHeuristic(unittest.TestCase):
-    @unittest.skip("Update needed for new Network class")
+
     def test_create_dependency_graph_using_preprocessed_txt(self):
         print("-------------- Running test.txt ----------------")
         self.__run_test_txt("test0")
@@ -28,7 +28,6 @@ class TestHeuristic(unittest.TestCase):
         print("passed test 3")
         print("---------------- test.txt passed! ----------------")
 
-    @unittest.skip("Update needed for new Network class")
     def test_create_dependency_graph_using_test_csv(self):
         print("-------------- Running test_csv ----------------")
         self.__run_test_csv(0.5, 1)
@@ -41,13 +40,11 @@ class TestHeuristic(unittest.TestCase):
         print("passed test 4")
         print("---------------- test_csv passed! ----------------")
 
-    @unittest.skip("Update needed for new Network class")
     def test_create_dependency_graph_using_CallcenterExample(self):
         print("-------------- Running large CallcenterExample ----------------")
         self.__run_CallcenterExample_csv(0.5, 1)
         print("---------------- CallcenterExample passed! ----------------")
 
-    @unittest.skip("Update needed for new Network class")
     def test_loading_pickle_HeuristicMining_model(self):
         print("----------- Running pickle loading test ----------")
         print("(This test fails if you messed with the HeuristicMining class)")
@@ -72,7 +69,7 @@ class TestHeuristic(unittest.TestCase):
         G = Controller.create_dependency_graph(0.5, 1)
         target = "temp/" + filename
         dotsource = target + ".dot"
-        G.render(target, format="dot")
+        G.export_graph(target, format="dot")
         self.__check_graph_integrity_with_netx(dotsource)
 
     def __run_test_csv(self, threshold, min_freq):
@@ -83,7 +80,7 @@ class TestHeuristic(unittest.TestCase):
         )  # G is a graphviz Digraph
         target = "temp/test_csv"
         dot_source = target + ".dot"
-        G.render(target, format="dot")
+        G.export_graph(target, format="dot")
         self.__check_graph_integrity_with_netx(dot_source)
 
     def __run_CallcenterExample_csv(self, threshold, min_freq):
@@ -101,7 +98,7 @@ class TestHeuristic(unittest.TestCase):
         )  # G is a graphviz Digraph
         target = "temp/callcenter"
         dot_source = target + ".dot"
-        G.render(target, format="dot")
+        G.export_graph(target, format="dot")
         self.__check_graph_integrity_with_netx(dot_source)
 
     def __run_pickle_loading_test(self, pickleFile):

@@ -111,7 +111,7 @@ class BaseGraph:
                     **edge_attributes,
                 )
             else:
-                self.add_edge(starting_node, node, **edge_attributes)
+                self.add_edge(starting_node, node, weight=None, **edge_attributes)
 
     def add_ending_edges(
         self,
