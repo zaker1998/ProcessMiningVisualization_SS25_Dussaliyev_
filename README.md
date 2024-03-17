@@ -65,13 +65,23 @@ There are also the 'export png' and 'export svg' options under 'File', that lets
 
 ### How to run unit tests?
 
-e.g. If you want to run unit tests of `heuristic_mining_test.py`, just type the command below:
+Unittest can be run by the following command:
+```
+python -m unittest <Path To Tests>
+```
+
+in the root folder.
+
+If you want to run unit tests of `heuristic_mining_test.py` int the directory `tests/mining_algorithms`, just type the command below:
 
 ```
-python -m unittest tests.heuristic_mining_test
+python -m unittest tests.mining_algorithms.heuristic_mining_test
 ```
 
-in THIS folder.
+To run all tests us the following command:
+```
+python -m unittest tests
+```
 
 # Building on this project
 If you want to add your own algorithm to this project, you need to create 2 files minimum.
