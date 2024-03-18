@@ -7,7 +7,7 @@ assignees: fabianf00
 
 ---
 
-**Feature Overview:**
+**Feature Description:**
 [Provide a concise description of what the feature can do and its intended purpose. Highlight key functionalities.]
 
 **Reasons for Feature:**
