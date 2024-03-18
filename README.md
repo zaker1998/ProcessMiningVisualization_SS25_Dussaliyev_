@@ -72,7 +72,7 @@ python -m unittest <Path To Tests>
 
 in the root folder.
 
-If you want to run unit tests of `heuristic_mining_test.py` int the directory `tests/mining_algorithms`, just type the command below:
+If you want to run unit tests of `heuristic_mining_test.py` in the directory `tests/mining_algorithms`, just type the command below:
 
 ```
 python -m unittest tests.mining_algorithms.heuristic_mining_test
