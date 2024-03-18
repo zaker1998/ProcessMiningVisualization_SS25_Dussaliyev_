@@ -10,12 +10,13 @@ class FuzzyGraph(BaseGraph):
     def add_event(
         self,
         title: str,
-        frequency: int,
+        significance: int,
         size: tuple[int, int],
         **event_data,
     ) -> None:
-        event_data["frequency"] = frequency
-        label = f"{title}\n{frequency}"
+        event_data["significance"] = significance
+        # chatgpt asked how to change fontcolor just for node_freq
+        label = f'<{title}<br/><font color="red">{significance}</font>>'
         width, height = size
         super().add_node(
             id=title,
@@ -34,21 +35,22 @@ class FuzzyGraph(BaseGraph):
         destination: str,
         size: float,
         weight: int = None,
+        color: str = "black",
     ) -> None:
-        super().add_edge(source, destination, weight, penwidth=str(size))
+        super().add_edge(source, destination, weight, penwidth=str(size), color=color)
 
     def add_cluster(
         self,
         cluster_name: str,
-        frequency: int | float,
+        significance: int | float,
         size: tuple[int, int],
         merged_nodes: list[str],
         **cluster_data: dict[str, str | int | float],
     ) -> None:
-        cluster_data["frequency"] = frequency
+        cluster_data["significance"] = significance
         cluster_data["nodes"] = merged_nodes
         width, height = size
-        label = f"{cluster_name}\n{len(merged_nodes)} Elements\n~{frequency}"
+        label = f"{cluster_name}\n{len(merged_nodes)} Elements\n~{significance}"
         super().add_node(
             id=cluster_name,
             label=label,

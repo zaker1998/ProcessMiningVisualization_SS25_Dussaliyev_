@@ -262,7 +262,6 @@ class FuzzyMining:
         print("normalised_matrix = \n" + str(normalised_matrix))
         return normalised_matrix
 
-    # TODO add mapping from cluster to nodes in cluster
     def __add_edges_to_graph_for_each_method(
         self, edges, graph, node_to_node_case, list_of_filtered_edges
     ):
@@ -286,10 +285,9 @@ class FuzzyMining:
                 if "-" in next_cluster:
                     next_cluster = self.cluster_id_mapping.get(next_cluster)
 
-                # TODO add red color later if considered neseccary
-                graph.create_edge(current_cluster, next_cluster, edge_thickness, value)
-                # graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
-                #           label=str(value), color='red')
+                graph.create_edge(
+                    current_cluster, next_cluster, edge_thickness, value, "red"
+                )
 
     def __add_edges_to_graph(
         self, graph, clustered_nodes_after_sec_rule, list_of_filtered_edges
@@ -505,9 +503,7 @@ class FuzzyMining:
 
                 # chatgpt asked how to change fontcolor just for node_freq
                 graph.add_event(node, node_sign, (node_width, node_height))
-                # TODO add red color later if considered neseccary and change frequency to node_sign
-                # graph.node(str(node), label=f'<{node}<br/><font color="red">{node_sign}</font>>', width=str(node_width),
-                #           height=str(node_height), shape="box", style="filled", fillcolor='#FDFFF5')
+
         return graph
 
     def __convert_clustered_nodes_to_list(self, clustered_nodes):
@@ -583,7 +579,6 @@ class FuzzyMining:
                 # first_possib = self.events[i] + self.events[j]
                 # incoming edges
                 # sec_possib = self.events[j] + self.events[i]
-                # TODO put self.minimum_correlation instead of using hard coding
                 if (
                     corr_after_first_rule[i][j] >= self.minimum_correlation
                     or corr_after_first_rule[j][i] >= self.minimum_correlation
@@ -622,15 +617,12 @@ class FuzzyMining:
         counter = 1
         for cluster in nodes:
             cluster_events = cluster.split("-")
-            name = str(len(cluster_events)) + " Elments"
             string_cluster = "Cluster " + str(counter)
             # needed to later find the cluster id and to draw the edges
             self.cluster_id_mapping[cluster] = string_cluster
             sign = sign_dict.get(cluster_events[0])
             print("cluster: " + str(cluster))
             graph.add_cluster(string_cluster, sign, (1.5, 1.0), cluster_events)
-            # graph.node(str(cluster), label=str(string_cluster) + "\n" + str(name) + "\n" + "~" + str(sign),
-            #           width=str(1.5), height=str(1.0), shape="octagon", style="filled", fillcolor='#6495ED')
             counter += 1
 
     def __calculate_significant_nodes(self, corr_after_first_rule):
