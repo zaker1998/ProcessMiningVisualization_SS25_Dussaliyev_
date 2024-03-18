@@ -41,7 +41,7 @@ def read_excel(filePath: str) -> pd.DataFrame:
     return pd.read_excel(filePath)
 
 
-def read_file(filePath: str) -> pd.DataFrame:
+def read_file(filePath: str) -> pd.DataFrame | object:
     if filePath.endswith(".csv"):
         return read_csv(filePath)
     elif filePath.endswith(".pickle"):
