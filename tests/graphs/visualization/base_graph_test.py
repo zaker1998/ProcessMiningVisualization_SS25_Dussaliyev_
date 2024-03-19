@@ -1,5 +1,11 @@
 import unittest
 from graphs.visualization.base_graph import BaseGraph, Node, Edge
+from exceptions.graph_exceptions import (
+    DuplicateNodeException,
+    DuplicateEdgeException,
+    NodeDoesNotExistException,
+    EdgeDoesNotExistException,
+)
 
 
 class TestNode(unittest.TestCase):
@@ -58,7 +64,6 @@ class TestBaseGraph(unittest.TestCase):
 
     def test_default_base_graph_creation(self):
         graph = BaseGraph()
-        self.assertEqual(graph.directed, True)
         self.assertEqual(graph.nodes, {})
         self.assertEqual(graph.edges, {})
 
@@ -74,7 +79,7 @@ class TestBaseGraph(unittest.TestCase):
         graph = BaseGraph()
         graph.add_node(id=1, label="node1")
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DuplicateNodeException):
             graph.add_node(id=1, label="node2")
 
     def test_adding_edges_to_graph_with_already_added_nodes(self):
@@ -88,14 +93,10 @@ class TestBaseGraph(unittest.TestCase):
         self.assertEqual(len(edges), 1)
         self.assertEqual(edges[("1", "2")].get_edge(), ("1", "2", 1))
 
-    def test_adding_edges_to_graph_with_not_added_nodes(self):
+    def test_adding_edges_to_graph_with_not_added_nodes_throws_exception(self):
         graph = BaseGraph()
-        graph.add_edge(1, 2)
-
-        nodes = graph.nodes
-        self.assertEqual(len(nodes), 2)
-        self.assertTrue(nodes.keys().__contains__("1"))
-        self.assertTrue(nodes.keys().__contains__("2"))
+        with self.assertRaises(NodeDoesNotExistException):
+            graph.add_edge(1, 2)
 
     def test_adding_edges_to_graph_with_weight(self):
         graph = BaseGraph()
@@ -115,7 +116,7 @@ class TestBaseGraph(unittest.TestCase):
 
         graph.add_edge(1, 2, 5)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DuplicateEdgeException):
             graph.add_edge(1, 2, 5)
 
     def test_contains_node_without_nodes(self):
@@ -138,11 +139,15 @@ class TestBaseGraph(unittest.TestCase):
 
     def test_contains_edge_with_edge(self):
         graph = BaseGraph()
+        graph.add_node(1)
+        graph.add_node(2)
         graph.add_edge(1, 2)
         self.assertEqual(graph.contains_edge("1", "2"), True)
 
     def test_contains_edge_with_edge_with_int_ids(self):
         graph = BaseGraph()
+        graph.add_node(1)
+        graph.add_node(2)
         graph.add_edge(1, 2)
         self.assertEqual(graph.contains_edge(1, 2), True)
 
@@ -155,11 +160,14 @@ class TestBaseGraph(unittest.TestCase):
 
     def test_get_node_with_non_existing_node(self):
         graph = BaseGraph()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NodeDoesNotExistException):
             graph.get_node("1")
 
     def test_get_edge_with_existing_edge(self):
         graph = BaseGraph()
+        graph.add_node(1)
+        graph.add_node(2)
+
         graph.add_edge(1, 2)
         edge = graph.get_edge("1", "2")
         self.assertEqual(edge.source, "1")
@@ -167,7 +175,7 @@ class TestBaseGraph(unittest.TestCase):
 
     def test_get_edge_with_non_existing_edge(self):
         graph = BaseGraph()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(EdgeDoesNotExistException):
             graph.get_edge("1", "2")
 
     def test_get_nodes_returns_empty_list_without_nodes(self):
@@ -189,19 +197,16 @@ class TestBaseGraph(unittest.TestCase):
 
     def test_get_edges_returns_list_of_edges(self):
         graph = BaseGraph()
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_node(3)
+
         graph.add_edge(1, 2)
         graph.add_edge(2, 3)
         edges = graph.get_edges()
         self.assertEqual(len(edges), 2)
         self.assertEqual(edges[0].get_edge(), ("1", "2", 1))
         self.assertEqual(edges[1].get_edge(), ("2", "3", 1))
-
-    # Undirected graph tests
-    # TODO: Add tests for undirected graph to fully test the class
-
-    def test_base_graph_creation_with_undirected_graph(self):
-        graph = BaseGraph(directed=False)
-        self.assertEqual(graph.directed, False)
 
 
 if __name__ == "__main__":

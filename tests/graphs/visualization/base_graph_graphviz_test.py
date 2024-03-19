@@ -12,17 +12,12 @@ def get_edge_strings(graphviz_string):
 
 
 class TestBaseGraphGraphvizConverstion(unittest.TestCase):
-    def test_directed_graph_to_graphviz_conversion(self):
+    def test_graph_to_graphviz_conversion(self):
         graph = BaseGraph()
         graphviz_string = graph.get_graphviz_string()
         self.assertRegex(graphviz_string, r"digraph {\s*}\s*")
 
-    def test_undirected_graph_to_graphviz_conversion(self):
-        graph = BaseGraph(directed=False)
-        graphviz_string = graph.get_graphviz_string()
-        self.assertRegex(graphviz_string, r"graph {\s*}\s*")
-
-    def test_directed_graph_with_nodes_to_graphviz_conversion(self):
+    def test_graph_with_nodes_to_graphviz_conversion(self):
         graph = BaseGraph()
         graph.add_node(1)
         graph.add_node(2)
@@ -71,6 +66,10 @@ class TestBaseGraphGraphvizConverstion(unittest.TestCase):
 
     def test_graph_conversion_with_edges(self):
         graph = BaseGraph()
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_node(3)
+
         graph.add_edge(1, 2)
         graph.add_edge(2, 3)
         graph.add_edge(3, 1)
@@ -84,6 +83,10 @@ class TestBaseGraphGraphvizConverstion(unittest.TestCase):
     def test_graph_conversion_with_edges_and_attributes(self):
         graph = BaseGraph()
         colors = ["red", "green", "blue"]
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_node(3)
+
         graph.add_edge(1, 2, color="red")
         graph.add_edge(2, 3, color="green")
         graph.add_edge(3, 1, color="blue")

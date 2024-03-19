@@ -1,7 +1,12 @@
 import graphviz
+from exceptions.graph_exceptions import (
+    DuplicateNodeException,
+    DuplicateEdgeException,
+    NodeDoesNotExistException,
+    EdgeDoesNotExistException,
+)
 
 
-# TODO: Consistent behaviour if node or edge already exists or if something is not found. Either exceptions or return None. Own design decision
 class Node:
 
     def __init__(
@@ -28,8 +33,6 @@ class Node:
 
     def get_data_from_key(self, key: str) -> str | int | float:
         if key not in self.__data:
-            # Throw exception instead of none? Or return default value? Should be consitant throughout the code
-            # own design decision!!
             return None
         return self.__data[key]
 
@@ -52,14 +55,12 @@ class Edge:
 class BaseGraph:
     def __init__(
         self,
-        directed: bool = True,
         **graph_attributes,
     ) -> None:
-        self.directed: bool = directed
         self.nodes: dict[str, Node] = {}
         self.edges: dict[tuple[str, str], Edge] = {}
 
-        self.graph = graphviz.Digraph() if directed else graphviz.Graph()
+        self.graph = graphviz.Digraph()
 
         self.graph.attr("graph", **graph_attributes)
 
@@ -71,8 +72,7 @@ class BaseGraph:
         **node_attributes,
     ) -> None:
         if self.contains_node(id):
-            # TODO: Add logging and use own exception types
-            raise ValueError(f"Node with id {id} already exists.")
+            raise DuplicateNodeException(id)
         node = Node(id, label, data)
         self.nodes[node.get_id()] = node
 
@@ -82,7 +82,7 @@ class BaseGraph:
         if node_attributes:
             self.add_node(id, **node_attributes)
         else:
-            self.add_node(id, shape="circle", style="filled", fillcolor="green")
+            self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
 
     def add_end_node(self, id: str = "End", **node_attributes) -> None:
         if node_attributes:
@@ -140,13 +140,13 @@ class BaseGraph:
         **edge_attributes,
     ) -> None:
         if str(source_id) not in self.nodes:
-            self.nodes[str(source_id)] = Node(source_id)
+            raise NodeDoesNotExistException(source_id)
 
         if str(target_id) not in self.nodes:
-            self.nodes[str(target_id)] = Node(target_id)
+            raise NodeDoesNotExistException(target_id)
 
         if self.contains_edge(source_id, target_id):
-            raise ValueError(f"Edge from {source_id} to {target_id} already exists.")
+            raise DuplicateEdgeException(source_id, target_id)
 
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
@@ -164,15 +164,12 @@ class BaseGraph:
 
     def get_node(self, id: str | int) -> Node:
         if not self.contains_node(id):
-            # TODO: Add logging and use own exception types
-            raise ValueError(f"Node with id {id} does not exist.")
+            raise NodeDoesNotExistException(id)
         return self.nodes[str(id)]
 
     def get_edge(self, source: str | int, destination: str | int) -> Edge:
         if not self.contains_edge(source, destination):
-            # TODO: Add logging and use own exception types
-            raise ValueError(f"Edge from {source} to {destination} does not exist.")
-            # TODO: add result for undirected graph
+            raise EdgeDoesNotExistException(source, destination)
         return self.edges[(str(source), str(destination))]
 
     def contains_node(self, id: str | int) -> bool:
@@ -180,10 +177,7 @@ class BaseGraph:
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
         edge = (str(source), str(destination))
-        if self.directed:
-            return edge in self.edges
-        else:
-            return edge in self.edges or edge[::-1] in self.edges
+        return edge in self.edges
 
     def get_nodes(self) -> list[Node]:
         return list(self.nodes.values())
