@@ -9,3 +9,4 @@ dash
 flask
 dash_interactive_graphviz
 Werkzeug
+streamlit
