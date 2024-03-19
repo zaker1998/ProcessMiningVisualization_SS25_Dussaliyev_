@@ -196,3 +196,6 @@ class BaseGraph:
 
     def export_graph(self, filename: str, format: str = "png") -> None:
         self.graph.render(filename, format=format, cleanup=True)
+
+    def node_to_string(self, id: str) -> str:
+        return id
