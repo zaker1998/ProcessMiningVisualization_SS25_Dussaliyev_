@@ -7,8 +7,7 @@ def dataframe_to_cases_list(
     timeLabel: str = "timestamp",
     caseLabel: str = "case",
     eventLabel: str = "event",
-) -> list:
-    # check that the required columns exist
+) -> list[list[str, ...]]:
     required_columns = [timeLabel, caseLabel, eventLabel]
     if not all(col in df.columns for col in required_columns):
         raise BadColumnException(
@@ -17,11 +16,16 @@ def dataframe_to_cases_list(
 
     # Sort by timestamp
     df = df.sort_values(by=[timeLabel])
-    df_grouped = df.groupby(caseLabel)
 
-    cases = []
-    for k in df_grouped.groups:
-        cases.append(df_grouped.get_group(k)[eventLabel].tolist())
+    result = df.groupby(caseLabel)[eventLabel].apply(list).reset_index(name="events")
+    return result["events"].tolist()
+
+
+def cases_list_to_dict(cases_list: list[list[str, ...]]) -> dict[tuple[str, ...], int]:
+    cases = {}
+    for trace in cases_list:
+        trace_tuple = tuple(trace)
+        cases[trace_tuple] = cases.get(trace_tuple, 0) + 1
     return cases
 
 
@@ -30,23 +34,6 @@ def dataframe_to_cases_dict(
     timeLabel: str = "timestamp",
     caseLabel: str = "case",
     eventLabel: str = "event",
-) -> dict:
-    # check that the required columns exist
-    required_columns = [timeLabel, caseLabel, eventLabel]
-    if not all(col in df.columns for col in required_columns):
-        raise BadColumnException(
-            "transformations.py ERROR: Selected columns not found in DataFrame"
-        )
-
-    # Sort by timestamp
-    df = df.sort_values(by=[timeLabel])
-    df_grouped = df.groupby(caseLabel)
-
-    cases = {}
-    for k in df_grouped.groups:
-        traces = tuple(df_grouped.get_group(k)[eventLabel].tolist())
-        if traces in cases:
-            cases[traces] += 1
-        else:
-            cases[traces] = 1
-    return cases
+) -> dict[tuple[str, ...], int]:
+    cases_list = dataframe_to_cases_list(df, timeLabel, caseLabel, eventLabel)
+    return cases_list_to_dict(cases_list)
