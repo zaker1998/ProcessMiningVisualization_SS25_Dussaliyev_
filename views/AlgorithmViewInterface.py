@@ -6,9 +6,9 @@ from graphs.visualization.base_graph import BaseGraph
 
 class AlgorithmViewInterface(ViewInterface, ABC):
 
-    def __init__(self):
-        self.sliders = {}
-        super().__init__()
+    @abstractmethod
+    def initialize_values(self):
+        raise NotImplementedError("initialize_values() method not implemented")
 
     @abstractmethod
     def perform_mining(self, cases: list[list[str, ...]]) -> BaseGraph:
@@ -27,27 +27,40 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             st.session_state.page = "Home"
             st.rerun()
 
+        self.initialize_values()
+
         st.title(self.get_page_title())
 
         self.render_sliders()
-        graph = self.perform_mining(st.session_state.cases)
+        self.graph = self.perform_mining(st.session_state.cases)
 
         graph_container = st.container(border=True)
         with graph_container:
-            st.graphviz_chart(graph.get_graphviz_string())
+            st.graphviz_chart(self.graph.get_graphviz_string())
+
+        def back_to_home():
+            st.session_state.page = "Home"
+
+        st.button("Back", on_click=self.back_to_home, type="secondary")
+        st.button("Export", on_click=self.to_export_view, type="secondary")
+
+    def back_to_home(self):
+        st.session_state.page = "Home"
+
+    def to_export_view(self):
+        st.session_state.page = "Export"
+        st.session_state.graph = self.graph
 
     def add_slider(
         self,
         min: int | float,
         max: int | float,
-        value: int | float,
         steps: float | int,
         label: str,
         key: str,
     ) -> None:
-        self.sliders[key] = st.sidebar.slider(
-            label, min, max, value=value, step=steps, key=key
-        )
+        # stored values in session state lost after switching to another page
+        st.sidebar.slider(label, min, max, step=steps, key=key)
 
     def get_slider_value(self, key: str) -> int:
-        return self.sliders[key]
+        return st.session_state[key]

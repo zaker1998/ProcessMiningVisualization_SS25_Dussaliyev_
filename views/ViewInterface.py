@@ -5,5 +5,4 @@ class ViewInterface(ABC):
 
     @abstractmethod
     def render(self):
-        print("Hello World")
-        # raise NotImplementedError("render() method not implemented")
+        raise NotImplementedError("render() method not implemented")
