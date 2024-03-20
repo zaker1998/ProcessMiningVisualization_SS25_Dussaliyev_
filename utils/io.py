@@ -2,8 +2,10 @@ import pickle
 import pandas as pd
 import csv
 import os
+import streamlit as st
 
 # TODO: Use docstrings to document the functions not comments
+supported_formats = ["xls", "xlsx", "xlsm", "xlsb", "odf", "ods", "odt"]
 
 
 def is_excel_file(file_path: str) -> bool:
@@ -21,8 +23,11 @@ def pickle_save(class_object: object, filename: str) -> None:
 
 # Loads the class object that was saved as a pickle file. path should include filename
 def pickle_load(path: str) -> object:
-    with open(path, "rb") as file:
-        load_instance = pickle.load(file)
+    if isinstance(path, st.runtime.uploaded_file_manager.UploadedFile):
+        load_instance = pickle.load(path.read())
+    else:
+        with open(path, "rb") as file:
+            load_instance = pickle.load(file)
     return load_instance
 
 
@@ -41,12 +46,18 @@ def read_excel(filePath: str) -> pd.DataFrame:
     return pd.read_excel(filePath)
 
 
-def read_file(filePath: str) -> pd.DataFrame | object:
-    if filePath.endswith(".csv"):
+def read_file(
+    filePath: str | st.runtime.uploaded_file_manager.UploadedFile,
+) -> pd.DataFrame | object:
+    if isinstance(filePath, st.runtime.uploaded_file_manager.UploadedFile):
+        file_name = filePath.name
+    else:
+        file_name = filePath
+    if file_name.endswith(".csv"):
         return read_csv(filePath)
-    elif filePath.endswith(".pickle"):
+    elif file_name.endswith(".pickle"):
         return pickle_load(filePath)
-    elif is_excel_file(filePath):
+    elif is_excel_file(file_name):
         return read_excel(filePath)
     else:
         # TODO: use a custom io exception
