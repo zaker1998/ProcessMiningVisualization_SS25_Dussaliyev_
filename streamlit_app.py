@@ -3,6 +3,7 @@ from views.Home import Home
 from views.HeuristicGraphView import HeuristicGraphView
 from views.ColumnSelectionView import ColumnSelectionView
 from views.ViewInterface import ViewInterface
+from views.ExportView import ExportView
 
 st.set_page_config(
     page_title="Process Mining Tool",
@@ -19,3 +20,5 @@ elif st.session_state.page == "Algorithm":
     HeuristicGraphView().render()
 elif st.session_state.page == "ColumnSelectionView":
     ColumnSelectionView().render()
+elif st.session_state.page == "Export":
+    ExportView().render()
