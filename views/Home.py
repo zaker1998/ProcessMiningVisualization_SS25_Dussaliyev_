@@ -2,7 +2,7 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 import os
 from utils.transformations import dataframe_to_cases_list
-import pandas as pd
+from utils.io import read_file, supported_formats
 
 
 class Home(ViewInterface):
@@ -14,11 +14,13 @@ class Home(ViewInterface):
         st.write("To get started, upload a CSV file containing your process logs.")
 
         file = st.file_uploader(
-            "Upload a file", type=["csv", "xlsx"], accept_multiple_files=False
+            "Upload a file",
+            type=["csv", *supported_formats],
+            accept_multiple_files=False,
         )
 
         if file:
-            df = pd.read_csv(file)
+            df = read_file(file)
             st.session_state.df = df
             st.session_state.page = "ColumnSelectionView"
             st.rerun()
