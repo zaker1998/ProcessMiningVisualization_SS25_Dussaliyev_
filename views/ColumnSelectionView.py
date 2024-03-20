@@ -8,15 +8,25 @@ class ColumnSelectionView(ViewInterface):
     def render(self):
         st.write("Column Selection View")
         if "df" in st.session_state:
-            time_label = st.selectbox(
-                "Select the time column", st.session_state.df.columns
-            )
-            case_label = st.selectbox(
-                "Select the case column", st.session_state.df.columns
-            )
-            activity_label = st.selectbox(
-                "Select the activity column", st.session_state.df.columns
-            )
+
+            selection_columns = st.columns(3)
+
+            with selection_columns[0]:
+
+                time_label = st.selectbox(
+                    "Select the time column", st.session_state.df.columns
+                )
+
+            with selection_columns[1]:
+                case_label = st.selectbox(
+                    "Select the case column", st.session_state.df.columns
+                )
+
+            with selection_columns[2]:
+                activity_label = st.selectbox(
+                    "Select the activity column", st.session_state.df.columns
+                )
+
             st.write(st.session_state.df)
 
             mine_button = st.button("Mine")
