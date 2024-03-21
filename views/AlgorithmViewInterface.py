@@ -35,7 +35,6 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             or "activity_column" not in st.session_state
         ):
             self.navigte_to("Home", True)
-            return
 
         st.session_state.cases = dataframe_to_cases_list(
             st.session_state.df,
