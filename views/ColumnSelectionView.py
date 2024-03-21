@@ -34,6 +34,10 @@ class ColumnSelectionView(ViewInterface):
                 height=500,
             )
 
+            algorithm = st.selectbox(
+                "Select the algorithm", ["Heuristic Miner", "Fuzzy Miner"]
+            )
+
             mine_button = st.button("Mine", type="primary")
 
             if mine_button:
@@ -46,4 +50,5 @@ class ColumnSelectionView(ViewInterface):
 
                 st.session_state.cases = cases
                 st.session_state.page = "Algorithm"
+                st.session_state.algorithm = algorithm
                 st.rerun()

@@ -19,6 +19,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         raise NotImplementedError("render_sliders() method not implemented")
 
     @abstractmethod
+    def clear(self):
+        raise NotImplementedError("clear() method not implemented")
+
+    @abstractmethod
     def get_page_title(self) -> str:
         return "Algorithm View Interface"
 
@@ -30,37 +34,35 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         self.initialize_values()
 
         st.title(self.get_page_title())
+        with st.sidebar:
+            self.render_sliders()
 
-        self.render_sliders()
         self.graph = self.perform_mining(st.session_state.cases)
 
         graph_container = st.container(border=True)
         with graph_container:
             st.graphviz_chart(self.graph.get_graphviz_string())
 
-        def back_to_home():
-            st.session_state.page = "Home"
-
-        st.button("Back", on_click=self.back_to_home, type="secondary")
-        st.button("Export", on_click=self.to_export_view, type="secondary")
+        columns = st.columns([1, 1, 1])
+        with columns[0]:
+            st.button(
+                "Back",
+                on_click=self.back_to_home,
+                type="secondary",
+                use_container_width=True,
+            )
+        with columns[2]:
+            st.button(
+                "Export",
+                on_click=self.to_export_view,
+                type="primary",
+                use_container_width=True,
+            )
 
     def back_to_home(self):
         st.session_state.page = "Home"
+        self.clear()
 
     def to_export_view(self):
         st.session_state.page = "Export"
         st.session_state.graph = self.graph
-
-    def add_slider(
-        self,
-        min: int | float,
-        max: int | float,
-        steps: float | int,
-        label: str,
-        key: str,
-    ) -> None:
-        # stored values in session state lost after switching to another page
-        st.sidebar.slider(label, min, max, step=steps, key=key)
-
-    def get_slider_value(self, key: str) -> int:
-        return st.session_state[key]

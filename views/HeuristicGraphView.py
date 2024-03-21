@@ -17,13 +17,21 @@ class HeuristicGraphView(AlgorithmViewInterface):
     def perform_mining(self, cases: list[list[str, ...]]) -> HeuristicGraph:
         miner = HeuristicMining(cases)
         return miner.create_dependency_graph_with_graphviz(
-            self.get_slider_value("threshhold"),
-            self.get_slider_value("frequency"),
+            st.session_state.threshhold,
+            st.session_state.frequency,
         )
 
     def render_sliders(self):
-        self.add_slider(0, 25, 1, "Minimum Frequency", "frequency")
-        self.add_slider(0.0, 1.0, 0.1, "Threshhold", "threshhold")
+        # if key="frequency" is used, the session state is lost after 1 rerun
+        freq = st.slider("Minimum Frequency", 0, 25, st.session_state.frequency)
+        st.session_state.frequency = freq
+
+        thresh = st.slider("Threshhold", 0.0, 1.0, st.session_state.threshhold)
+        st.session_state.threshhold = thresh
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
+
+    def clear(self):
+        del st.session_state.frequency
+        del st.session_state.threshhold
