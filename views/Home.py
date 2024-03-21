@@ -22,5 +22,8 @@ class Home(ViewInterface):
         if file:
             df = read_file(file)
             st.session_state.df = df
-            st.session_state.page = "ColumnSelectionView"
+            self.navigte_to("ColumnSelectionView")
             st.rerun()
+
+    def clear(self):
+        return

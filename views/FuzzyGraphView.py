@@ -57,4 +57,4 @@ class FuzzyGraphView(AlgorithmViewInterface):
         del st.session_state.correlation
         del st.session_state.edge_cutoff
         del st.session_state.utility_ration
-        return
+        super().clear()

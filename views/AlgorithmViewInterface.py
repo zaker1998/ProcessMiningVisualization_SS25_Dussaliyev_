@@ -47,7 +47,8 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         with columns[0]:
             st.button(
                 "Back",
-                on_click=self.back_to_home,
+                on_click=self.navigte_to,
+                args=("Home", True),
                 type="secondary",
                 use_container_width=True,
             )
@@ -59,10 +60,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                 use_container_width=True,
             )
 
-    def back_to_home(self):
-        st.session_state.page = "Home"
-        self.clear()
-
     def to_export_view(self):
-        st.session_state.page = "Export"
+        self.navigte_to("Export")
         st.session_state.graph = self.graph
+
+    def clear(self):
+        del st.session_state.cases
+        del st.session_state.algorithm

@@ -35,3 +35,4 @@ class HeuristicGraphView(AlgorithmViewInterface):
     def clear(self):
         del st.session_state.frequency
         del st.session_state.threshhold
+        super().clear()

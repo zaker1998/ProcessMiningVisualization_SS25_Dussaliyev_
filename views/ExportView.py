@@ -13,7 +13,9 @@ class ExportView(ViewInterface):
 
         self.export_graph(graph, format.lower())
 
-        st.button("Back", type="secondary", on_click=self.back_to_algorithm)
+        st.button(
+            "Back", type="secondary", on_click=self.navigte_to, args=("Algorithm", True)
+        )
 
     def export_graph(self, graph, format):
         file_name = "temp/graph"
@@ -26,6 +28,5 @@ class ExportView(ViewInterface):
                 mime="image/" + format if format != "dot" else "text/plain",
             )
 
-    def back_to_algorithm(self):
-        st.session_state.page = "Algorithm"
+    def clear(self):
         del st.session_state.graph

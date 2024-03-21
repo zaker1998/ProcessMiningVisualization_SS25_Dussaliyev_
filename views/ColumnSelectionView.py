@@ -49,6 +49,9 @@ class ColumnSelectionView(ViewInterface):
                 )
 
                 st.session_state.cases = cases
-                st.session_state.page = "Algorithm"
                 st.session_state.algorithm = algorithm
+                self.navigte_to("Algorithm", clean_up=True)
                 st.rerun()
+
+    def clear(self):
+        del st.session_state.df
