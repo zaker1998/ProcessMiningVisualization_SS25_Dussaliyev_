@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from views.ViewInterface import ViewInterface
 import streamlit as st
 from graphs.visualization.base_graph import BaseGraph
+from utils.transformations import dataframe_to_cases_list
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -26,10 +27,28 @@ class AlgorithmViewInterface(ViewInterface, ABC):
     def get_page_title(self) -> str:
         return "Algorithm View Interface"
 
+    def transform_df_to_cases(self):
+        if (
+            "df" not in st.session_state
+            or "time_column" not in st.session_state
+            or "case_column" not in st.session_state
+            or "activity_column" not in st.session_state
+        ):
+            self.navigte_to("Home", True)
+            return
+
+        st.session_state.cases = dataframe_to_cases_list(
+            st.session_state.df,
+            st.session_state.time_column,
+            st.session_state.case_column,
+            st.session_state.activity_column,
+        )
+
+        del st.session_state.df
+
     def render(self):
         if "cases" not in st.session_state:
-            st.session_state.page = "Home"
-            st.rerun()
+            self.transform_df_to_cases()
 
         self.initialize_values()
 

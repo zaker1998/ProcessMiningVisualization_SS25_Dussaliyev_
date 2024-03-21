@@ -40,12 +40,11 @@ class ColumnSelectionView(ViewInterface):
             and "case_column" not in st.session_state
             and "activity_column" not in st.session_state
         ):
-            time_column, case_column, activity_column = self.predict_columns(
-                st.session_state.df.columns
-            )
-            st.session_state.time_column = time_column
-            st.session_state.case_column = case_column
-            st.session_state.activity_column = activity_column
+            (
+                st.session_state.time_column,
+                st.session_state.case_column,
+                st.session_state.activity_column,
+            ) = self.predict_columns(st.session_state.df.columns)
 
         with selection_columns[0]:
             st.selectbox(
@@ -82,21 +81,9 @@ class ColumnSelectionView(ViewInterface):
         mine_button = st.button("Mine", type="primary")
 
         if mine_button:
-            cases = dataframe_to_cases_list(
-                st.session_state.df,
-                timeLabel=st.session_state.time_column,
-                caseLabel=st.session_state.case_column,
-                eventLabel=st.session_state.activity_column,
-            )
-
-            st.session_state.cases = cases
             st.session_state.algorithm = algorithm
             self.navigte_to("Algorithm", clean_up=True)
             st.rerun()
 
     def clear(self):
-        del st.session_state.df
-        del st.session_state.time_column
-        del st.session_state.case_column
-        del st.session_state.activity_column
-        del st.session_state.data_columns
+        return
