@@ -6,10 +6,10 @@ from utils.transformations import dataframe_to_cases_list
 class ColumnSelectionView(ViewInterface):
 
     def render(self):
-        st.write("Column Selection View")
+        st.title("Column Selection View")
         if "df" in st.session_state:
 
-            selection_columns = st.columns(3)
+            selection_columns = st.columns([2, 2, 2])
 
             with selection_columns[0]:
 
@@ -27,9 +27,15 @@ class ColumnSelectionView(ViewInterface):
                     "Select the activity column", st.session_state.df.columns
                 )
 
-            st.write(st.session_state.df)
+            st.dataframe(
+                st.session_state.df,
+                use_container_width=True,
+                hide_index=True,
+                height=500,
+            )
 
-            mine_button = st.button("Mine")
+            mine_button = st.button("Mine", type="primary")
+
             if mine_button:
                 cases = dataframe_to_cases_list(
                     st.session_state.df,
