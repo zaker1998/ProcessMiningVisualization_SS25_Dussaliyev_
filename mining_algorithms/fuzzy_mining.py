@@ -279,10 +279,10 @@ class FuzzyMining:
                 # graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
                 #           label=str(value))
             else:
-                if "-" in current_cluster:
+                if current_cluster in self.cluster_id_mapping:
                     current_cluster = self.cluster_id_mapping.get(current_cluster)
 
-                if "-" in next_cluster:
+                if next_cluster in self.cluster_id_mapping:
                     next_cluster = self.cluster_id_mapping.get(next_cluster)
 
                 graph.create_edge(
@@ -621,7 +621,7 @@ class FuzzyMining:
             # needed to later find the cluster id and to draw the edges
             self.cluster_id_mapping[cluster] = string_cluster
             sign = sign_dict.get(cluster_events[0])
-            print("cluster: " + str(cluster))
+            print(string_cluster + ": " + str(cluster))
             graph.add_cluster(string_cluster, sign, (1.5, 1.0), cluster_events)
             counter += 1
 
