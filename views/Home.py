@@ -2,7 +2,8 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 import os
 from utils.transformations import dataframe_to_cases_list
-from utils.io import read_file, supported_formats
+from utils.io import read_file
+from config import supported_exel_types
 
 
 class Home(ViewInterface):
@@ -15,7 +16,7 @@ class Home(ViewInterface):
 
         file = st.file_uploader(
             "Upload a file",
-            type=["csv", *supported_formats],
+            type=["csv", *supported_exel_types],
             accept_multiple_files=False,
         )
 

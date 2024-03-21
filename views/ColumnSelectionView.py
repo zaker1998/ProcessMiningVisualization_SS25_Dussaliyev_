@@ -1,6 +1,7 @@
 import streamlit as st
 from views.ViewInterface import ViewInterface
 from utils.transformations import dataframe_to_cases_list
+from config import algorithm_mappings
 
 
 class ColumnSelectionView(ViewInterface):
@@ -74,14 +75,12 @@ class ColumnSelectionView(ViewInterface):
             height=500,
         )
 
-        algorithm = st.selectbox(
-            "Select the algorithm", ["Heuristic Miner", "Fuzzy Miner"]
-        )
+        algorithm = st.selectbox("Select the algorithm", [*algorithm_mappings.keys()])
 
         mine_button = st.button("Mine", type="primary")
 
         if mine_button:
-            st.session_state.algorithm = algorithm
+            st.session_state.algorithm = algorithm_mappings[algorithm]
             self.navigte_to("Algorithm", clean_up=True)
             st.rerun()
 

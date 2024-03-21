@@ -3,15 +3,14 @@ import pandas as pd
 import csv
 import os
 import streamlit as st
+from config import supported_exel_types
 
 # TODO: Use docstrings to document the functions not comments
-supported_formats = ["xls", "xlsx", "xlsm", "xlsb", "odf", "ods", "odt"]
 
 
 def is_excel_file(file_path: str) -> bool:
     file_format = file_path.split(".")[-1]
-    supported_formats = ["xls", "xlsx", "xlsm", "xlsb", "odf", "ods", "odt"]
-    return file_format in supported_formats
+    return file_format in supported_exel_types
 
 
 # Saves the class object as a pickle file. filename is the full path

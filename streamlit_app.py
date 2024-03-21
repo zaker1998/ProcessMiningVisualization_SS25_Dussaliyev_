@@ -1,9 +1,8 @@
 import streamlit as st
 from views.Home import Home
-from views.HeuristicGraphView import HeuristicGraphView
-from views.FuzzyGraphView import FuzzyGraphView
 from views.ColumnSelectionView import ColumnSelectionView
 from views.ExportView import ExportView
+from config import algorithm_routes
 
 
 st.set_page_config(
@@ -18,10 +17,7 @@ if "page" not in st.session_state:
 if st.session_state.page == "Home":
     Home().render()
 elif st.session_state.page == "Algorithm":
-    if st.session_state.algorithm == "Heuristic Miner":
-        HeuristicGraphView().render()
-    elif st.session_state.algorithm == "Fuzzy Miner":
-        FuzzyGraphView().render()
+    algorithm_routes[st.session_state.algorithm].render()
 elif st.session_state.page == "ColumnSelectionView":
     ColumnSelectionView().render()
 elif st.session_state.page == "Export":
