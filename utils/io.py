@@ -3,14 +3,8 @@ import pandas as pd
 import csv
 import os
 import streamlit as st
-from config import supported_exel_types
 
 # TODO: Use docstrings to document the functions not comments
-
-
-def is_excel_file(file_path: str) -> bool:
-    file_format = file_path.split(".")[-1]
-    return file_format in supported_exel_types
 
 
 # Saves the class object as a pickle file. filename is the full path
@@ -56,8 +50,6 @@ def read_file(
         return read_csv(filePath)
     elif file_name.endswith(".pickle"):
         return pickle_load(filePath)
-    elif is_excel_file(file_name):
-        return read_excel(filePath)
     else:
         # TODO: use a custom io exception
         raise ValueError("File format not supported")
