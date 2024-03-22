@@ -7,8 +7,6 @@ class ExportView(ViewInterface):
     def render(self):
         st.title("Export")
         graph = st.session_state.graph
-
-        st.graphviz_chart(graph.get_graphviz_string())
         format = st.sidebar.selectbox("Export as:", ["PNG", "SVG", "DOT"])
 
         self.export_graph(graph, format.lower())
