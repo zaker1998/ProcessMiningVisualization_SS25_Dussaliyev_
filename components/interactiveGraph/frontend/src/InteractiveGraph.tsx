@@ -5,7 +5,7 @@ import {
 } from "streamlit-component-lib"
 import React, { useEffect, useRef, useState } from "react"
 import { graphviz } from "d3-graphviz"
-import { select, selectAll } from "d3"
+import { selectAll } from "d3"
 
 const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
@@ -29,7 +29,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }
 
   useEffect(() => {
-    Streamlit.setFrameHeight(800)
+    Streamlit.setFrameHeight(600)
 
     const onResize = () => {
       if (graph_div_ref.current) {

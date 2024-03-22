@@ -31,23 +31,23 @@ class FuzzyGraphView(AlgorithmViewInterface):
 
     def render_sliders(self):
         st.write("Significance Cutoff")
-        significance = st.slider(
+        st.session_state.significance = st.slider(
             "Significance", 0.0, 1.0, st.session_state.significance
         )
-        st.session_state.significance = significance
 
-        correlation = st.slider("Correlation", 0.0, 1.0, st.session_state.correlation)
-        st.session_state.correlation = correlation
+        st.session_state.correlation = st.slider(
+            "Correlation", 0.0, 1.0, st.session_state.correlation
+        )
 
         st.divider()
         st.write("Edge filtering")
-        edge_cutoff = st.slider("Edge Cutoff", 0.0, 1.0, st.session_state.edge_cutoff)
-        st.session_state.edge_cutoff = edge_cutoff
+        st.session_state.edge_cutoff = st.slider(
+            "Edge Cutoff", 0.0, 1.0, st.session_state.edge_cutoff
+        )
 
-        utility_ration = st.slider(
+        st.session_state.utility_ration = st.slider(
             "Utility Ration", 0.0, 1.0, st.session_state.utility_ration
         )
-        st.session_state.utility_ration = utility_ration
 
     def get_page_title(self) -> str:
         return "Fuzzy Miner"

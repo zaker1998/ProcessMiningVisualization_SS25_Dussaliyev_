@@ -23,11 +23,9 @@ class HeuristicGraphView(AlgorithmViewInterface):
 
     def render_sliders(self):
         # if key="frequency" is used, the session state is lost after 1 rerun
-        freq = st.slider("Minimum Frequency", 0, 25, st.session_state.frequency)
-        st.session_state.frequency = freq
+        st.slider("Minimum Frequency", 0, 25, key="frequency")
 
-        thresh = st.slider("Threshhold", 0.0, 1.0, st.session_state.threshhold)
-        st.session_state.threshhold = thresh
+        st.slider("Threshhold", 0.0, 1.0, key="threshhold")
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"

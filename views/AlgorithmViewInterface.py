@@ -3,6 +3,7 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 from graphs.visualization.base_graph import BaseGraph
 from utils.transformations import dataframe_to_cases_list
+from components.interactiveGraph import interactiveGraph
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -57,9 +58,11 @@ class AlgorithmViewInterface(ViewInterface, ABC):
 
         self.graph = self.perform_mining(st.session_state.cases)
 
-        graph_container = st.container(border=True)
-        with graph_container:
-            st.graphviz_chart(self.graph.get_graphviz_string())
+        # graph_container = st.container(border=True)
+        # with graph_container:
+        #    st.graphviz_chart(self.graph.get_graphviz_string())
+
+        interactiveGraph(self.graph)
 
         columns = st.columns([1, 1, 1])
         with columns[0]:
