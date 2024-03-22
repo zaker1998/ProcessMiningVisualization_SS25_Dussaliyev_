@@ -9,28 +9,43 @@ import streamlit as st
 class HeuristicGraphView(AlgorithmViewInterface):
 
     def initialize_values(self):
+
         if "frequency" not in st.session_state:
             st.session_state.frequency = 1
-        if "threshhold" not in st.session_state:
-            st.session_state.threshhold = 0.5
+        if "threshold" not in st.session_state:
+            st.session_state.threshold = 0.5
+
+        if "max_frequency" not in st.session_state:
+            st.session_state.max_frequency = HeuristicMining(
+                st.session_state.cases
+            ).get_max_frequency()
 
     def perform_mining(self, cases: list[list[str, ...]]) -> HeuristicGraph:
         miner = HeuristicMining(cases)
+
         return miner.create_dependency_graph_with_graphviz(
-            st.session_state.threshhold,
+            st.session_state.threshold,
             st.session_state.frequency,
         )
 
     def render_sliders(self):
         # if key="frequency" is used, the session state is lost after 1 rerun
-        st.slider("Minimum Frequency", 0, 25, key="frequency")
+        st.session_state.frequency = st.slider(
+            "Minimum Frequency",
+            1,
+            st.session_state.max_frequency,
+            value=st.session_state.frequency,
+        )
 
-        st.slider("Threshhold", 0.0, 1.0, key="threshhold")
+        st.session_state.threshold = st.slider(
+            "Threshold", 0.0, 1.0, value=st.session_state.threshold
+        )
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
 
     def clear(self):
         del st.session_state.frequency
-        del st.session_state.threshhold
+        del st.session_state.threshold
+        del st.session_state.max_frequency
         super().clear()
