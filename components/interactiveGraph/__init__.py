@@ -21,7 +21,7 @@ else:
 
 # TODO: Add Graph as input parameter, and pass it to the component
 # TODO: Add onClick function as parameter, and pass it to the component
-def interactiveGraph(graph: BaseGraph, key: int | str = "interactive-graph"):
+def interactiveGraph(graph: BaseGraph, key="interactiveGraph"):
     """Wrapper function for the interactiveGraph component
 
     Parameters

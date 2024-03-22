@@ -11,21 +11,22 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
   const key = args["key"]
   const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
+  const [selectedNode, setSelectedNode] = useState(null)
+  const height: number = 600
+  const [size, setSize] = useState({ width: 0, height: height })
 
-  const [size, setSize] = useState({ width: 0, height: 0 })
-  Streamlit.setComponentValue(null)
+  function bindAfterRender() {
+    graphviz(".graph").fit(true).resetZoom()
 
-  function bindOnNodeClick() {
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
       console.log(event.target.__data__.parent.key)
-
-      Streamlit.setComponentValue(event.target.__data__.parent.key)
+      setSelectedNode(event.target.__data__.parent.key)
     })
   }
 
   useEffect(() => {
-    Streamlit.setFrameHeight(600)
+    Streamlit.setFrameHeight(height)
 
     const onResize = () => {
       if (graph_div_ref.current) {
@@ -39,19 +40,25 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     onResize()
     window.addEventListener("resize", onResize)
 
+    // cleanup
     return () => {
       window.removeEventListener("resize", onResize)
     }
   }, [])
-
+  // TODO: learn how transitions work in typescript
   useEffect(() => {
     graphviz(".graph")
       .width(size.width)
       .height(size.height)
       .fit(true)
-      .on("end", bindOnNodeClick)
+      //.transition()
+      .on("end", bindAfterRender)
       .renderDot(dot_source)
   }, [dot_source, size])
+
+  useEffect(() => {
+    Streamlit.setComponentValue(selectedNode)
+  }, [selectedNode])
 
   return (
     <div
@@ -62,6 +69,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
         position: "absolute",
         height: "100%",
         width: "100%",
+        backgroundColor: "white",
       }}
     ></div>
   )
