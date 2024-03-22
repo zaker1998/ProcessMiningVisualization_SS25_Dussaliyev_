@@ -58,10 +58,6 @@ class AlgorithmViewInterface(ViewInterface, ABC):
 
         self.graph = self.perform_mining(st.session_state.cases)
 
-        # graph_container = st.container(border=True)
-        # with graph_container:
-        #    st.graphviz_chart(self.graph.get_graphviz_string())
-
         interactiveGraph(self.graph)
 
         columns = st.columns([1, 1, 1])

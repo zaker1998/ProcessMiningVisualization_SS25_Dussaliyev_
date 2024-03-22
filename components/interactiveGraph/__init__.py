@@ -21,7 +21,7 @@ else:
 
 # TODO: Add Graph as input parameter, and pass it to the component
 # TODO: Add onClick function as parameter, and pass it to the component
-def interactiveGraph(graph: BaseGraph, key: int | str = None):
+def interactiveGraph(graph: BaseGraph, key: int | str = "interactive-graph"):
     """Wrapper function for the interactiveGraph component
 
     Parameters
@@ -35,4 +35,5 @@ def interactiveGraph(graph: BaseGraph, key: int | str = None):
         component_value = _component_func(
             graphviz_string=graph.get_graphviz_string(), key=key, default=None
         )
+        del st.session_state[key]
     return component_value

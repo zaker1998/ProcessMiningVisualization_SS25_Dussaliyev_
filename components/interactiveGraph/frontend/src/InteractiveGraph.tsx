@@ -13,13 +13,9 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
 
   const [size, setSize] = useState({ width: 0, height: 0 })
-
-  // maybe later needed if area inside node works for click
-  //const [selctedNode, setSelectedNode] = useState<string>("")
+  Streamlit.setComponentValue(null)
 
   function bindOnNodeClick() {
-    //get node from "event.currentTarget"
-
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
       console.log(event.target.__data__.parent.key)
