@@ -54,6 +54,14 @@ pip install -r requirements.txt
 # Usage Interface
 Open a CMD in THIS folder and type 
 ```
+streamlit run streamlit_app.py
+```
+
+It will open the browser.
+
+### Old UI
+Open a CMD in THIS folder and type 
+```
 python main.py
 ```
 
