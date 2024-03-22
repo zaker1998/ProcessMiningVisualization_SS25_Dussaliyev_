@@ -75,7 +75,11 @@ class BaseGraph:
             raise DuplicateNodeException(id)
         node = Node(id, label, data)
         self.nodes[node.get_id()] = node
-
+        if "filled" not in node_attributes.get("style", ""):
+            if "style" in node_attributes:
+                node_attributes["style"] += ", filled"
+            else:
+                node_attributes["style"] = "filled"
         self.graph.node(node.get_id(), node.get_label(), **node_attributes)
 
     def add_start_node(self, id: str = "Start", **node_attributes) -> None:
