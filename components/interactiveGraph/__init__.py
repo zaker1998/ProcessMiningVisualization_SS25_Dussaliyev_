@@ -33,6 +33,6 @@ def interactiveGraph(graph: BaseGraph, key: int | str = None):
     # get container width
     with st.container(border=True):
         component_value = _component_func(
-            graphviz_string=graph.get_graphviz_string(), key=key, default=0
+            graphviz_string=graph.get_graphviz_string(), key=key, default=None
         )
     return component_value

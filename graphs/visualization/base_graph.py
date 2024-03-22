@@ -192,4 +192,4 @@ class BaseGraph:
         self.graph.render(filename, format=format, cleanup=True)
 
     def node_to_string(self, id: str) -> str:
-        return id
+        return f"Node: {id}"
