@@ -15,8 +15,12 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const height: number = 600
   const [size, setSize] = useState({ width: 0, height: height })
 
-  function bindAfterRender() {
+  function resetGraph() {
     graphviz(".graph").fit(true).resetZoom()
+  }
+
+  function bindAfterRender() {
+    resetGraph()
 
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
@@ -45,15 +49,16 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       window.removeEventListener("resize", onResize)
     }
   }, [])
-  // TODO: learn how transitions work in typescript
+
   useEffect(() => {
-    graphviz(".graph")
+    graphviz(graph_div_ref.current)
       .width(size.width)
       .height(size.height)
       .fit(true)
       //.transition()
       .on("end", bindAfterRender)
       .renderDot(dot_source)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dot_source, size])
 
   useEffect(() => {
@@ -63,15 +68,40 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   return (
     <div
       id={key}
-      ref={graph_div_ref}
-      className="graph"
       style={{
         position: "absolute",
         height: "100%",
         width: "100%",
         backgroundColor: "white",
       }}
-    ></div>
+    >
+      <div
+        ref={graph_div_ref}
+        className="graph"
+        style={{
+          position: "absolute",
+          height: "100%",
+          width: "100%",
+        }}
+      ></div>
+      <button
+        onClick={resetGraph}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          backgroundColor: "#F0F0F0",
+          borderRadius: "0.5rem",
+          minHeight: "38px",
+          padding: "0.25 rem 0.75rem",
+          margin: 0,
+          border: "none",
+          outline: "none",
+        }}
+      >
+        Reset
+      </button>
+    </div>
   )
 }
 
