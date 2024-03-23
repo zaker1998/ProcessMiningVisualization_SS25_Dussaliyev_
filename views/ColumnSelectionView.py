@@ -29,6 +29,10 @@ class ColumnSelectionView(ViewInterface):
         return time_column, case_column, activity_column
 
     def render(self):
+        if "error" in st.session_state:
+            st.error(st.session_state.error)
+            del st.session_state.error
+
         st.title("Column Selection View")
         if "df" not in st.session_state:
             st.session_state.page = "Home"
@@ -49,19 +53,26 @@ class ColumnSelectionView(ViewInterface):
 
         with selection_columns[0]:
             st.selectbox(
-                "Select the time column", st.session_state.df.columns, key="time_column"
+                "Select the time column *",
+                st.session_state.df.columns,
+                key="time_column",
+                index=None,
             )
 
         with selection_columns[1]:
             st.selectbox(
-                "Select the case column", st.session_state.df.columns, key="case_column"
+                "Select the case column *",
+                st.session_state.df.columns,
+                key="case_column",
+                index=None,
             )
 
         with selection_columns[2]:
             st.selectbox(
-                "Select the activity column",
+                "Select the activity column *",
                 st.session_state.df.columns,
                 key="activity_column",
+                index=None,
             )
 
         st.multiselect(
@@ -77,12 +88,20 @@ class ColumnSelectionView(ViewInterface):
 
         algorithm = st.selectbox("Select the algorithm", [*algorithm_mappings.keys()])
 
-        mine_button = st.button("Mine", type="primary")
+        mine_button = st.button(
+            "Mine", type="primary", on_click=self.on_mine_click, args=[algorithm]
+        )
 
-        if mine_button:
+    def on_mine_click(self, algorithm):
+        if (
+            st.session_state.time_column is None
+            or st.session_state.case_column is None
+            or st.session_state.activity_column is None
+        ):
+            st.session_state.error = "Please select the time, case and activity columns"
+        else:
             st.session_state.algorithm = algorithm_mappings[algorithm]
             self.navigte_to("Algorithm", clean_up=True)
-            st.rerun()
 
     def clear(self):
         return

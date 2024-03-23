@@ -11,7 +11,8 @@ class ExportView(ViewInterface):
 
         self.export_graph(graph, format.lower())
 
-        st.image("temp/graph.png")
+        with st.container(border=True):
+            st.image("temp/graph.png")
 
         st.button(
             "Back", type="secondary", on_click=self.navigte_to, args=("Algorithm", True)
