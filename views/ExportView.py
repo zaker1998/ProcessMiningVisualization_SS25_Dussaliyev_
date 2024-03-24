@@ -1,5 +1,6 @@
 from views.ViewInterface import ViewInterface
 import streamlit as st
+import pickle
 
 
 class ExportView(ViewInterface):
@@ -7,9 +8,12 @@ class ExportView(ViewInterface):
     def render(self):
         st.title("Export")
         graph = st.session_state.model.get_graph()
-        format = st.sidebar.selectbox("Export as:", ["PNG", "SVG", "DOT"])
-
-        self.export_graph(graph, format.lower())
+        graph.export_graph("temp/graph", "png")
+        format = st.sidebar.selectbox("Export as:", ["PNG", "SVG", "DOT", "Model"])
+        if format.lower() == "model":
+            self.export_model(st.session_state.model)
+        else:
+            self.export_graph(graph, format.lower())
 
         with st.container(border=True):
             st.image("temp/graph.png")
@@ -28,6 +32,15 @@ class ExportView(ViewInterface):
                 data=file,
                 mime="image/" + format if format != "dot" else "text/plain",
             )
+
+    def export_model(self, model):
+        filename = "temp/model.pickle"
+        st.sidebar.download_button(
+            label="Export",
+            file_name="model.pickle",
+            data=pickle.dumps(model),
+            mime="application/octet-stream",
+        )
 
     def clear(self):
         return
