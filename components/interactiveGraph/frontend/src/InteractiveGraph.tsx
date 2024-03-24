@@ -7,11 +7,19 @@ import React, { useEffect, useRef, useState } from "react"
 import { graphviz } from "d3-graphviz"
 import { selectAll } from "d3"
 
+type nodeClickData = {
+  clickId: number
+  nodeId: string
+}
+
 const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
   const key = args["key"]
   const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
-  const [selectedNode, setSelectedNode] = useState(null)
+  const [nodeClickData, setNodeClickData] = useState<nodeClickData>({
+    clickId: 0,
+    nodeId: "",
+  })
   const height: number = 600
   const [size, setSize] = useState({ width: 0, height: height })
 
@@ -24,8 +32,12 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
-      console.log(event.target.__data__.parent.key)
-      setSelectedNode(event.target.__data__.parent.key)
+      const node_id = event.target.__data__.parent.key
+      console.log(node_id)
+      setNodeClickData((previous) => ({
+        clickId: previous.clickId + 1,
+        nodeId: node_id,
+      }))
     })
   }
 
@@ -62,8 +74,8 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }, [dot_source, size])
 
   useEffect(() => {
-    Streamlit.setComponentValue(selectedNode)
-  }, [selectedNode])
+    Streamlit.setComponentValue(nodeClickData)
+  }, [nodeClickData])
 
   return (
     <div
@@ -94,7 +106,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
           borderRadius: "0.5rem",
           minHeight: "38px",
           padding: "0.25 rem 0.75rem",
-          margin: 0,
+          margin: "0.25rem",
           border: "none",
           outline: "none",
         }}
