@@ -6,7 +6,7 @@ class ExportView(ViewInterface):
 
     def render(self):
         st.title("Export")
-        graph = st.session_state.graph
+        graph = st.session_state.model.get_graph()
         format = st.sidebar.selectbox("Export as:", ["PNG", "SVG", "DOT"])
 
         self.export_graph(graph, format.lower())
@@ -30,4 +30,4 @@ class ExportView(ViewInterface):
             )
 
     def clear(self):
-        del st.session_state.graph
+        return

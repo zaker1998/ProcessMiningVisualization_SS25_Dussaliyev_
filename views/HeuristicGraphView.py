@@ -32,10 +32,6 @@ class HeuristicGraphView(AlgorithmViewInterface):
         self.controller.set_frequency(frequency)
         self.controller.set_threshold(threshold)
 
-        if st.button("Mine"):
-            self.controller.perform_mining()
-            st.session_state.model = self.controller.get_model()
-
     def get_page_title(self) -> str:
         return "Heuristic Mining"
 

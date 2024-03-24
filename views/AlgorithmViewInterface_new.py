@@ -51,11 +51,9 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         with st.sidebar:
             self.render_sidebar()
 
-        # without button perform mining here
+        self.controller.perform_mining()
 
-        self.graph = self.controller.get_graph()
-
-        interactiveGraph(self.graph)
+        interactiveGraph(self.controller.get_graph())
 
         columns = st.columns([1, 1, 1])
         with columns[0]:
@@ -69,16 +67,11 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         with columns[2]:
             st.button(
                 "Export",
-                on_click=self.to_export_view,
+                on_click=self.navigte_to,
+                args=("Export",),
                 type="primary",
                 use_container_width=True,
             )
 
-    def to_export_view(self):
-        self.navigte_to("Export")
-        st.session_state.graph = self.graph
-
     def clear(self):
-        # del st.session_state.cases
-        # del st.session_state.algorithm
         return
