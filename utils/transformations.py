@@ -1,5 +1,4 @@
 import pandas as pd
-from api.custom_error import BadColumnException
 
 
 def dataframe_to_cases_list(
@@ -10,9 +9,7 @@ def dataframe_to_cases_list(
 ) -> list[list[str, ...]]:
     required_columns = [timeLabel, caseLabel, eventLabel]
     if not all(col in df.columns for col in required_columns):
-        raise BadColumnException(
-            "transformations.py ERROR: Selected columns not found in DataFrame"
-        )
+        raise ValueError("Selected columns not found in DataFrame")
 
     # Sort by timestamp
     df = df.sort_values(by=[timeLabel])
