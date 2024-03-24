@@ -14,6 +14,10 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
+if "error" in st.session_state:
+    st.error(st.session_state.error)
+    del st.session_state.error
+
 if st.session_state.page == "Home":
     Home().render()
 elif st.session_state.page == "Algorithm":

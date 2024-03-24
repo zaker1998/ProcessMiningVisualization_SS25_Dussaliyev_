@@ -29,17 +29,16 @@ class ColumnSelectionView(ViewInterface):
         return time_column, case_column, activity_column
 
     def render(self):
-        if "error" in st.session_state:
-            st.error(st.session_state.error)
-            del st.session_state.error
-
         st.title("Column Selection View")
+
         if "df" not in st.session_state:
             st.session_state.page = "Home"
+            st.session_state.error = "Please upload a file first"
             st.rerun()
 
         selection_columns = st.columns([2, 2, 2])
 
+        # Try to predict the columns if they are not already set
         if (
             "time_column" not in st.session_state
             and "case_column" not in st.session_state

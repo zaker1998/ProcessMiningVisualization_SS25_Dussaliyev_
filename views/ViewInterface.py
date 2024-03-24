@@ -15,4 +15,4 @@ class ViewInterface(ABC):
 
     @abstractmethod
     def clear(self):
-        raise NotImplementedError("clear() method not implemented")
+        return

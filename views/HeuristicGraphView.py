@@ -24,7 +24,6 @@ class HeuristicGraphView(AlgorithmViewInterface):
         )
 
     def render_sliders(self):
-        # if key="frequency" is used, the session state is lost after 1 rerun
         st.slider(
             "Minimum Frequency",
             1,
