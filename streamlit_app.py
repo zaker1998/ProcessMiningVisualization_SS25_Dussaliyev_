@@ -22,7 +22,7 @@ if st.session_state.page == "Home":
     Home().render()
 elif st.session_state.page == "Algorithm":
     algorithm_routes[st.session_state.algorithm].render()
-elif st.session_state.page == "ColumnSelectionView":
+elif st.session_state.page == "ColumnSelection":
     ColumnSelectionView().render()
 elif st.session_state.page == "Export":
     ExportView().render()

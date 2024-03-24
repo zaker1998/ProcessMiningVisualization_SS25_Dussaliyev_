@@ -22,7 +22,7 @@ class Home(ViewInterface):
         if file:
             df = read_file(file)
             st.session_state.df = df
-            self.navigte_to("ColumnSelectionView")
+            self.navigte_to("ColumnSelection")
             st.rerun()
 
     def clear(self):
