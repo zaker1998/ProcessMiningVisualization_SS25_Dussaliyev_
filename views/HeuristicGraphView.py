@@ -1,6 +1,9 @@
-from views.AlgorithmViewInterface import AlgorithmViewInterface
+from views.AlgorithmViewInterface_new import AlgorithmViewInterface
 from mining_algorithms.heuristic_mining import HeuristicMining
 from graphs.visualization.heuristic_graph import HeuristicGraph
+from mining_algorithms.heuristic_miner.HeuristicMiningController import (
+    HeuristicMiningController,
+)
 import streamlit as st
 
 
@@ -8,36 +11,35 @@ import streamlit as st
 # start mining is only called once at old implementation. not at all the reruns after the values changed
 class HeuristicGraphView(AlgorithmViewInterface):
 
+    def __init__(self):
+        self.controller = HeuristicMiningController()
+
     def initialize_values(self):
+        if "threshold" not in st.session_state:
+            st.session_state.threshold = self.controller.get_model_threshold()
+        if "frequency" not in st.session_state:
+            st.session_state.frequency = self.controller.get_model_frequency()
+        self.max_frequency = self.controller.get_max_frequency()
 
-        if "max_frequency" not in st.session_state:
-            st.session_state.max_frequency = HeuristicMining(
-                st.session_state.cases
-            ).get_max_frequency()
-
-    def perform_mining(self, cases: list[list[str, ...]]) -> HeuristicGraph:
-        miner = HeuristicMining(cases)
-
-        return miner.create_dependency_graph_with_graphviz(
-            st.session_state.threshold,
-            st.session_state.frequency,
-        )
-
-    def render_sliders(self):
-        st.slider(
+    def render_sidebar(self):
+        frequency = st.slider(
             "Minimum Frequency",
             1,
-            st.session_state.max_frequency,
+            self.max_frequency,
             key="frequency",
         )
 
-        st.slider("Threshold", 0.0, 1.0, key="threshold")
+        threshold = st.slider("Threshold", 0.0, 1.0, key="threshold")
+
+        self.controller.set_frequency(frequency)
+        self.controller.set_threshold(threshold)
+
+        if st.button("Mine"):
+            self.controller.perform_mining()
+            st.session_state.model = self.controller.get_model()
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
 
     def clear(self):
-        del st.session_state.frequency
-        del st.session_state.threshold
-        del st.session_state.max_frequency
         super().clear()

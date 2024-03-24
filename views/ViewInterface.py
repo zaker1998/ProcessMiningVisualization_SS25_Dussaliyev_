@@ -9,6 +9,8 @@ class ViewInterface(ABC):
         raise NotImplementedError("render() method not implemented")
 
     def navigte_to(self, page: str, clean_up: bool = False):
+        if page == "Home":
+            st.session_state.clear()
         if clean_up:
             self.clear()
         st.session_state.page = page
