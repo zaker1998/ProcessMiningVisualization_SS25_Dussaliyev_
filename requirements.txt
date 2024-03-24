@@ -1,12 +1,5 @@
 numpy
 pandas
 graphviz
-matplotlib
-PyQtWebEngine
-PyQt5
 ddcal
-dash
-flask
-dash_interactive_graphviz
-Werkzeug
 streamlit
