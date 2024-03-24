@@ -1,42 +1,54 @@
-from views.AlgorithmViewInterface import AlgorithmViewInterface
+from views.AlgorithmViewInterface_new import AlgorithmViewInterface
 from graphs.visualization.fuzzy_graph import FuzzyGraph
-from mining_algorithms.fuzzy_mining import FuzzyMining
+from mining_algorithms.fuzzy_miner.FuzzyMiningController import (
+    FuzzyMiningController,
+)
 import streamlit as st
 
 
 class FuzzyGraphView(AlgorithmViewInterface):
 
+    def __init__(self):
+        self.controller = FuzzyMiningController()
+
     def initialize_values(self):
-        return
+        # find other way to initialize values, as the view should not directly access the controller
+        if "significance" not in st.session_state:
+            st.session_state.significance = (
+                self.controller.get_model().get_significance()
+            )
+        if "correlation" not in st.session_state:
+            st.session_state.correlation = self.controller.get_model().get_correlation()
+        if "edge_cutoff" not in st.session_state:
+            st.session_state.edge_cutoff = self.controller.get_model().get_edge_cutoff()
+        if "utility_ratio" not in st.session_state:
+            st.session_state.utility_ratio = (
+                self.controller.get_model().get_utility_ratio()
+            )
 
-    def perform_mining(self, cases: list[list[str, ...]]) -> FuzzyGraph:
-        miner = FuzzyMining(cases)
-        graph = miner.create_graph_with_graphviz(
-            st.session_state.significance,
-            st.session_state.correlation,
-            st.session_state.edge_cutoff,
-            st.session_state.utility_ration,
-        )
-        return graph
-
-    def render_sliders(self):
+    def render_sidebar(self):
         st.write("Significance Cutoff")
-        st.slider("Significance", 0.0, 1.0, key="significance")
+        significance = st.slider("Significance", 0.0, 1.0, key="significance")
 
-        st.slider("Correlation", 0.0, 1.0, key="correlation")
+        correlation = st.slider("Correlation", 0.0, 1.0, key="correlation")
 
         st.divider()
         st.write("Edge filtering")
-        st.slider("Edge Cutoff", 0.0, 1.0, key="edge_cutoff")
+        edge_cutoff = st.slider("Edge Cutoff", 0.0, 1.0, key="edge_cutoff")
 
-        st.slider("Utility Ration", 0.0, 1.0, key="utility_ration")
+        utility_ratio = st.slider("Utility Ration", 0.0, 1.0, key="utility_ration")
+
+        self.controller.set_significance(significance)
+        self.controller.set_correlation(correlation)
+        self.controller.set_edge_cutoff(edge_cutoff)
+        self.controller.set_utility_ratio(utility_ratio)
+
+        if st.button("Mine"):
+            self.controller.perform_mining()
+            st.session_state.model = self.controller.get_model()
 
     def get_page_title(self) -> str:
-        return "Fuzzy Miner"
+        return "Fuzzy Mining"
 
     def clear(self):
-        del st.session_state.significance
-        del st.session_state.correlation
-        del st.session_state.edge_cutoff
-        del st.session_state.utility_ration
         super().clear()

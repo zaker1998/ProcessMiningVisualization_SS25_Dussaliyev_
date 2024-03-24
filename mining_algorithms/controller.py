@@ -40,9 +40,3 @@ class Controller(ABC):
         )
         self.model.set_cases(cases)
         self.perform_mining()
-
-    def get_model_frequency(self):
-        return self.model.get_frequency()
-
-    def get_model_threshold(self):
-        return self.model.get_threshold()
