@@ -30,11 +30,12 @@ def interactiveGraph(graph: BaseGraph, key="interactiveGraph"):
         key value for the component. needed if multiple components are displayed on the same page , by default None
     """
 
-    if "previous_clickId" not in st.session_state:
-        st.session_state.previous_clickId = 0
+    state_name = f"previous_clickId-{key}"
+
+    if state_name not in st.session_state:
+        st.session_state[state_name] = 0
 
     with st.container(border=True):
-        # TODO: update the component value type it is now a dict
         component_value = _component_func(
             graphviz_string=graph.get_graphviz_string(), key=key
         )
@@ -42,9 +43,9 @@ def interactiveGraph(graph: BaseGraph, key="interactiveGraph"):
         if (
             component_value is not None
             and component_value["clickId"] != 0
-            and component_value["clickId"] != st.session_state.previous_clickId
+            and component_value["clickId"] != st.session_state[state_name]
         ):
-            st.session_state.previous_clickId = component_value["clickId"]
+            st.session_state[state_name] = component_value["clickId"]
             info_col, button_col = st.columns([4, 1])
             with info_col:
                 st.info(graph.node_to_string(component_value["nodeId"]))
