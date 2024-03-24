@@ -8,7 +8,7 @@ from config import algorithm_routes
 st.set_page_config(
     page_title="Process Mining Tool",
     page_icon=":bar_chart:",
-    layout="centered",
+    layout="wide",
 )
 
 if "page" not in st.session_state:
