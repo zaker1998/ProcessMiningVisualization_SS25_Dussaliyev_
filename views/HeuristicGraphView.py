@@ -12,7 +12,6 @@ class HeuristicGraphView(AlgorithmViewInterface):
         self.controller = HeuristicMiningController()
 
     def initialize_values(self):
-        # find other way to initialize values, as the view should not directly access the model
         if "threshold" not in st.session_state:
             st.session_state.threshold = self.controller.get_threshold()
         if "frequency" not in st.session_state:

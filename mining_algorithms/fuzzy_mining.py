@@ -1,11 +1,12 @@
 from graphs.visualization.fuzzy_graph import FuzzyGraph
 import numpy as np
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
+from mining_algorithms.base_mining import BaseMining
 
 
-class FuzzyMining:
+class FuzzyMining(BaseMining):
     def __init__(self, cases):
-        self.cases = cases
+        super().__init__(cases)
         self.min_node_size = 1.5
         self.minimum_correlation = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
@@ -46,7 +47,7 @@ class FuzzyMining:
 
         self.minimum_correlation = correlation
         # self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
-        graph = FuzzyGraph()
+        self.graph = FuzzyGraph()
         cluster = DensityDistributionClusterAlgorithm(
             list(self.appearance_activities.values())
         )
@@ -112,13 +113,13 @@ class FuzzyMining:
 
         # print clustered nodes
         self.__add_clustered_nodes_to_graph(
-            graph, clustered_nodes_after_sec_rule, self.sign_dict
+            self.graph, clustered_nodes_after_sec_rule, self.sign_dict
         )
         # normal nodes
         # normal_nodes_after_sec_rule = self.__calculate_normal_nodes()
         # what is already clustered is not a normal node
         self.__add_normal_nodes_to_graph(
-            graph,
+            self.graph,
             nodes_after_first_rule,
             self.list_of_clustered_nodes,
             self.appearance_activities,
@@ -129,10 +130,8 @@ class FuzzyMining:
         )
 
         self.__add_edges_to_graph(
-            graph, clustered_nodes_after_sec_rule, list_of_filtered_edges_as_node
+            self.graph, clustered_nodes_after_sec_rule, list_of_filtered_edges_as_node
         )
-
-        return graph
 
     def __get_as_node_removed_indices(self, list_of_filtered_edges):
         removed_nodes = []
@@ -275,7 +274,9 @@ class FuzzyMining:
                 # print("yes - " + str(current_cluster)+ "->" + str(next_cluster) + " is in list_of_removed")
                 if [current_cluster, next_cluster] in list_of_filtered_edges:
                     continue
-                graph.create_edge(current_cluster, next_cluster, edge_thickness, value)
+                self.graph.create_edge(
+                    current_cluster, next_cluster, edge_thickness, value
+                )
                 # graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
                 #           label=str(value))
             else:
@@ -285,7 +286,7 @@ class FuzzyMining:
                 if next_cluster in self.cluster_id_mapping:
                     next_cluster = self.cluster_id_mapping.get(next_cluster)
 
-                graph.create_edge(
+                self.graph.create_edge(
                     current_cluster, next_cluster, edge_thickness, value, "red"
                 )
 
@@ -302,16 +303,16 @@ class FuzzyMining:
         )
 
         self.__add_edges_to_graph_for_each_method(
-            node_to_cluster_edge, graph, False, list_of_filtered_edges
+            node_to_cluster_edge, self.graph, False, list_of_filtered_edges
         )
         self.__add_edges_to_graph_for_each_method(
-            cluster_to_node_edge, graph, False, list_of_filtered_edges
+            cluster_to_node_edge, self.graph, False, list_of_filtered_edges
         )
         self.__add_edges_to_graph_for_each_method(
-            cluster_to_cluster_edge, graph, False, list_of_filtered_edges
+            cluster_to_cluster_edge, self.graph, False, list_of_filtered_edges
         )
         self.__add_edges_to_graph_for_each_method(
-            node_to_node_edge, graph, True, list_of_filtered_edges
+            node_to_node_edge, self.graph, True, list_of_filtered_edges
         )
 
     def __calculate_avg_correlation_for_clustered_nodes(
@@ -502,9 +503,7 @@ class FuzzyMining:
                 node_sign = self.sign_dict.get(node)
 
                 # chatgpt asked how to change fontcolor just for node_freq
-                graph.add_event(node, node_sign, (node_width, node_height))
-
-        return graph
+                self.graph.add_event(node, node_sign, (node_width, node_height))
 
     def __convert_clustered_nodes_to_list(self, clustered_nodes):
         ret_nodes = []
@@ -622,7 +621,7 @@ class FuzzyMining:
             self.cluster_id_mapping[cluster] = string_cluster
             sign = sign_dict.get(cluster_events[0])
             print(string_cluster + ": " + str(cluster))
-            graph.add_cluster(string_cluster, sign, (1.5, 1.0), cluster_events)
+            self.graph.add_cluster(string_cluster, sign, (1.5, 1.0), cluster_events)
             counter += 1
 
     def __calculate_significant_nodes(self, corr_after_first_rule):
@@ -697,7 +696,7 @@ class FuzzyMining:
 
     def __filter_all_events(self):
         dic = {}
-        for trace in self.cases:
+        for trace in self.log:
             for activity in trace:
                 # chatGpt asked for doing this, if activity already in dictionary increase value + 1
                 dic[activity] = dic.get(activity, 0) + 1
@@ -718,7 +717,7 @@ class FuzzyMining:
         # d 0 0 0 0
         """
         succession_matrix = np.zeros((len(self.events), len(self.events)))
-        for trace in self.cases:
+        for trace in self.log:
             index_x = -1
             for element in trace:
                 if index_x < 0:

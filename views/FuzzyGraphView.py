@@ -1,6 +1,6 @@
 from views.AlgorithmViewInterface import AlgorithmViewInterface
 from graphs.visualization.fuzzy_graph import FuzzyGraph
-from mining_algorithms.fuzzy_miner.FuzzyMiningController import (
+from controllers.FuzzyMiningController import (
     FuzzyMiningController,
 )
 import streamlit as st
@@ -12,19 +12,14 @@ class FuzzyGraphView(AlgorithmViewInterface):
         self.controller = FuzzyMiningController()
 
     def initialize_values(self):
-        # find other way to initialize values, as the view should not directly access the model
         if "significance" not in st.session_state:
-            st.session_state.significance = (
-                self.controller.get_model().get_significance()
-            )
+            st.session_state.significance = self.controller.get_significance()
         if "correlation" not in st.session_state:
-            st.session_state.correlation = self.controller.get_model().get_correlation()
+            st.session_state.correlation = self.controller.get_correlation()
         if "edge_cutoff" not in st.session_state:
-            st.session_state.edge_cutoff = self.controller.get_model().get_edge_cutoff()
+            st.session_state.edge_cutoff = self.controller.get_edge_cutoff()
         if "utility_ratio" not in st.session_state:
-            st.session_state.utility_ratio = (
-                self.controller.get_model().get_utility_ratio()
-            )
+            st.session_state.utility_ratio = self.controller.get_utility_ratio()
 
     def render_sidebar(self):
         st.write("Significance Cutoff")
