@@ -1,4 +1,4 @@
-from views.AlgorithmViewInterface_new import AlgorithmViewInterface
+from views.AlgorithmViewInterface import AlgorithmViewInterface
 from graphs.visualization.fuzzy_graph import FuzzyGraph
 from mining_algorithms.fuzzy_miner.FuzzyMiningController import (
     FuzzyMiningController,

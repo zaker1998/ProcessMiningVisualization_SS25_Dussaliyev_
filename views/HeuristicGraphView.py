@@ -1,4 +1,4 @@
-from views.AlgorithmViewInterface_new import AlgorithmViewInterface
+from views.AlgorithmViewInterface import AlgorithmViewInterface
 from graphs.visualization.heuristic_graph import HeuristicGraph
 from mining_algorithms.heuristic_miner.HeuristicMiningController import (
     HeuristicMiningController,
