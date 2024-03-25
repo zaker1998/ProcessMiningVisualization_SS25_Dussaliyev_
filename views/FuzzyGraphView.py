@@ -12,7 +12,7 @@ class FuzzyGraphView(AlgorithmViewInterface):
         self.controller = FuzzyMiningController()
 
     def initialize_values(self):
-        # find other way to initialize values, as the view should not directly access the controller
+        # find other way to initialize values, as the view should not directly access the model
         if "significance" not in st.session_state:
             st.session_state.significance = (
                 self.controller.get_model().get_significance()
