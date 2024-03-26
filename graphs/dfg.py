@@ -73,6 +73,24 @@ class DFG:
 
         return visited
 
+    def get_successors(self, node: str | int) -> set[str | int]:
+        successors = set()
+
+        for source, destination in self.edges:
+            if source == node:
+                successors.add(destination)
+
+        return successors
+
+    def get_predecessors(self, node: str | int) -> set[str | int]:
+        predecessors = set()
+
+        for source, destination in self.edges:
+            if destination == node:
+                predecessors.add(source)
+
+        return predecessors
+
     def get_nodes(self) -> set[str | int]:
         return self.nodes
 
