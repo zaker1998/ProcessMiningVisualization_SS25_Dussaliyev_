@@ -97,6 +97,14 @@ class TestDFG(unittest.TestCase):
         self.assertIn({"D", "E"}, connected_components)
         self.assertIn({"A", "B", "C"}, connected_components)
 
+    def test_is_reachable(self):
+        self.assertTrue(self.dfg.is_reachable("A", "B"))
+        self.assertTrue(self.dfg.is_reachable("A", "C"))
+        self.assertTrue(self.dfg.is_reachable("B", "C"))
+        self.assertFalse(self.dfg.is_reachable("B", "A"))
+        self.assertFalse(self.dfg.is_reachable("C", "A"))
+        self.assertTrue(self.dfg.is_reachable("C", "B"))
+
 
 if __name__ == "__main__":
     unittest.main()

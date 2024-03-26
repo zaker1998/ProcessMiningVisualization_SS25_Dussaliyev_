@@ -96,3 +96,21 @@ class DFG:
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
         return (source, destination) in self.edges
+
+    def is_reachable(self, source: str | int, destination: str | int) -> bool:
+        queue = deque([source])
+        visited = set([source])
+
+        while queue:
+            current_node = queue.popleft()
+
+            for node in self.nodes:
+
+                if node not in visited and (current_node, node) in self.edges:
+                    if node == destination:
+                        return True
+
+                    queue.append(node)
+                    visited.add(node)
+
+        return False
