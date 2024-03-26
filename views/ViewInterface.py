@@ -10,6 +10,7 @@ class ViewInterface(ABC):
 
     def navigte_to(self, page: str, clean_up: bool = False):
         if page == "Home":
+            error_message = None
             if "error" in st.session_state:
                 error_message = st.session_state.error
             st.session_state.clear()
