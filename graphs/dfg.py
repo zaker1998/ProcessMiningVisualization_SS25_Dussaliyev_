@@ -63,10 +63,3 @@ class DFG:
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
         return (source, destination) in self.edges
-
-    def get_neighbours(self, node: str | int) -> list[str | int]:
-        neighbours = []
-        for edge in self.edges:
-            if edge[0] == node:
-                neighbours.append(edge[1])
-        return neighbours

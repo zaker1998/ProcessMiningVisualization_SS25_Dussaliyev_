@@ -81,11 +81,6 @@ class TestDFG(unittest.TestCase):
         self.assertTrue(self.dfg.contains_edge("A", "B"))
         self.assertFalse(self.dfg.contains_edge("B", "A"))
 
-    def test_get_neighbours(self):
-        self.assertEqual(self.dfg.get_neighbours("A"), ["B", "C"])
-        self.assertEqual(self.dfg.get_neighbours("B"), ["C"])
-        self.assertEqual(self.dfg.get_neighbours("C"), ["B"])
-
 
 if __name__ == "__main__":
     unittest.main()
