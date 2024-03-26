@@ -1,3 +1,6 @@
+from collections import deque
+
+
 class DFG:
     """Implementation of a Directly Follows Graph (DFG)"""
 
@@ -39,6 +42,36 @@ class DFG:
 
     def add_node(self, node: str | int) -> None:
         self.nodes.add(node)
+
+    def get_connected_components(self) -> list[set[str | int]]:
+        connected_components = []
+        visited = set()
+
+        for node in self.nodes:
+            if node not in visited:
+                component = self.__bfs(node)
+                connected_components.append(component)
+                visited.update(component)
+
+        return connected_components
+
+    def __bfs(self, starting_node: str | int) -> set[str | int]:
+        """Breadth-first search to find all reachable nodes from a starting node, without considering the direction of the edges."""
+        queue = deque([starting_node])
+        visited = set([starting_node])
+
+        while queue:
+            current_node = queue.popleft()
+
+            for node in self.nodes:
+                if node not in visited and (
+                    (current_node, node) in self.edges
+                    or (node, current_node) in self.edges
+                ):
+                    queue.append(node)
+                    visited.add(node)
+
+        return visited
 
     def get_nodes(self) -> set[str | int]:
         return self.nodes

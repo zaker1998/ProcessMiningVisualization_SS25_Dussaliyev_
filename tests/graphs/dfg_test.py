@@ -81,6 +81,22 @@ class TestDFG(unittest.TestCase):
         self.assertTrue(self.dfg.contains_edge("A", "B"))
         self.assertFalse(self.dfg.contains_edge("B", "A"))
 
+    def test_connected_components_with(self):
+        self.assertEqual(self.dfg.get_connected_components(), [{"A", "B", "C"}])
+
+    def test_connected_components_does_ignore_directions(self):
+        log = [["A", "B"], ["B", "C"], ["C", "A"], ["D", "E"], ["D", "A"]]
+        dfg = DFG(log)
+
+        self.assertEqual(dfg.get_connected_components(), [{"A", "B", "C", "D", "E"}])
+
+    def test_connected_components_with_more_than_one_connected_component(self):
+        self.dfg.add_edge("D", "E")
+
+        connected_components = self.dfg.get_connected_components()
+        self.assertIn({"D", "E"}, connected_components)
+        self.assertIn({"A", "B", "C"}, connected_components)
+
 
 if __name__ == "__main__":
     unittest.main()
