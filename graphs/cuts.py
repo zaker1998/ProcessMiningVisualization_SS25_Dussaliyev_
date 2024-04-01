@@ -1,60 +1,168 @@
 from graphs.dfg import DFG
 from collections import deque
 
-"""
-parts inspired by pseudocode in:
-Leemans S.J.J., "Robust process mining with guarantees", Ph.D. Thesis, Eindhoven University of Technology
-
-and by:
-Leemans, S.J.J., Fahland, D., van der Aalst, W.M.P. (2013). Discovering Block-Structured Process Models from Event Logs - 
-A Constructive Approach. In: Colom, JM., Desel, J. (eds) Application and Theory of Petri Nets and Concurrency. PETRI NETS 2013. 
-Lecture Notes in Computer Science, vol 7927. Springer, Berlin, Heidelberg (pp. 311-329)
-"""
-
 
 def exclusive_cut(graph: DFG) -> list[set[str | int], ...]:
     connected_components = graph.get_connected_components()
-    return connected_components
+    return connected_components if len(connected_components) > 1 else None
 
 
 def sequence_cut(graph: DFG) -> list[set[str | int], ...]:
-    partitions = []
+    partitions = [{node} for node in graph.get_nodes()]
+    nodes = list(graph.get_nodes())
 
-    current_partition = set(graph.get_start_nodes())
-    next_partition = set()
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            node_1 = nodes[i]
+            node_2 = nodes[j]
+            is_j_reachable_from_i = graph.is_reachable(node_1, node_2)
+            is_i_reachable_from_j = graph.is_reachable(node_2, node_1)
 
-    nodes_in_partition = set(graph.get_start_nodes())
+            # merge partitions if the nodes are reachable from each other or not reachable from each other
+            if (is_j_reachable_from_i and is_i_reachable_from_j) or (
+                not is_i_reachable_from_j and not is_j_reachable_from_i
+            ):
+                partition_1 = None
+                partition_2 = None
 
-    while nodes_in_partition != graph.get_nodes():
-        queue = deque(current_partition)
-        while queue:
-            node = queue.popleft()
-            successors = graph.get_successors(node)
-            for successor in successors:
-                if successor not in current_partition:
-                    if is_successor_part_of_partition(
-                        successor, current_partition, graph
-                    ):
-                        current_partition.add(successor)
-                        nodes_in_partition.add(successor)
-                        queue.append(successor)
-                    else:
-                        next_partition.add(successor)
-                        nodes_in_partition.add(successor)
+                for partition in partitions:
+                    if partition_1 and partition_2:
+                        break
 
-        partitions.append(current_partition)
-        current_partition = next_partition
-        next_partition = set()
-        queue = deque(current_partition)
+                    if node_1 in partition:
+                        partition_1 = partition
 
-    partitions.append(current_partition)
+                    if node_2 in partition:
+                        partition_2 = partition
 
-    return partitions
+                if partition_1 != partition_2:
+                    partition_1.update(partition_2)
+                    partitions.remove(partition_2)
+
+    # sort partitions by the order of reachability i < j if i is reachable from j
+    for i in range(len(partitions)):
+        min_partition_index = i
+        for j in range(i + 1, len(partitions)):
+            if graph.is_reachable(
+                next(iter(partitions[j])), next(iter(partitions[min_partition_index]))
+            ):
+                min_partition_index = j
+
+        partitions[i], partitions[min_partition_index] = (
+            partitions[min_partition_index],
+            partitions[i],
+        )
+
+    return partitions if len(partitions) > 1 else None
 
 
 def parallel_cut(graph: DFG) -> list[set[str | int], ...]:
-    partitions = [{node} for node in graph.get_nodes()]
+    inverted_dfg = create_inverted_dfg(graph)
+    partitions = inverted_dfg.get_connected_components()
+
+    if len(partitions) == 1:
+        return None
+
+    partitions_to_merge = [
+        partition
+        for partition in partitions
+        if not partition.intersection(graph.get_start_nodes())
+        or not partition.intersection(graph.get_end_nodes())
+    ]
+
+    partitions = [
+        partition for partition in partitions if partition not in partitions_to_merge
+    ]
+
+    partitions_with_only_start_nodes = list()
+    partitions_with_only_end_nodes = list()
+    partitions_without_start_end_nodes = list()
+
+    # split partitions into partitions with only start nodes, partitions with only end nodes and partitions without start and end nodes
+    for partition in partitions_to_merge:
+        has_start_node = len(partition.intersection(graph.get_start_nodes())) > 0
+        has_end_node = len(partition.intersection(graph.get_end_nodes())) > 0
+
+        if has_start_node:
+            partitions_with_only_start_nodes.append(partition)
+
+        elif has_end_node:
+            partitions_with_only_end_nodes.append(partition)
+
+        else:
+            partitions_without_start_end_nodes.append(partition)
+
+    partitions_to_merge = partitions_without_start_end_nodes
+
+    # merge partitions with only start nodes with partitions with only end nodes
+    for start_node_partition, end_node_partition in zip(
+        partitions_with_only_start_nodes, partitions_with_only_end_nodes
+    ):
+        partitions.append(start_node_partition.union(end_node_partition))
+
+    # if the number of partitions with only start nodes is not equal to the number of partitions with only end nodes
+    # merge the remaining partitions with the other partitions to merge
+    if len(partitions_with_only_end_nodes) != len(partitions_with_only_start_nodes):
+        index = min(
+            len(partitions_with_only_start_nodes), len(partitions_with_only_end_nodes)
+        )
+
+        if len(partitions_with_only_start_nodes) > len(partitions_with_only_end_nodes):
+            partitions_to_merge.extend(partitions_with_only_start_nodes[index:])
+        else:
+            partitions_to_merge.extend(partitions_with_only_end_nodes[index:])
+
+    # merge partitions without start and end nodes with partitions with start and end nodes
+    index_to_merge = 0
+    for partition in partitions_to_merge:
+        partitions[index_to_merge] = partitions[index_to_merge].union(partition)
+        index_to_merge = (index_to_merge + 1) % len(partitions)
+
+    return partitions if len(partitions) > 1 else None
+
+
+def loop_cut(graph: DFG) -> list[set[str | int], ...]:
+    partition_1 = set(graph.get_start_nodes().union(graph.get_end_nodes()))
+
+    starting_nodes = graph.get_start_nodes()
+    ending_nodes = graph.get_end_nodes()
+
+    dfg_without_end_start_nodes = create_dfg_without_nodes(
+        graph, starting_nodes.union(ending_nodes)
+    )
+
+    # create partitions thath ar not connected to each other
+    connected_components = dfg_without_end_start_nodes.get_connected_components()
+    if len(connected_components) > 0:
+        return None
+
+    partitions = [partition_1, *connected_components]
+
+    # check other conditions for partitions if not fullfiled merge with partition_1
+
+    return partitions if len(partitions) > 1 else None
+
+
+def create_dfg_without_nodes(graph: DFG, nodes: set[str | int]) -> DFG:
+    dfg_without_nodes = DFG()
+
+    for edge in graph.get_edges():
+        source, destination = edge
+        if source not in nodes and destination not in nodes:
+            dfg_without_nodes.add_edge(source, destination)
+
+    return dfg_without_nodes
+
+
+def create_inverted_dfg(graph: DFG) -> DFG:
+    inverted_dfg = DFG()
+
+    edges = graph.get_edges()
     nodes = list(graph.get_nodes())
+
+    for node in nodes:
+        inverted_dfg.add_node(node)
+
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             node_1 = nodes[i]
@@ -63,39 +171,7 @@ def parallel_cut(graph: DFG) -> list[set[str | int], ...]:
             if not graph.contains_edge(node_1, node_2) or not graph.contains_edge(
                 node_2, node_1
             ):
-                # merge partitions
-                partition_node_1 = list(filter(lambda x: node_1 in x, partitions))[0]
-                partition_node_2 = list(filter(lambda x: node_2 in x, partitions))[0]
+                inverted_dfg.add_edge(node_1, node_2)
+                inverted_dfg.add_edge(node_2, node_1)
 
-                # print(partition_node_1, partition_node_2)
-
-                if partition_node_1 != partition_node_2:
-                    partition_node_1.update(partition_node_2)
-                    partitions.remove(partition_node_2)
-
-    # check if each partition has at least one start node and one end node
-    # if not, merge partition with another partition that has a start node and an end node
-    maximum_number_of_valid_partitions = min(
-        len(graph.get_start_nodes()), len(graph.get_end_nodes())
-    )
-    if len(partitions) > maximum_number_of_valid_partitions:
-        print("Merging partitions required")
-
-    return partitions
-
-
-def loop_cut(graph: DFG) -> list[set[str | int], ...]:
-    pass
-
-
-def is_successor_part_of_partition(successor, partition, graph):
-    for node in partition:
-        if (
-            graph.is_reachable(node, successor) and graph.is_reachable(successor, node)
-        ) or (
-            not graph.is_reachable(successor, node)
-            and not graph.is_reachable(node, successor)
-        ):
-            return True
-
-    return False
+    return inverted_dfg

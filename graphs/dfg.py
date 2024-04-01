@@ -4,12 +4,13 @@ from collections import deque
 class DFG:
     """Implementation of a Directly Follows Graph (DFG)"""
 
-    def __init__(self, log: list[list[str]]) -> None:
+    def __init__(self, log: list[list[str]] = None) -> None:
         self.start_nodes: set[str | int] = set()
         self.end_nodes: set[str | int] = set()
         self.nodes: set[str | int] = set()
         self.edges: dict[tuple[str | int, str | int], int] = dict()
-        self.__build_graph_from_log(log)
+        if log:
+            self.__build_graph_from_log(log)
 
     def __build_graph_from_log(self, log: list[list[str]]) -> None:
         for trace in log:
@@ -123,7 +124,6 @@ class DFG:
             current_node = queue.popleft()
 
             for node in self.nodes:
-
                 if node not in visited and (current_node, node) in self.edges:
                     if node == destination:
                         return True
