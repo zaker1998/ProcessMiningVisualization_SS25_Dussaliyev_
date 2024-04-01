@@ -4,19 +4,22 @@ This unittest tests the integrity of the heuristic_graph_controller which holds 
 
 import unittest
 
-# from custom_ui.heuristic_graph_ui.heuristic_graph_controller import (
-#    HeuristicGraphController,
-# )
 from graphs.visualization.base_graph import BaseGraph
-
-# from mining_algorithms.heuristic_mining import HeuristicMining
-# from api.csv_preprocessor import read
+from mining_algorithms.heuristic_mining import HeuristicMining
+from controllers.HeuristicMiningController import HeuristicMiningController
 from collections import deque
+
+from utils.io import read_file
+from utils.transformations import dataframe_to_cases_list
+
+
+def read(filename, timeLabel="timestamp", caseLabel="case", eventLabel="event"):
+    df = read_file(filename)
+    return dataframe_to_cases_list(df, timeLabel, caseLabel, eventLabel)
 
 
 class TestHeuristic(unittest.TestCase):
 
-    @unittest.skip("Not adapted to new controller")
     def test_create_dependency_graph_using_preprocessed_txt(self):
         print("-------------- Running test.txt ----------------")
         self.__run_test_txt("test0")
@@ -29,7 +32,6 @@ class TestHeuristic(unittest.TestCase):
         print("passed test 3")
         print("---------------- test.txt passed! ----------------")
 
-    @unittest.skip("Not adapted to new controller")
     def test_create_dependency_graph_using_test_csv(self):
         print("-------------- Running test_csv ----------------")
         self.__run_test_csv(0.5, 1)
@@ -42,13 +44,11 @@ class TestHeuristic(unittest.TestCase):
         print("passed test 4")
         print("---------------- test_csv passed! ----------------")
 
-    @unittest.skip("Not adapted to new controller")
     def test_create_dependency_graph_using_CallcenterExample(self):
         print("-------------- Running large CallcenterExample ----------------")
         self.__run_CallcenterExample_csv(0.5, 1)
         print("---------------- CallcenterExample passed! ----------------")
 
-    @unittest.skip("Not adapted to new controller")
     def test_loading_pickle_HeuristicMining_model(self):
         print("----------- Running pickle loading test ----------")
         print("(This test fails if you messed with the HeuristicMining class)")
@@ -68,22 +68,19 @@ class TestHeuristic(unittest.TestCase):
         return log
 
     def __run_test_txt(self, filename):
-        Controller = HeuristicGraphController("temp/graph_viz")
-        Controller.startMining(self.__read_cases("tests/testlogs/" + filename + ".txt"))
-        G = Controller.create_dependency_graph(0.5, 1)
-        self.__check_graph_integrity(G)
+        heuristicMining = HeuristicMining(
+            self.__read_cases("tests/testlogs/" + filename + ".txt")
+        )
+        heuristicMining.create_dependency_graph_with_graphviz(0.5, 1)
+        self.__check_graph_integrity(heuristicMining.get_graph())
 
     def __run_test_csv(self, threshold, min_freq):
-        Controller = HeuristicGraphController("temp/graph_viz")
-        Controller.startMining(read("tests/testcsv/test_csv.csv"))
-        G = Controller.create_dependency_graph(
-            threshold, min_freq
-        )  # G is a HeuricticGraph/BaseGraph
-        self.__check_graph_integrity(G)
+        heuristicMining = HeuristicMining(read("tests/testcsv/test_csv.csv"))
+        heuristicMining.create_dependency_graph_with_graphviz(threshold, min_freq)
+        self.__check_graph_integrity(heuristicMining.get_graph())
 
     def __run_CallcenterExample_csv(self, threshold, min_freq):
-        Controller = HeuristicGraphController("temp/graphviz")
-        Controller.startMining(
+        heuristicMining = HeuristicMining(
             read(
                 "tests/testcsv/CallcenterExample.csv",
                 caseLabel="Service ID",
@@ -91,24 +88,27 @@ class TestHeuristic(unittest.TestCase):
                 timeLabel="Start Date",
             )
         )
-        G = Controller.create_dependency_graph(
-            threshold, min_freq
-        )  # G is a HeuricticGraph/BaseGraph
-        self.__check_graph_integrity(G)
+        heuristicMining.create_dependency_graph_with_graphviz(threshold, min_freq)
+        self.__check_graph_integrity(heuristicMining.get_graph())
 
     def __run_pickle_loading_test(self, pickleFile):
-        Controller = HeuristicGraphController("temp/graph_viz")
-        Controller.loadModel(pickleFile)
+        model = read_file(pickleFile)
 
-        self.assertIsInstance(Controller.getModel(), HeuristicMining)
+        Controller = HeuristicMiningController()
+        Controller.set_model(model)
 
-        G = Controller.create_dependency_graph(0.2, 4)
+        self.assertIsInstance(Controller.get_model(), HeuristicMining)
+        Controller.set_threshold(0.2)
+        Controller.set_frequency(4)
+        Controller.perform_mining()
+
+        G = Controller.get_graph()
         self.assertIsNotNone(G)
 
         max_frequency = Controller.get_max_frequency()
         self.assertIsNotNone(max_frequency)
 
-        min_frequency = Controller.get_min_frequency()
+        min_frequency = Controller.get_frequency()
         self.assertIsNotNone(min_frequency)
 
         threshold = Controller.get_threshold()
