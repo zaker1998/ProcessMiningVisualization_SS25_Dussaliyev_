@@ -24,6 +24,31 @@ class TestSequenceCut(unittest.TestCase):
         self.assertEqual(cuts[1], {2})
         self.assertEqual(cuts[2], {3})
 
+    def test_cut_with_partitions_of_different_sizes(self):
+        log = [
+            ["A", "G", "B", "C", "D"],
+            ["A", "G", "C", "B", "D"],
+            ["A", "G", "E", "F", "D"],
+            ["G", "A", "E", "F", "D"],
+            ["G", "Y", "A", "E", "F", "D"],
+        ]
+
+        dfg = DFG(log)
+
+        cuts = sequence_cut(dfg)
+
+        self.assertEqual(len(cuts), 3)
+        self.assertEqual(cuts[0], {"A", "G", "Y"})
+        self.assertEqual(cuts[1], {"B", "C", "E", "F"})
+        self.assertEqual(cuts[2], {"D"})
+
+    def test_not_cut_returns_none(self):
+        log = [["B", "C"], ["C", "B"]]
+        dfg = DFG(log)
+        cuts = sequence_cut(dfg)
+
+        self.assertIsNone(cuts)
+
 
 if __name__ == "__main__":
     unittest.main()
