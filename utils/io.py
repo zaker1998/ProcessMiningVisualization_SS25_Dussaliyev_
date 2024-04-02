@@ -17,7 +17,7 @@ def pickle_save(class_object: object, filename: str) -> None:
 # Loads the class object that was saved as a pickle file. path should include filename
 def pickle_load(path: str) -> object:
     if isinstance(path, st.runtime.uploaded_file_manager.UploadedFile):
-        load_instance = pickle.load(path.read())
+        load_instance = pickle.load(path)
     else:
         with open(path, "rb") as file:
             load_instance = pickle.load(file)

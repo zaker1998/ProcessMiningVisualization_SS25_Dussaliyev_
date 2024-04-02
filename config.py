@@ -14,8 +14,6 @@ algorithm_routes = {
     "fuzzy": FuzzyGraphView(),
 }
 
-print("config.py loaded")
-
 
 @st.cache_data
 def get_algorithm_view(algorithm: str):

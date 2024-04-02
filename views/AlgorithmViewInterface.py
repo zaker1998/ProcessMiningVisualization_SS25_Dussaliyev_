@@ -14,6 +14,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         raise NotImplementedError("initialize_values() method not implemented")
 
     @abstractmethod
+    def is_correct_model_type(self, model) -> bool:
+        raise NotImplementedError("is_correct_model_type() method not implemented")
+
+    @abstractmethod
     def render_sidebar(self):
         raise NotImplementedError("render_sidebar() method not implemented")
 
@@ -23,6 +27,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
 
     def read_values_from_session_state(self):
         if "model" in st.session_state:
+            if not self.is_correct_model_type(st.session_state.model):
+                st.session_state.error = "Invalid model type"
+                self.navigte_to("Home", True)
+                st.rerun()
             self.controller.set_model(st.session_state.model)
         else:
             if (

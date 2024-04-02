@@ -3,6 +3,7 @@ from graphs.visualization.fuzzy_graph import FuzzyGraph
 from controllers.FuzzyMiningController import (
     FuzzyMiningController,
 )
+from mining_algorithms.fuzzy_mining import FuzzyMining
 import streamlit as st
 
 
@@ -10,6 +11,9 @@ class FuzzyGraphView(AlgorithmViewInterface):
 
     def __init__(self):
         self.controller = FuzzyMiningController()
+
+    def is_correct_model_type(self, model) -> bool:
+        return isinstance(model, FuzzyMining)
 
     def initialize_values(self):
         if "significance" not in st.session_state:
