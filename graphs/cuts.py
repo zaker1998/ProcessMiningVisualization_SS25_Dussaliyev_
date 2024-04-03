@@ -136,10 +136,14 @@ def loop_cut(graph: DFG) -> list[set[str | int], ...]:
     if len(connected_components) > 0:
         return None
 
-    partitions = [partition_1, *connected_components]
-
     # check other conditions for partitions if not fullfiled merge with partition_1
+    for partition in connected_components:
+        pass
+        # check if edges from partition to end node (that is not also a start node) exists if yes merge with partition one
 
+        # check if edges from start nodes (that are not an end node) to partition exists if yes merge with partition one
+
+    partitions = [partition_1, *connected_components]
     return partitions if len(partitions) > 1 else None
 
 

@@ -34,6 +34,25 @@ class TestParallelCut(unittest.TestCase):
         # C is merged with other nodes
         self.assertNotIn({"C"}, cuts)
 
+    def test_partitions_with_start_node_are_first_merged_with_end_node_partitions(self):
+        log = [
+            ["A", "B", "C", "D"],
+            ["A", "B", "D", "C"],
+            ["A", "D", "B", "C"],
+            ["A", "C", "B", "D"],
+            ["B", "A", "C", "D"],
+            ["B", "C", "A", "D"],
+            ["B", "C", "D", "A"],
+            ["D", "A", "B", "C"],
+        ]
+        dfg = DFG(log)
+        cuts = parallel_cut(dfg)
+
+        self.assertEqual(len(cuts), 3)
+        self.assertIn({"A"}, cuts)
+        self.assertIn({"B", "C"}, cuts)
+        self.assertIn({"D"}, cuts)
+
 
 if __name__ == "__main__":
     unittest.main()
