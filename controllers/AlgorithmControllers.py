@@ -17,7 +17,7 @@ class AlgorithmController(ABC):
     def have_parameters_changed(self):
         raise NotImplementedError("have_parameters_changed() method not implemented")
 
-    def __create_cases_from_df(
+    def create_cases_from_df(
         self, df, timestamp_col, activity_col, cases_col, **additional_cols
     ):
         cases = dataframe_to_cases_list(df, timestamp_col, cases_col, activity_col)
@@ -37,7 +37,7 @@ class AlgorithmController(ABC):
     ):
         if self.model is not None:
             raise ValueError("The model is already set. To change it, use set_model()")
-        cases = self.__create_cases_from_df(
+        cases = self.create_cases_from_df(
             df, timestamp_col, activity_col, cases_col, **additional_cols
         )
         self.model = self.create_empty_model(cases)
