@@ -13,6 +13,10 @@ class AlgorithmController(ABC):
     def create_empty_model(self, cases):
         raise NotImplementedError("create_empty_model() method not implemented")
 
+    @abstractmethod
+    def have_parameters_changed(self):
+        raise NotImplementedError("have_parameters_changed() method not implemented")
+
     def __create_cases_from_df(
         self, df, timestamp_col, activity_col, cases_col, **additional_cols
     ):

@@ -13,7 +13,15 @@ class HeuristicMiningController(AlgorithmController):
     def create_empty_model(self, cases):
         return HeuristicMining(cases)
 
+    def have_parameters_changed(self):
+        return (
+            self.model.get_threshold() != self.threshold
+            or self.model.get_min_frequency() != self.frequency
+        )
+
     def perform_mining(self) -> None:
+        if self.get_graph() is not None and not self.have_parameters_changed():
+            return
 
         self.model.create_dependency_graph_with_graphviz(self.threshold, self.frequency)
 

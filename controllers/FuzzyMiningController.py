@@ -14,7 +14,18 @@ class FuzzyMiningController(AlgorithmController):
     def create_empty_model(self, cases):
         return FuzzyMining(cases)
 
+    def have_parameters_changed(self):
+        return (
+            self.model.get_significance() != self.significance
+            or self.model.get_correlation() != self.correlation
+            or self.model.get_edge_cutoff() != self.edge_cutoff
+            or self.model.get_utility_ratio() != self.utility_ratio
+        )
+
     def perform_mining(self) -> None:
+        if self.get_graph() is not None and not self.have_parameters_changed():
+            return
+
         self.model.create_graph_with_graphviz(
             self.significance, self.correlation, self.edge_cutoff, self.utility_ratio
         )
