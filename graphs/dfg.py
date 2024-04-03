@@ -1,4 +1,5 @@
 from collections import deque
+from utils.transformations import cases_list_to_dict
 
 
 class DFG:
@@ -12,8 +13,14 @@ class DFG:
         if log:
             self.__build_graph_from_log(log)
 
-    def __build_graph_from_log(self, log: list[list[str]]) -> None:
-        for trace in log:
+    def __build_graph_from_log(
+        self, log: list[list[str]] | dict[tuple[str, ...], int]
+    ) -> None:
+        _log = log
+        if isinstance(log, list):
+            _log = cases_list_to_dict(log)
+
+        for trace, frequency in _log.items():
             if len(trace) == 0:
                 continue
 
@@ -21,7 +28,7 @@ class DFG:
             self.end_nodes.add(trace[-1])
 
             for i in range(len(trace) - 1):
-                self.add_edge(trace[i], trace[i + 1])
+                self.add_edge(trace[i], trace[i + 1], frequency)
 
     def add_edge(
         self, source: str | int, destination: str | int, weight: int = 1
