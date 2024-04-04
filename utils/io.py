@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 import os
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 # TODO: Use docstrings to document the functions not comments
 
@@ -15,8 +16,8 @@ def pickle_save(class_object: object, filename: str) -> None:
 
 
 # Loads the class object that was saved as a pickle file. path should include filename
-def pickle_load(path: str) -> object:
-    if isinstance(path, st.runtime.uploaded_file_manager.UploadedFile):
+def pickle_load(path: str | UploadedFile) -> object:
+    if isinstance(path, UploadedFile):
         load_instance = pickle.load(path)
     else:
         with open(path, "rb") as file:
@@ -24,9 +25,8 @@ def pickle_load(path: str) -> object:
     return load_instance
 
 
-def read_csv(filePath: str) -> pd.DataFrame:
-    # use csv.Sniffer to detect the delimiter
-    if isinstance(filePath, st.runtime.uploaded_file_manager.UploadedFile):
+def detect_delimiter(filePath: str | UploadedFile) -> str:
+    if isinstance(filePath, UploadedFile):
         dialect = csv.Sniffer().sniff(filePath.read(1024).decode("utf-8"))
         filePath.seek(0)
     else:
@@ -34,8 +34,10 @@ def read_csv(filePath: str) -> pd.DataFrame:
             dialect = csv.Sniffer().sniff(f.read(1024))
 
     delimiter = dialect.delimiter
+    return delimiter
 
-    # Read the CSV file
+
+def read_csv(filePath: str | UploadedFile, delimiter: str = ",") -> pd.DataFrame:
     df = pd.read_csv(filePath, delimiter=delimiter)
     return df
 
@@ -45,14 +47,14 @@ def read_excel(filePath: str) -> pd.DataFrame:
 
 
 def read_file(
-    filePath: str | st.runtime.uploaded_file_manager.UploadedFile,
+    filePath: str | UploadedFile, delimiter: str = ","
 ) -> pd.DataFrame | object:
-    if isinstance(filePath, st.runtime.uploaded_file_manager.UploadedFile):
+    if isinstance(filePath, UploadedFile):
         file_name = filePath.name
     else:
         file_name = filePath
     if file_name.endswith(".csv"):
-        return read_csv(filePath)
+        return read_csv(filePath, delimiter=delimiter)
     elif file_name.endswith(".pickle"):
         return pickle_load(filePath)
     else:

@@ -2,7 +2,7 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 import os
 from utils.transformations import dataframe_to_cases_list
-from utils.io import read_file
+from utils.io import read_file, detect_delimiter
 from config import algorithm_mappings
 
 
@@ -16,34 +16,49 @@ class Home(ViewInterface):
             )
             st.write("To get started, upload a CSV file containing your process logs.")
 
-            file = st.file_uploader(
+            self.file = st.file_uploader(
                 "Upload a file",
                 type=["csv", "pickle"],
                 accept_multiple_files=False,
                 key="file_uploader",
             )
 
-            if file:
-                self.processed_file = read_file(file)
-                if file.name.endswith(".csv"):
+            if self.file:
+                if self.file.name.endswith(".csv"):
                     self.render_df_import()
-                elif file.name.endswith(".pickle"):
+                elif self.file.name.endswith(".pickle"):
                     self.render_model_import()
 
     def render_model_import(self):
-        selection = st.selectbox("Mining Algorthm", list(algorithm_mappings.keys()))
+        model = read_file(self.file)
+        algorithm_col, _, button_column = st.columns([2, 2, 1])
+        with algorithm_col:
+            selection = st.selectbox("Mining Algorthm", list(algorithm_mappings.keys()))
 
-        if st.button("Import Model", type="primary"):
-            st.session_state.algorithm = algorithm_mappings[selection]
-            st.session_state.model = self.processed_file
-            self.navigte_to("Algorithm")
-            st.rerun()
+        with button_column:
+            st.write("")
+            if st.button("Import Model", type="primary", use_container_width=True):
+                st.session_state.algorithm = algorithm_mappings[selection]
+                st.session_state.model = model
+                self.navigte_to("Algorithm")
+                st.rerun()
 
     def render_df_import(self):
-        if st.button("Mine from File", type="primary"):
-            st.session_state.df = self.processed_file
-            self.navigte_to("ColumnSelection")
-            st.rerun()
+        detected_delimiter = detect_delimiter(self.file)
+
+        delimiter_col, _, button_column = st.columns([1, 3, 1])
+
+        with delimiter_col:
+            delimiter = st.text_input(
+                "Delimiter", value=detected_delimiter, key="delimiter", max_chars=1
+            )
+
+        with button_column:
+            st.write("")
+            if st.button("Mine from File", type="primary", use_container_width=True):
+                st.session_state.df = read_file(self.file, delimiter=delimiter)
+                self.navigte_to("ColumnSelection")
+                st.rerun()
 
     def clear(self):
         return
