@@ -81,6 +81,7 @@ class HeuristicMining(BaseMining):
         self.graph.add_end_node()
         self.graph.add_ending_edges(self.__get_end_nodes())
 
+    # TODO should be max frequency of edges and not nodes
     def get_max_frequency(self):
         max_freq = 0
         for value in list(self.appearence_frequency.values()):
