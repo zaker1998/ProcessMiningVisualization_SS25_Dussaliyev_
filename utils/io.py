@@ -26,12 +26,17 @@ def pickle_load(path: str) -> object:
 
 def read_csv(filePath: str) -> pd.DataFrame:
     # use csv.Sniffer to detect the delimiter
-    # with open(filePath, "r") as f:
-    #    dialect = csv.Sniffer().sniff(f.read(1024))
-    #    delimiter = dialect.delimiter
+    if isinstance(filePath, st.runtime.uploaded_file_manager.UploadedFile):
+        dialect = csv.Sniffer().sniff(filePath.read(1024).decode("utf-8"))
+        filePath.seek(0)
+    else:
+        with open(filePath, "r") as f:
+            dialect = csv.Sniffer().sniff(f.read(1024))
+
+    delimiter = dialect.delimiter
 
     # Read the CSV file
-    df = pd.read_csv(filePath)  # , delimiter=delimiter)
+    df = pd.read_csv(filePath, delimiter=delimiter)
     return df
 
 
