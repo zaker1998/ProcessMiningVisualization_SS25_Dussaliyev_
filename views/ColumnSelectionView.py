@@ -84,12 +84,31 @@ class ColumnSelectionView(ViewInterface):
             hide_index=True,
             height=500,
         )
+        back_col, _, algorithm_column, _, mine_col = st.columns([2, 1, 4, 1, 2])
 
-        algorithm = st.selectbox("Select the algorithm", [*algorithm_mappings.keys()])
+        with algorithm_column:
+            algorithm = st.selectbox(
+                "Select the algorithm", [*algorithm_mappings.keys()]
+            )
 
-        mine_button = st.button(
-            "Mine", type="primary", on_click=self.on_mine_click, args=[algorithm]
-        )
+        with back_col:
+            st.write("")
+            back_button = st.button(
+                "Back",
+                type="secondary",
+                on_click=self.navigte_to,
+                args=["Home"],
+                use_container_width=True,
+            )
+        with mine_col:
+            st.write("")
+            mine_button = st.button(
+                "Mine",
+                type="primary",
+                on_click=self.on_mine_click,
+                args=[algorithm],
+                use_container_width=True,
+            )
 
     def on_mine_click(self, algorithm):
         if (
