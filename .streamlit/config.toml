@@ -144,7 +144,7 @@ cookieSecret = "0b7f52860d0bacaf0c45286de2047b628de6732cd3de9f4fe2c02ae3bf454577
 
 # Default: false unless (1) we are on a Linux box where DISPLAY is unset, or
 # (2) we are running in the Streamlit Atom plugin.
-# headless = false
+headless = false
 
 # Automatically rerun script when the file is modified on disk.
 
