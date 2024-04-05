@@ -5,6 +5,7 @@ from config import algorithm_mappings
 
 
 class ColumnSelectionView(ViewInterface):
+    max_rows_shown = 200
 
     def predict_columns(self, column_names) -> tuple[str, str, str]:
         time_column = None
@@ -36,6 +37,8 @@ class ColumnSelectionView(ViewInterface):
             st.session_state.error = "Please upload a file first"
             st.rerun()
 
+        df = st.session_state.df.head(self.max_rows_shown)
+
         selection_columns = st.columns([2, 2, 2])
 
         # Try to predict the columns if they are not already set
@@ -48,42 +51,48 @@ class ColumnSelectionView(ViewInterface):
                 st.session_state.time_column,
                 st.session_state.case_column,
                 st.session_state.activity_column,
-            ) = self.predict_columns(st.session_state.df.columns)
+            ) = self.predict_columns(df)
 
         with selection_columns[0]:
             st.selectbox(
-                "Select the time column *",
-                st.session_state.df.columns,
+                "Select the :red[time column] *",
+                df.columns,
                 key="time_column",
                 index=None,
             )
 
         with selection_columns[1]:
             st.selectbox(
-                "Select the case column *",
-                st.session_state.df.columns,
+                "Select the :blue[case column] *",
+                df.columns,
                 key="case_column",
                 index=None,
             )
 
         with selection_columns[2]:
             st.selectbox(
-                "Select the activity column *",
-                st.session_state.df.columns,
+                "Select the :green[activity column] *",
+                df.columns,
                 key="activity_column",
                 index=None,
             )
 
         st.multiselect(
-            "Select the data columns", st.session_state.df.columns, key="data_columns"
+            "Select the :violet[data columns]", df.columns, key="data_columns"
+        )
+
+        styled_df = df.style.apply(
+            axis=0,
+            func=self.style_df,
         )
 
         st.dataframe(
-            st.session_state.df,
+            styled_df,
             use_container_width=True,
             hide_index=True,
             height=500,
         )
+
         back_col, _, algorithm_column, _, mine_col = st.columns([2, 1, 4, 1, 2])
 
         with algorithm_column:
@@ -120,6 +129,18 @@ class ColumnSelectionView(ViewInterface):
         else:
             st.session_state.algorithm = algorithm_mappings[algorithm]
             self.navigte_to("Algorithm", clean_up=True)
+
+    def style_df(self, col):
+        if col.name == st.session_state.time_column:
+            return ["background-color: #FF705B" for _ in col]
+        elif col.name == st.session_state.case_column:
+            return ["background-color: #629AFF" for _ in col]
+        elif col.name == st.session_state.activity_column:
+            return ["background-color: #57B868" for _ in col]
+        elif col.name in st.session_state.data_columns:
+            return ["background-color: #C38CFF" for _ in col]
+        else:
+            return ["background-color: #ffffff" for _ in col]
 
     def clear(self):
         return
