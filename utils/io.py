@@ -27,11 +27,11 @@ def pickle_load(path: str | UploadedFile) -> object:
 
 def detect_delimiter(filePath: str | UploadedFile) -> str:
     if isinstance(filePath, UploadedFile):
-        dialect = csv.Sniffer().sniff(filePath.read(1024).decode("utf-8"))
+        dialect = csv.Sniffer().sniff(filePath.readline().decode("utf-8"))
         filePath.seek(0)
     else:
         with open(filePath, "r") as f:
-            dialect = csv.Sniffer().sniff(f.read(1024))
+            dialect = csv.Sniffer().sniff(f.readline())
 
     delimiter = dialect.delimiter
     return delimiter

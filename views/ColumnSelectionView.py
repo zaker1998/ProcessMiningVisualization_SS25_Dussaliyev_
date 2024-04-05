@@ -139,8 +139,6 @@ class ColumnSelectionView(ViewInterface):
             return ["background-color: #57B868" for _ in col]
         elif col.name in st.session_state.data_columns:
             return ["background-color: #C38CFF" for _ in col]
-        else:
-            return ["background-color: #ffffff" for _ in col]
 
     def clear(self):
         return

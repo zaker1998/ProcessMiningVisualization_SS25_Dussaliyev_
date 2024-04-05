@@ -44,7 +44,11 @@ class Home(ViewInterface):
                 st.rerun()
 
     def render_df_import(self):
-        detected_delimiter = detect_delimiter(self.file)
+        detected_delimiter = ""
+        try:
+            detected_delimiter = detect_delimiter(self.file)
+        except Exception as e:
+            print(e)
 
         delimiter_col, _, button_column = st.columns([1, 3, 1])
 
@@ -56,6 +60,10 @@ class Home(ViewInterface):
         with button_column:
             st.write("")
             if st.button("Mine from File", type="primary", use_container_width=True):
+                if delimiter == "":
+                    st.session_state.error = "Please enter a delimiter"
+                    st.rerun()
+                    return
                 st.session_state.df = read_file(self.file, delimiter=delimiter)
                 self.navigte_to("ColumnSelection")
                 st.rerun()
