@@ -37,9 +37,3 @@ class HeuristicGraph(BaseGraph):
         weight: int = None,
     ) -> None:
         super().add_edge(source, destination, weight, penwidth=str(size))
-
-    def add_starting_edges(self, start_nodes: list[str]) -> None:
-        super().add_starting_edges(start_nodes, penwidth="0.1")
-
-    def add_ending_edges(self, end_nodes: list[str]) -> None:
-        super().add_ending_edges(end_nodes, penwidth="0.1")
