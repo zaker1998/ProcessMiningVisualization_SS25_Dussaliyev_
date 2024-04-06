@@ -98,6 +98,9 @@ class BaseGraph:
         if not nodes:
             return
 
+        if "penwidth" not in edge_attributes:
+            edge_attributes["penwidth"] = "0.1"
+
         for node in nodes:
             if weights:
                 self.add_edge(
