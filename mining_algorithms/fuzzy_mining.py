@@ -7,10 +7,7 @@ from mining_algorithms.base_mining import BaseMining
 class FuzzyMining(BaseMining):
     def __init__(self, cases):
         super().__init__(cases)
-        self.min_node_size = 1.5
         self.minimum_correlation = None
-        # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
-        self.events, self.appearance_activities = self.__filter_all_events()
         self.succession_matrix = self.__create_succession_matrix()
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()
         self.significance_of_nodes = self.__calculate_significance()
@@ -27,15 +24,7 @@ class FuzzyMining(BaseMining):
         """
         stores the cluster_id as an value and the nodes int the cluster as the key. The node ids are separated by a '-'
         """
-        self.cluster_id_mapping = {}
-
-    """  
-        Info about DensityDistributionClusterAlgorithm DDCAL:
-         If we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
-         after using cluster.sorted_data we get a sorted array[123, 234, 345, 433, 456]
-         after using cluster.labels_sorted_data we get a normalized array with float numbers
-         minimum value starts with 0.0 and the greatest value has 5.0 in this case [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
-    """
+        self.cluster_id_mapping = None
 
     def create_graph_with_graphviz(
         self, significance, correlation, edge_cutoff, utility_ratio
@@ -44,15 +33,11 @@ class FuzzyMining(BaseMining):
         self.correlation = correlation
         self.edge_cutoff = edge_cutoff
         self.utility_ratio = utility_ratio
+        self.cluster_id_mapping = {}
 
         self.minimum_correlation = correlation
         # self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
         self.graph = FuzzyGraph()
-        cluster = DensityDistributionClusterAlgorithm(
-            list(self.appearance_activities.values())
-        )
-        nodes_sorted = list(cluster.sorted_data)
-        freq_labels_sorted = list(cluster.labels_sorted_data)
         print("Sign: " + str(significance))
         print("Succession: " + "\n" + str(self.succession_matrix))
         # 1 Rule remove less significant and less correlated nodes
@@ -119,10 +104,7 @@ class FuzzyMining(BaseMining):
         # normal_nodes_after_sec_rule = self.__calculate_normal_nodes()
         # what is already clustered is not a normal node
         self.__add_normal_nodes_to_graph(
-            self.graph,
-            nodes_after_first_rule,
-            self.list_of_clustered_nodes,
-            self.appearance_activities,
+            self.graph, nodes_after_first_rule, self.list_of_clustered_nodes
         )
 
         list_of_filtered_edges_as_node = self.__get_as_node_removed_indices(
@@ -132,6 +114,31 @@ class FuzzyMining(BaseMining):
         self.__add_edges_to_graph(
             self.graph, clustered_nodes_after_sec_rule, list_of_filtered_edges_as_node
         )
+
+        # add start and end nodes
+        self.graph.add_start_node()
+        self.graph.add_end_node()
+
+        # add starting and ending edges from the log
+        # if nodes are merged to cluster, get the cluster id
+        start_nodes = set(map(lambda node: self.get_node_id(node), self.start_nodes))
+        end_nodes = set(map(lambda node: self.get_node_id(node), self.end_nodes))
+
+        print("Start nodes: " + str(start_nodes))
+        print("End nodes: " + str(end_nodes))
+
+        self.graph.add_starting_edges(start_nodes)
+        self.graph.add_ending_edges(end_nodes)
+
+        # TODO: add startign and ending edges for nodes that are
+        # 1. not reachable from the start node
+        # 2. not leading to the end node
+
+    def get_node_id(self, node):
+        for key, value in self.cluster_id_mapping.items():
+            if node in key:
+                return value
+        return node
 
     def __get_as_node_removed_indices(self, list_of_filtered_edges):
         removed_nodes = []
@@ -483,27 +490,12 @@ class FuzzyMining(BaseMining):
         graph,
         nodes_after_first_rule,
         list_of_clustered_nodes,
-        appearance_activities,
     ):
-        min_node_size = 1.5
-        cluster = DensityDistributionClusterAlgorithm(
-            list(appearance_activities.values())
-        )
-        nodes_sorted = list(cluster.sorted_data)
-        freq_labels_sorted = list(cluster.labels_sorted_data)
         for node in nodes_after_first_rule:
             if node not in list_of_clustered_nodes:
-                node_freq = appearance_activities.get(node)
-                node_width = (
-                    freq_labels_sorted[nodes_sorted.index(node_freq)] / 2
-                    + min_node_size
-                )
-                node_height = node_width / 3
-
+                w, h = self.calulate_node_size(node)
                 node_sign = self.sign_dict.get(node)
-
-                # chatgpt asked how to change fontcolor just for node_freq
-                self.graph.add_event(node, node_sign, (node_width, node_height))
+                self.graph.add_event(node, node_sign, (w, h))
 
     def __convert_clustered_nodes_to_list(self, clustered_nodes):
         ret_nodes = []
@@ -512,7 +504,6 @@ class FuzzyMining(BaseMining):
             for node in cluster_events:
                 if node not in ret_nodes:
                     ret_nodes.append(node)
-        # result_list = [event for sublist in clustered_nodes for word in sublist for event in word.split('-')]
         return ret_nodes
 
     def __update_significance_matrix(
@@ -686,27 +677,13 @@ class FuzzyMining(BaseMining):
 
     def __calculate_significance(self):
         # find the most frequently node from of all events
-        max_value = max(self.appearance_activities.values())
+        max_value = max(self.appearence_frequency.values())
         dict = {}
         # dict = {key: value / max_value for key, value in self.appearance_activities.items()}
-        for key, value in self.appearance_activities.items():
+        for key, value in self.appearence_frequency.items():
             new_sign = format(value / max_value, ".2f")
             dict[key] = new_sign
         return dict
-
-    def __filter_all_events(self):
-        dic = {}
-        for trace in self.log:
-            for activity in trace:
-                # chatGpt asked for doing this, if activity already in dictionary increase value + 1
-                dic[activity] = dic.get(activity, 0) + 1
-        # list of all unique activities
-        #
-        activities = sorted(list(dic.keys()))
-        sorted_dic = {a: dic[a] for a in sorted(dic)}
-
-        # returns activities "a", "b" ... and dic: a: 4, a has 4-appearances ...
-        return activities, sorted_dic
 
     def __create_succession_matrix(self):
         """2D matrix a, b, c => 3x3 matrix example below
