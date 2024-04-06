@@ -82,19 +82,11 @@ class BaseGraph:
                 node_attributes["style"] = "filled"
         self.graph.node(node.get_id(), node.get_label(), **node_attributes)
 
-    def add_start_node(self, id: str = "Start", **node_attributes) -> None:
-        if node_attributes:
-            self.add_node(id, **node_attributes)
-        else:
-            self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
+    def add_start_node(self, id: str = "Start") -> None:
+        self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
 
-    def add_end_node(self, id: str = "End", **node_attributes) -> None:
-        if node_attributes:
-            self.add_node(id, **node_attributes)
-        else:
-            self.add_node(
-                id, shape="doublecircle", style="filled, bold", fillcolor="red"
-            )
+    def add_end_node(self, id: str = "End") -> None:
+        self.add_node(id, shape="doublecircle", style="filled, bold", fillcolor="red")
 
     def add_starting_edges(
         self,
