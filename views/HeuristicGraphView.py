@@ -31,7 +31,7 @@ class HeuristicGraphView(AlgorithmViewInterface):
             key="frequency",
         )
 
-        threshold = st.slider("Threshold", 0.0, 1.0, key="threshold")
+        threshold = st.slider("Dependency Threshold", 0.0, 1.0, key="threshold")
 
         self.controller.set_frequency(frequency)
         self.controller.set_threshold(threshold)

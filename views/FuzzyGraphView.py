@@ -27,15 +27,39 @@ class FuzzyGraphView(AlgorithmViewInterface):
 
     def render_sidebar(self):
         st.write("Significance Cutoff")
-        significance = st.slider("Significance", 0.0, 1.0, key="significance")
+        significance = st.slider(
+            "Significance",
+            0.0,
+            1.0,
+            key="significance",
+            help="Significance measures the frequency of events that are observed more frequently and are therefore considered more significant.",
+        )
 
-        correlation = st.slider("Correlation", 0.0, 1.0, key="correlation")
+        correlation = st.slider(
+            "Correlation",
+            0.0,
+            1.0,
+            key="correlation",
+            help="Correlation measures how closely related two events following one another are.",
+        )
 
         st.divider()
         st.write("Edge filtering")
-        edge_cutoff = st.slider("Edge Cutoff", 0.0, 1.0, key="edge_cutoff")
+        edge_cutoff = st.slider(
+            "Edge Cutoff",
+            0.0,
+            1.0,
+            key="edge_cutoff",
+            help="The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges",
+        )
 
-        utility_ratio = st.slider("Utility Ration", 0.0, 1.0, key="utility_ration")
+        utility_ratio = st.slider(
+            "Utility Ration",
+            0.0,
+            1.0,
+            key="utility_ration",
+            help="A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges",
+        )
 
         self.controller.set_significance(significance)
         self.controller.set_correlation(correlation)
