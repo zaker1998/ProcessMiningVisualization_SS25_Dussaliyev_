@@ -7,7 +7,7 @@ class BaseMining:
         self.min_node_size = 1.5
         self.graph = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
-        self.events, self.appearence_frequency = self.__filter_out_all_events()
+        self.events, self.appearance_frequency = self.__filter_out_all_events()
 
         """  
         Info about DensityDistributionClusterAlgorithm DDCAL:
@@ -18,7 +18,7 @@ class BaseMining:
         """
         # cluster the node sizes based on frequency
         cluster = DensityDistributionClusterAlgorithm(
-            list(self.appearence_frequency.values())
+            list(self.appearance_frequency.values())
         )
         self.freq_sorted = list(cluster.sorted_data)
         self.freq_labels_sorted = list(cluster.labels_sorted_data)
@@ -49,7 +49,7 @@ class BaseMining:
         return width, height
 
     def get_scale_factor(self, node):
-        node_freq = self.appearence_frequency.get(node)
+        node_freq = self.appearance_frequency.get(node)
         scale_factor = self.freq_labels_sorted[self.freq_sorted.index(node_freq)]
         return scale_factor
 

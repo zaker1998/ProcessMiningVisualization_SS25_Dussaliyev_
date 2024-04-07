@@ -6,9 +6,6 @@ class InductiveMining(BaseMining):
     def __init__(self, log):
         super().__init__(log)
 
-        if isinstance(log, list):
-            self.log = cases_list_to_dict(log)
-
     def generate_graph(self):
         pass
 

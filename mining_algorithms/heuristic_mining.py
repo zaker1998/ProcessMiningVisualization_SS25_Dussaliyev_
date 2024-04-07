@@ -31,7 +31,7 @@ class HeuristicMining(BaseMining):
 
         # add nodes to graph
         for node in self.events:
-            node_freq = self.appearence_frequency.get(node)
+            node_freq = self.appearance_frequency.get(node)
             w, h = self.calulate_node_size(node)
             self.graph.add_event(node, node_freq, (w, h))
 

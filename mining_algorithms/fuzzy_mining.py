@@ -677,10 +677,10 @@ class FuzzyMining(BaseMining):
 
     def __calculate_significance(self):
         # find the most frequently node from of all events
-        max_value = max(self.appearence_frequency.values())
+        max_value = max(self.appearance_frequency.values())
         dict = {}
         # dict = {key: value / max_value for key, value in self.appearance_activities.items()}
-        for key, value in self.appearence_frequency.items():
+        for key, value in self.appearance_frequency.items():
             new_sign = format(value / max_value, ".2f")
             dict[key] = new_sign
         return dict
