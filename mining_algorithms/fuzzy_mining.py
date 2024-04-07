@@ -694,16 +694,12 @@ class FuzzyMining(BaseMining):
         # d 0 0 0 0
         """
         succession_matrix = np.zeros((len(self.events), len(self.events)))
+        mapping = {event: i for i, event in enumerate(self.events)}
         for trace, frequency in self.log.items():
-            index_x = -1
-            for element in trace:
-                if index_x < 0:
-                    index_x += 1
-                    continue
-                x = self.events.index(trace[index_x])
-                y = self.events.index(element)
+            for index in range(len(trace) - 1):
+                x = mapping[trace[index]]
+                y = mapping[trace[index + 1]]
                 succession_matrix[x][y] += frequency
-                index_x += 1
         return succession_matrix
 
     def __create_correlation_dependency_matrix(self):
