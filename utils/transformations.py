@@ -1,6 +1,7 @@
 import pandas as pd
 
 
+# deprecated, use dataframe_to_cases_dict instead
 def dataframe_to_cases_list(
     df: pd.DataFrame,
     timeLabel: str = "timestamp",
