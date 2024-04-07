@@ -28,12 +28,12 @@ class BaseMining:
 
     def __filter_out_all_events(self):
         dic = {}
-        for trace in self.log:
+        for trace, frequency in self.log.items():
             for activity in trace:
                 if activity in dic:
-                    dic[activity] = dic[activity] + 1
+                    dic[activity] = dic[activity] + frequency
                 else:
-                    dic[activity] = 1
+                    dic[activity] = frequency
 
         activities = list(dic.keys())
         return activities, dic
@@ -54,7 +54,7 @@ class BaseMining:
         return scale_factor
 
     def __get_start_nodes(self):
-        return set([trace[0] for trace in self.log])
+        return set([trace[0] for trace in self.log.keys()])
 
     def __get_end_nodes(self):
-        return set([trace[-1] for trace in self.log])
+        return set([trace[-1] for trace in self.log.keys()])

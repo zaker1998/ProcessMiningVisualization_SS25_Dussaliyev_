@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from utils.transformations import dataframe_to_cases_list
+from utils.transformations import dataframe_to_cases_dict
 
 
 class AlgorithmController(ABC):
@@ -20,7 +20,7 @@ class AlgorithmController(ABC):
     def create_cases_from_df(
         self, df, timestamp_col, activity_col, cases_col, **additional_cols
     ):
-        cases = dataframe_to_cases_list(df, timestamp_col, cases_col, activity_col)
+        cases = dataframe_to_cases_dict(df, timestamp_col, cases_col, activity_col)
         return cases
 
     def get_model(self):

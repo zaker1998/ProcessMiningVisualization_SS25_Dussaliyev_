@@ -694,7 +694,7 @@ class FuzzyMining(BaseMining):
         # d 0 0 0 0
         """
         succession_matrix = np.zeros((len(self.events), len(self.events)))
-        for trace in self.log:
+        for trace, frequency in self.log.items():
             index_x = -1
             for element in trace:
                 if index_x < 0:
@@ -702,7 +702,7 @@ class FuzzyMining(BaseMining):
                     continue
                 x = self.events.index(trace[index_x])
                 y = self.events.index(element)
-                succession_matrix[x][y] += 1
+                succession_matrix[x][y] += frequency
                 index_x += 1
         return succession_matrix
 
