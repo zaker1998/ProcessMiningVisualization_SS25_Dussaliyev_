@@ -10,12 +10,12 @@ from controllers.HeuristicMiningController import HeuristicMiningController
 from collections import deque
 
 from utils.io import read_file
-from utils.transformations import dataframe_to_cases_list
+from utils.transformations import dataframe_to_cases_dict, cases_list_to_dict
 
 
 def read(filename, timeLabel="timestamp", caseLabel="case", eventLabel="event"):
     df = read_file(filename)
-    return dataframe_to_cases_list(df, timeLabel, caseLabel, eventLabel)
+    return dataframe_to_cases_dict(df, timeLabel, caseLabel, eventLabel)
 
 
 class TestHeuristic(unittest.TestCase):
@@ -69,7 +69,7 @@ class TestHeuristic(unittest.TestCase):
 
     def __run_test_txt(self, filename):
         heuristicMining = HeuristicMining(
-            self.__read_cases("tests/testlogs/" + filename + ".txt")
+            cases_list_to_dict(self.__read_cases("tests/testlogs/" + filename + ".txt"))
         )
         heuristicMining.create_dependency_graph_with_graphviz(0.5, 1)
         self.__check_graph_integrity(heuristicMining.get_graph())
