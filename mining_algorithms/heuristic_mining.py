@@ -47,7 +47,7 @@ class HeuristicMining(BaseMining):
         # add edges to graph
         for i in range(len(self.events)):
             for j in range(len(self.events)):
-                if dependency_graph[i][j] == 1.0:
+                if dependency_graph[i][j] >= 1.0:
                     if dependency_threshold == 0:
                         edge_thickness = 0.1
                     else:
@@ -118,14 +118,9 @@ class HeuristicMining(BaseMining):
     # TODO: do not store only if edges exists, but also store the weight of the edge
     def __create_dependency_graph(self, dependency_treshhold, min_frequency):
         dependency_graph = np.zeros(self.dependency_matrix.shape)
-        y = 0
-        for row in dependency_graph:
-            for x in range(len(row)):
-                if (
-                    self.dependency_matrix[y][x] >= dependency_treshhold
-                    and self.succession_matrix[y][x] >= min_frequency
-                ):
-                    dependency_graph[y][x] += 1
-            y += 1
+        filter_matrix = (self.succession_matrix >= min_frequency) & (
+            self.dependency_matrix >= dependency_treshhold
+        )
+        dependency_graph[filter_matrix] = self.succession_matrix[filter_matrix]
 
         return dependency_graph
