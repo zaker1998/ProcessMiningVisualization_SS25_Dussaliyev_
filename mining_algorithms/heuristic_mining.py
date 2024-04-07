@@ -14,6 +14,7 @@ class HeuristicMining(BaseMining):
         self.min_edge_thickness = 1
         self.min_frequency = 1
         self.dependency_threshold = 0.5
+        self.max_frequency = 0
 
     def create_dependency_graph_with_graphviz(
         self, dependency_threshold, min_frequency
@@ -66,6 +67,8 @@ class HeuristicMining(BaseMining):
                 size=edge_thickness,
             )
 
+        self.max_frequency = max(int(np.max(dependency_graph)), self.max_frequency)
+
         # add start and end nodes
         self.graph.add_start_node()
         self.graph.add_end_node()
@@ -80,13 +83,9 @@ class HeuristicMining(BaseMining):
         self.graph.add_starting_edges(source_nodes - self.start_nodes)
         self.graph.add_ending_edges(sink_nodes - self.end_nodes)
 
-    # TODO should be max frequency of edges and not nodes
     def get_max_frequency(self):
-        max_freq = 0
-        for value in list(self.appearence_frequency.values()):
-            if value > max_freq:
-                max_freq = value
-        return max_freq
+        # +1 to be able to remove all edges, not sure if it's correct or needed, but all edges can be deleted with this setting
+        return self.max_frequency + 1
 
     def get_min_frequency(self):
         return self.min_frequency
