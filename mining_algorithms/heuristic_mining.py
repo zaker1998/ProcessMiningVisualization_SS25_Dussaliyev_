@@ -100,7 +100,7 @@ class HeuristicMining(BaseMining):
                     index_x += 1
                     continue
                 x = mapping[trace[index_x]]
-                y = mappping[element]
+                y = mapping[element]
                 succession_matrix[x][y] += frequency
                 index_x += 1
         return succession_matrix
