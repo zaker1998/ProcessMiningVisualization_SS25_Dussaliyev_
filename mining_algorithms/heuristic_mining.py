@@ -101,10 +101,8 @@ class HeuristicMining(BaseMining):
 
     def __create_dependency_matrix(self):
         dependency_matrix = np.zeros(self.succession_matrix.shape)
-        y = 0
-        for row in self.succession_matrix:
-            x = 0
-            for i in row:
+        for y in range(self.succession_matrix.shape[0]):
+            for x in range(self.succession_matrix.shape[0]):
                 if x == y:
                     dependency_matrix[x][y] = self.succession_matrix[x][y] / (
                         self.succession_matrix[x][y] + 1
@@ -115,8 +113,6 @@ class HeuristicMining(BaseMining):
                     ) / (
                         self.succession_matrix[x][y] + self.succession_matrix[y][x] + 1
                     )
-                x += 1
-            y += 1
         return dependency_matrix
 
     # TODO: do not store only if edges exists, but also store the weight of the edge
