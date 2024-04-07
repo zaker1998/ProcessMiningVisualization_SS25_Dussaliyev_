@@ -91,6 +91,7 @@ class HeuristicMining(BaseMining):
 
     def __create_succession_matrix(self):
         succession_matrix = np.zeros((len(self.events), len(self.events)))
+        mapping = {event: i for i, event in enumerate(self.events)}
         for trace, frequency in self.log.items():
             index_x = -1
             for element in trace:
@@ -98,8 +99,8 @@ class HeuristicMining(BaseMining):
                 if index_x < 0:
                     index_x += 1
                     continue
-                x = self.events.index(trace[index_x])
-                y = self.events.index(element)
+                x = mapping[trace[index_x]]
+                y = mappping[element]
                 succession_matrix[x][y] += frequency
                 index_x += 1
         return succession_matrix
