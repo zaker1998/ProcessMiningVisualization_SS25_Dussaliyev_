@@ -107,18 +107,20 @@ class HeuristicMining(BaseMining):
 
     def __create_dependency_matrix(self):
         dependency_matrix = np.zeros(self.succession_matrix.shape)
-        for y in range(self.succession_matrix.shape[0]):
-            for x in range(self.succession_matrix.shape[0]):
-                if x == y:
-                    dependency_matrix[x][y] = self.succession_matrix[x][y] / (
-                        self.succession_matrix[x][y] + 1
-                    )
-                else:
-                    dependency_matrix[x][y] = (
-                        self.succession_matrix[x][y] - self.succession_matrix[y][x]
-                    ) / (
-                        self.succession_matrix[x][y] + self.succession_matrix[y][x] + 1
-                    )
+        np.fill_diagonal(dependency_matrix, 1.0)
+
+        non_diagonal_indices = np.where(dependency_matrix == 0)
+        diagonal_indices = np.diag_indices(dependency_matrix.shape[0])
+
+        dependency_matrix[diagonal_indices] = self.succession_matrix[
+            diagonal_indices
+        ] / (self.succession_matrix[diagonal_indices] + 1)
+
+        x, y = non_diagonal_indices
+
+        dependency_matrix[x, y] = (
+            self.succession_matrix[x, y] - self.succession_matrix[y, x]
+        ) / (self.succession_matrix[x, y] + self.succession_matrix[y, x] + 1)
         return dependency_matrix
 
     def __create_dependency_graph(self, dependency_treshhold, min_frequency):
