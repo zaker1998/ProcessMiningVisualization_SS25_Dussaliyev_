@@ -81,10 +81,12 @@ class ColumnSelectionView(ViewInterface):
             "Select the :violet[data columns]", df.columns, key="data_columns"
         )
 
+        st.write("before styling")
         styled_df = df.style.apply(
             axis=0,
             func=self.style_df,
         )
+        st.write("after styling")
 
         st.dataframe(
             styled_df,
@@ -139,6 +141,8 @@ class ColumnSelectionView(ViewInterface):
             return ["background-color: #57B868" for _ in col]
         elif col.name in st.session_state.data_columns:
             return ["background-color: #C38CFF" for _ in col]
+        else:
+            return ["" for _ in col]
 
     def clear(self):
         return
