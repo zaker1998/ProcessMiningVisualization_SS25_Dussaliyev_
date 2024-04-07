@@ -134,15 +134,15 @@ class ColumnSelectionView(ViewInterface):
 
     def style_df(self, col):
         if col.name == st.session_state.time_column:
-            return ["background-color: #FF705B" for _ in col]
+            return ["background-color: #FF705B"] * len(col)
         elif col.name == st.session_state.case_column:
-            return ["background-color: #629AFF" for _ in col]
+            return ["background-color: #629AFF"] * len(col)
         elif col.name == st.session_state.activity_column:
-            return ["background-color: #57B868" for _ in col]
+            return ["background-color: #57B868"] * len(col)
         elif col.name in st.session_state.data_columns:
-            return ["background-color: #C38CFF" for _ in col]
+            return ["background-color: #C38CFF"] * len(col)
         else:
-            return ["" for _ in col]
+            return [""] * len(col)
 
     def clear(self):
         return
