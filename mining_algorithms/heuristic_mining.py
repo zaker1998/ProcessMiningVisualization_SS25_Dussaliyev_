@@ -45,24 +45,27 @@ class HeuristicMining(BaseMining):
         freq_labels_sorted = list(cluster.labels_sorted_data)
 
         # add edges to graph
-        for i in range(len(self.events)):
-            for j in range(len(self.events)):
-                if dependency_graph[i][j] >= 1.0:
-                    if dependency_threshold == 0:
-                        edge_thickness = 0.1
-                    else:
-                        edge_thickness = (
-                            freq_labels_sorted[
-                                freq_sorted.index(self.dependency_matrix[i][j])
-                            ]
-                            + self.min_edge_thickness
-                        )
-                    self.graph.create_edge(
-                        self.events[i],
-                        self.events[j],
-                        weight=int(self.succession_matrix[i][j]),
-                        size=edge_thickness,
-                    )
+        sources, targets = np.nonzero(dependency_graph)
+        for source, target, weight in zip(
+            sources, targets, dependency_graph[sources, targets]
+        ):
+            if dependency_threshold == 0:
+                edge_thickness = 0.1
+            else:
+                edge_thickness = (
+                    freq_labels_sorted[
+                        freq_sorted.index(self.dependency_matrix[source][target])
+                    ]
+                    + self.min_edge_thickness
+                )
+
+            self.graph.create_edge(
+                self.events[source],
+                self.events[target],
+                weight=int(weight),
+                size=edge_thickness,
+            )
+
         # add start and end nodes
         self.graph.add_start_node()
         self.graph.add_end_node()
@@ -71,9 +74,11 @@ class HeuristicMining(BaseMining):
         self.graph.add_starting_edges(self.start_nodes)
         self.graph.add_ending_edges(self.end_nodes)
 
-        # TODO: add startign and ending edges for nodes that are
-        # 1. not reachable from the start node
-        # 2. not leading to the end node
+        source_nodes = self.__get_sources_from_dependency_graph(dependency_graph)
+        sink_nodes = self.__get_sinks_from_dependency_graph(dependency_graph)
+
+        self.graph.add_starting_edges(source_nodes - self.start_nodes)
+        self.graph.add_ending_edges(sink_nodes - self.end_nodes)
 
     # TODO should be max frequency of edges and not nodes
     def get_max_frequency(self):
@@ -115,12 +120,21 @@ class HeuristicMining(BaseMining):
                     )
         return dependency_matrix
 
-    # TODO: do not store only if edges exists, but also store the weight of the edge
     def __create_dependency_graph(self, dependency_treshhold, min_frequency):
         dependency_graph = np.zeros(self.dependency_matrix.shape)
+        # filter out the edges that are not frequent enough or not dependent enough
         filter_matrix = (self.succession_matrix >= min_frequency) & (
             self.dependency_matrix >= dependency_treshhold
         )
+
         dependency_graph[filter_matrix] = self.succession_matrix[filter_matrix]
 
         return dependency_graph
+
+    def __get_sources_from_dependency_graph(self, dependency_graph):
+        indices = np.where((dependency_graph == 0).all(axis=0))[0]
+        return set([self.events[i] for i in indices])
+
+    def __get_sinks_from_dependency_graph(self, dependency_graph):
+        indices = np.where((dependency_graph == 0).all(axis=1))[0]
+        return set([self.events[i] for i in indices])
