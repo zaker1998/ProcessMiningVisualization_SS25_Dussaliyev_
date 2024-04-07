@@ -124,6 +124,7 @@ class HeuristicMining(BaseMining):
             y += 1
         return dependency_matrix
 
+    # TODO: do not store only if edges exists, but also store the weight of the edge
     def __create_dependency_graph(self, dependency_treshhold, min_frequency):
         dependency_graph = np.zeros(self.dependency_matrix.shape)
         y = 0
