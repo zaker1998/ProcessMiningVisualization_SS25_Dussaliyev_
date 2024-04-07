@@ -24,7 +24,19 @@ class InductiveMining(BaseMining):
         return self.fallthrough(log)
 
     def base_cases(self, log):
-        pass
+        if len(log) > 1:
+            return None
+
+        if len(log) == 0:
+            return "tau"
+
+        if len(log) == 1:
+            if len(log[0]) == 0:
+                return "tau"
+            if len(log[0]) == 1:
+                return log[0][0]
+
+        return None
 
     def calulate_cut(self, log):
         pass
