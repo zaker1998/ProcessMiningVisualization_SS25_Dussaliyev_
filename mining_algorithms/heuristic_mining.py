@@ -135,9 +135,15 @@ class HeuristicMining(BaseMining):
         return dependency_graph
 
     def __get_sources_from_dependency_graph(self, dependency_graph):
-        indices = np.where((dependency_graph == 0).all(axis=0))[0]
+        indices = self.__get_all_axis_with_all_zero(dependency_graph, axis=0)
         return set([self.events[i] for i in indices])
 
     def __get_sinks_from_dependency_graph(self, dependency_graph):
-        indices = np.where((dependency_graph == 0).all(axis=1))[0]
+        indices = self.__get_all_axis_with_all_zero(dependency_graph, axis=1)
         return set([self.events[i] for i in indices])
+
+    def __get_all_axis_with_all_zero(self, dependency_graph, axis=0):
+        filter_matrix = dependency_graph == 0
+        # edges from and to the same node are not considered
+        np.fill_diagonal(filter_matrix, True)
+        return np.where(filter_matrix.all(axis=axis))[0]
