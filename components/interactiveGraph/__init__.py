@@ -19,8 +19,7 @@ else:
     _component_func = components.declare_component(_COMPONENT_NAME, path=build_dir)
 
 
-# TODO: Add onClick function as parameter, and pass it to the component
-def interactiveGraph(graph: BaseGraph, key="interactiveGraph"):
+def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph"):
     """Wrapper function for the interactiveGraph component
 
     Parameters
@@ -34,20 +33,15 @@ def interactiveGraph(graph: BaseGraph, key="interactiveGraph"):
     if state_name not in st.session_state:
         st.session_state[state_name] = 0
 
-    with st.container(border=True):
-        component_value = _component_func(
-            graphviz_string=graph.get_graphviz_string(), key=key
-        )
-        del st.session_state[key]
-        if (
-            component_value is not None
-            and component_value["clickId"] != 0
-            and component_value["clickId"] != st.session_state[state_name]
-        ):
-            st.session_state[state_name] = component_value["clickId"]
-            info_col, button_col = st.columns([4, 1])
-            with info_col:
-                st.info(graph.node_to_string(component_value["nodeId"]))
-            with button_col:
-                st.button("Close")
+    component_value = _component_func(
+        graphviz_string=graph.get_graphviz_string(), key=key
+    )
+    del st.session_state[key]
+    if (
+        component_value is not None
+        and component_value["clickId"] != 0
+        and component_value["clickId"] != st.session_state[state_name]
+    ):
+        st.session_state[state_name] = component_value["clickId"]
+        onNodeClick(graph.node_to_string(component_value["nodeId"]))
     return component_value

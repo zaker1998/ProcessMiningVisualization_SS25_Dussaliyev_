@@ -61,25 +61,39 @@ class AlgorithmViewInterface(ViewInterface, ABC):
 
         self.controller.perform_mining()
 
-        interactiveGraph(self.controller.get_graph())
+        graph_container = st.container(border=True)
 
-        columns = st.columns([1, 1, 1])
-        with columns[0]:
-            st.button(
-                "Back",
-                on_click=self.navigte_to,
-                args=("Home", True),
-                type="secondary",
-                use_container_width=True,
+        button_container = st.container()
+
+        self.node_info_container = st.container()
+
+        with graph_container:
+            interactiveGraph(
+                self.controller.get_graph(), onNodeClick=self.display_node_info
             )
-        with columns[2]:
-            st.button(
-                "Export",
-                on_click=self.navigte_to,
-                args=("Export",),
-                type="primary",
-                use_container_width=True,
-            )
+        with button_container:
+            columns = st.columns([1, 1, 1])
+            with columns[0]:
+                st.button(
+                    "Back",
+                    on_click=self.navigte_to,
+                    args=("Home", True),
+                    type="secondary",
+                    use_container_width=True,
+                )
+            with columns[2]:
+                st.button(
+                    "Export",
+                    on_click=self.navigte_to,
+                    args=("Export",),
+                    type="primary",
+                    use_container_width=True,
+                )
+
+    def display_node_info(self, node_info: str):
+        with self.node_info_container:
+            with st.expander(node_info):
+                st.write(node_info)
 
     def clear(self):
         return
