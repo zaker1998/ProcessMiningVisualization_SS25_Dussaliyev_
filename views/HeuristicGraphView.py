@@ -29,9 +29,16 @@ class HeuristicGraphView(AlgorithmViewInterface):
             1,
             self.max_frequency,
             key="frequency",
+            help="Minimum frequency for displaying edges. Edges with a lower frequency (weight) will be removed.",
         )
 
-        threshold = st.slider("Dependency Threshold", 0.0, 1.0, key="threshold")
+        threshold = st.slider(
+            "Dependency Threshold",
+            0.0,
+            1.0,
+            key="threshold",
+            help="Minimum dependency for displaying edges. Edges with a lower dependency will be removed.",
+        )
 
         self.controller.set_frequency(frequency)
         self.controller.set_threshold(threshold)
