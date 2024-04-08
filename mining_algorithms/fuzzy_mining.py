@@ -3,6 +3,12 @@ import numpy as np
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 from mining_algorithms.base_mining import BaseMining
 
+# TODO: improve code readability
+# 1. remove unnecessary comments
+# 2. remove (comment out) unnecessary print statements (use logging instead)
+# 3. improve for loops (e.g. use enumerate if value and index are needed)
+# 4. use numpy functions where possible
+
 
 class FuzzyMining(BaseMining):
     def __init__(self, cases):
@@ -686,13 +692,6 @@ class FuzzyMining(BaseMining):
         return dict
 
     def __create_succession_matrix(self):
-        """2D matrix a, b, c => 3x3 matrix example below
-        #   a b c d
-        # a 0 3 1 0
-        # b 0 1 3 0
-        # c 0 1 0 3
-        # d 0 0 0 0
-        """
         succession_matrix = np.zeros((len(self.events), len(self.events)))
         mapping = {event: i for i, event in enumerate(self.events)}
         for trace, frequency in self.log.items():
@@ -704,6 +703,7 @@ class FuzzyMining(BaseMining):
 
         return succession_matrix
 
+    # TODO: optimize using numpy if possible
     def __create_correlation_dependency_matrix(self):
         # create a matrix with the same shape and fill it with zeros
         correlation_matrix = np.zeros(self.succession_matrix.shape)

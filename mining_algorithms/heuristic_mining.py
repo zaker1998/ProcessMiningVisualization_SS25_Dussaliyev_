@@ -40,6 +40,7 @@ class HeuristicMining(BaseMining):
         edge_frequencies = edge_frequencies[edge_frequencies >= 0.0]
         edge_frequencies = np.unique(edge_frequencies)
         # print(edge_frequencies)
+
         # TODO: move in base class if used in other algorithms
         cluster = DensityDistributionClusterAlgorithm(edge_frequencies)
         freq_sorted = list(cluster.sorted_data)
