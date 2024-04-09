@@ -198,4 +198,7 @@ class BaseGraph:
     def node_to_string(self, id: str) -> tuple[str, str]:
         node = self.get_node(id)
         description = f"**Event:** {node.get_id()}"
+        if node.get_data():
+            for key, value in node.get_data().items():
+                description += f"\n**{key}:** {value}"
         return node.id, description
