@@ -2,6 +2,7 @@ import streamlit as st
 from views.ViewInterface import ViewInterface
 from utils.transformations import dataframe_to_cases_list
 from config import algorithm_mappings
+from components.buttons import home_button
 
 
 class ColumnSelectionView(ViewInterface):
@@ -104,13 +105,8 @@ class ColumnSelectionView(ViewInterface):
 
         with back_col:
             st.write("")
-            back_button = st.button(
-                "Back",
-                type="secondary",
-                on_click=self.navigte_to,
-                args=["Home"],
-                use_container_width=True,
-            )
+            home_button(label="Back", use_container_width=True)
+
         with mine_col:
             st.write("")
             mine_button = st.button(
