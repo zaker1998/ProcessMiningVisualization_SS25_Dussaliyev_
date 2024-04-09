@@ -202,4 +202,4 @@ class BaseGraph:
         if node.get_data():
             for key, value in node.get_data().items():
                 description += f"\n**{key}:** {value}"
-        return node.id, description
+        return node.get_id(), description

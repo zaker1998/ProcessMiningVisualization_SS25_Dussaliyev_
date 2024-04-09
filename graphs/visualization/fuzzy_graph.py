@@ -76,4 +76,4 @@ class FuzzyGraph(BaseGraph):
         if nodes := node.get_data_from_key("nodes"):
             description = f"""{description}\n**Clustered Nodes:** {", ".join(nodes)}"""
 
-        return node.id, description
+        return node.get_id(), description
