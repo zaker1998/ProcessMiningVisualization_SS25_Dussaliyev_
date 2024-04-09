@@ -37,3 +37,10 @@ class HeuristicGraph(BaseGraph):
         weight: int = None,
     ) -> None:
         super().add_edge(source, destination, weight, penwidth=str(size))
+
+    def node_to_string(self, id: str) -> tuple[str, str]:
+        node = self.get_node(id)
+        node_name, description = super().node_to_string(id)
+        if frequency := node.get_data_from_key("frequency"):
+            description = f"""{description}\n**Frequency:** {frequency}"""
+        return node.id, description

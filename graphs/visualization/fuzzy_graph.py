@@ -61,3 +61,19 @@ class FuzzyGraph(BaseGraph):
             width=str(width),
             height=str(height),
         )
+
+    def node_to_string(self, id: str) -> tuple[str, str]:
+        node = self.get_node(id)
+        node_name = node.get_id()
+        if "cluster" in node_name.lower():
+            description = f"**Cluster:** {node_name}"
+        else:
+            description = f"**Event:** {node_name}"
+
+        if significance := node.get_data_from_key("significance"):
+            description = f"""{description}\n**Significance:** {significance}"""
+
+        if nodes := node.get_data_from_key("nodes"):
+            description = f"""{description}\n**Clustered Nodes:** {", ".join(nodes)}"""
+
+        return node.id, description

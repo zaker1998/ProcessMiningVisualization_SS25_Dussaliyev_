@@ -32,6 +32,8 @@ class Node:
         return self.__data
 
     def get_data_from_key(self, key: str) -> str | int | float:
+        if not self.__data:
+            return None
         if key not in self.__data:
             return None
         return self.__data[key]
@@ -195,5 +197,5 @@ class BaseGraph:
 
     def node_to_string(self, id: str) -> tuple[str, str]:
         node = self.get_node(id)
-        description = f"Event: {node.get_id()}"
+        description = f"**Event:** {node.get_id()}"
         return node.id, description
