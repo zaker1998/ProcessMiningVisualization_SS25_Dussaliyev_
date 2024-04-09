@@ -19,7 +19,8 @@ else:
     _component_func = components.declare_component(_COMPONENT_NAME, path=build_dir)
 
 
-def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph"):
+# TODO: check onNodeClick type
+def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph") -> None:
     """Wrapper function for the interactiveGraph component
 
     Parameters
@@ -43,5 +44,5 @@ def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph"):
         and component_value["clickId"] != st.session_state[state_name]
     ):
         st.session_state[state_name] = component_value["clickId"]
-        onNodeClick(graph.node_to_string(component_value["nodeId"]))
-    return component_value
+        node_name, description = graph.node_to_string(component_value["nodeId"])
+        onNodeClick(node_name, description)

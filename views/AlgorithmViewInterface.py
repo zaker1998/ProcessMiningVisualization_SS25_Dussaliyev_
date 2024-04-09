@@ -90,10 +90,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                     use_container_width=True,
                 )
 
-    def display_node_info(self, node_info: str):
+    def display_node_info(self, node_name:str, node_description: str):
         with self.node_info_container:
-            with st.expander(node_info):
-                st.write(node_info)
+            with st.expander(f"Node: {node_name}"):
+                st.write(node_description)
 
     def clear(self):
         return
