@@ -20,7 +20,6 @@ class Home(ViewInterface):
                 "Upload a file",
                 type=["csv", "pickle"],
                 accept_multiple_files=False,
-                key="file_uploader",
             )
 
             if self.file:

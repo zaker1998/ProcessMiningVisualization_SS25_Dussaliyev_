@@ -3,7 +3,7 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 from graphs.visualization.base_graph import BaseGraph
 from components.interactiveGraph import interactiveGraph
-from components.buttons import home_button
+from components.buttons import home_button, to_home
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -30,7 +30,7 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
                 st.session_state.error = "Invalid model type"
-                self.navigte_to("Home", True)
+                to_home("Home")
                 st.rerun()
             self.controller.set_model(st.session_state.model)
         else:
@@ -40,7 +40,7 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                 or "case_column" not in st.session_state
                 or "activity_column" not in st.session_state
             ):
-                self.navigte_to("Home", True)
+                to_home("Home")
 
             self.controller.create_model(
                 st.session_state.df,
