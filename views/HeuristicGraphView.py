@@ -6,6 +6,7 @@ from controllers.HeuristicMiningController import (
 
 from mining_algorithms.heuristic_mining import HeuristicMining
 import streamlit as st
+from components.sliders import slider
 
 
 class HeuristicGraphView(AlgorithmViewInterface):
@@ -24,24 +25,23 @@ class HeuristicGraphView(AlgorithmViewInterface):
         self.max_frequency = self.controller.get_max_frequency()
 
     def render_sidebar(self):
-        frequency = st.slider(
-            "Minimum Frequency",
-            1,
-            self.max_frequency,
+        slider(
+            label="Minimum Frequency",
+            min_value=1,
+            max_value=self.max_frequency,
             key="frequency",
-            help="Minimum frequency for displaying edges. Edges with a lower frequency (weight) will be removed.",
+            setValue=self.controller.set_frequency,
+            tooltip="Minimum frequency for displaying edges. Edges with a lower frequency (weight) will be removed.",
         )
 
-        threshold = st.slider(
-            "Dependency Threshold",
-            0.0,
-            1.0,
+        slider(
+            label="Dependency Threshold",
+            min_value=0.0,
+            max_value=1.0,
             key="threshold",
-            help="Minimum dependency for displaying edges. Edges with a lower dependency will be removed.",
+            setValue=self.controller.set_threshold,
+            tooltip="Minimum dependency for displaying edges. Edges with a lower dependency will be removed.",
         )
-
-        self.controller.set_frequency(frequency)
-        self.controller.set_threshold(threshold)
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"

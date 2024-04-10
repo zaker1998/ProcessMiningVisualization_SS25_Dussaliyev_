@@ -5,6 +5,7 @@ from controllers.FuzzyMiningController import (
 )
 from mining_algorithms.fuzzy_mining import FuzzyMining
 import streamlit as st
+from components.sliders import slider
 
 
 class FuzzyGraphView(AlgorithmViewInterface):
@@ -27,44 +28,45 @@ class FuzzyGraphView(AlgorithmViewInterface):
 
     def render_sidebar(self):
         st.write("Significance Cutoff")
-        significance = st.slider(
-            "Significance",
-            0.0,
-            1.0,
+
+        slider(
+            label="Significance",
+            min_value=0.0,
+            max_value=1.0,
             key="significance",
-            help="Significance measures the frequency of events that are observed more frequently and are therefore considered more significant.",
+            setValue=self.controller.set_significance,
+            tooltip="Significance measures the frequency of events that are observed more frequently and are therefore considered more significant.",
         )
 
-        correlation = st.slider(
-            "Correlation",
-            0.0,
-            1.0,
+        slider(
+            label="Correlation",
+            min_value=0.0,
+            max_value=1.0,
             key="correlation",
-            help="Correlation measures how closely related two events following one another are.",
+            setValue=self.controller.set_correlation,
+            tooltip="Correlation measures how closely related two events following one another are.",
         )
 
         st.divider()
         st.write("Edge filtering")
-        edge_cutoff = st.slider(
-            "Edge Cutoff",
-            0.0,
-            1.0,
+
+        slider(
+            label="Edge Cutoff",
+            min_value=0.0,
+            max_value=1.0,
             key="edge_cutoff",
-            help="The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges",
+            setValue=self.controller.set_edge_cutoff,
+            tooltip="The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges.",
         )
 
-        utility_ratio = st.slider(
-            "Utility Ration",
-            0.0,
-            1.0,
+        slider(
+            label="Utility Ration",
+            min_value=0.0,
+            max_value=1.0,
             key="utility_ration",
-            help="A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges",
+            setValue=self.controller.set_utility_ratio,
+            tooltip="A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges",
         )
-
-        self.controller.set_significance(significance)
-        self.controller.set_correlation(correlation)
-        self.controller.set_edge_cutoff(edge_cutoff)
-        self.controller.set_utility_ratio(utility_ratio)
 
     def get_page_title(self) -> str:
         return "Fuzzy Mining"
