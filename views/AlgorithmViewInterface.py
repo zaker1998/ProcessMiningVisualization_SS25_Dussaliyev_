@@ -3,7 +3,7 @@ from views.ViewInterface import ViewInterface
 import streamlit as st
 from graphs.visualization.base_graph import BaseGraph
 from components.interactiveGraph import interactiveGraph
-from components.buttons import home_button, to_home
+from components.buttons import home_button, to_home, navigation_button
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -77,11 +77,9 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             with columns[0]:
                 home_button("Back", use_container_width=True)
             with columns[2]:
-                st.button(
+                navigation_button(
                     "Export",
-                    on_click=self.navigte_to,
-                    args=("Export",),
-                    type="primary",
+                    "Export",
                     use_container_width=True,
                 )
 
@@ -90,6 +88,3 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             with st.expander(f"Node: {node_name}"):
                 for line in node_description.split("\n"):
                     st.write(line)
-
-    def clear(self):
-        return

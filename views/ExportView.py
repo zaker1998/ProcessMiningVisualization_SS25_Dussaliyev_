@@ -1,6 +1,7 @@
 from views.ViewInterface import ViewInterface
 import streamlit as st
 import pickle
+from components.buttons import navigation_button
 
 
 class ExportView(ViewInterface):
@@ -20,9 +21,10 @@ class ExportView(ViewInterface):
         with st.container(border=True):
             st.image("temp/graph.png")
 
-        st.button(
-            "Back", type="secondary", on_click=self.navigte_to, args=("Algorithm", True)
-        )
+        navigation_button("Back", "Algorithm", type="secondary")
+        # st.button(
+        #    "Back", type="secondary", on_click=self.navigte_to, args=("Algorithm", True)
+        # )
 
     def export_graph(self, graph, format):
         self.dpi = st.sidebar.number_input("DPI", min_value=50, value=96, step=1)
@@ -45,6 +47,3 @@ class ExportView(ViewInterface):
             data=pickle.dumps(model),
             mime="application/octet-stream",
         )
-
-    def clear(self):
-        return

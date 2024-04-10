@@ -45,6 +45,3 @@ class HeuristicGraphView(AlgorithmViewInterface):
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
-
-    def clear(self):
-        super().clear()

@@ -2,7 +2,7 @@ import streamlit as st
 from views.ViewInterface import ViewInterface
 from utils.transformations import dataframe_to_cases_list
 from config import algorithm_mappings
-from components.buttons import home_button
+from components.buttons import home_button, navigation_button
 
 
 class ColumnSelectionView(ViewInterface):
@@ -109,24 +109,24 @@ class ColumnSelectionView(ViewInterface):
 
         with mine_col:
             st.write("")
-            mine_button = st.button(
-                "Mine",
-                type="primary",
-                on_click=self.on_mine_click,
-                args=[algorithm],
+            navigation_button(
+                label="Mine",
+                route="Algorithm",
                 use_container_width=True,
+                beforeNavigate=self.__on_mine_click,
+                args=(algorithm,),
             )
 
-    def on_mine_click(self, algorithm):
+    def __on_mine_click(self, algorithm):
         if (
             st.session_state.time_column is None
             or st.session_state.case_column is None
             or st.session_state.activity_column is None
         ):
             st.session_state.error = "Please select the time, case and activity columns"
+            st.session_state.page = "ColumnSelection"
         else:
             st.session_state.algorithm = algorithm_mappings[algorithm]
-            self.navigte_to("Algorithm", clean_up=True)
 
     def style_df(self, col):
         if col.name == st.session_state.time_column:
@@ -139,6 +139,3 @@ class ColumnSelectionView(ViewInterface):
             return ["background-color: #C38CFF"] * len(col)
         else:
             return [""] * len(col)
-
-    def clear(self):
-        return

@@ -68,6 +68,3 @@ class FuzzyGraphView(AlgorithmViewInterface):
 
     def get_page_title(self) -> str:
         return "Fuzzy Mining"
-
-    def clear(self):
-        super().clear()

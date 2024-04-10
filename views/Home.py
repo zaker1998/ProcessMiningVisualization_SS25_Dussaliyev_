@@ -4,6 +4,7 @@ import os
 from utils.transformations import dataframe_to_cases_list
 from utils.io import read_file, detect_delimiter
 from config import algorithm_mappings
+from components.buttons import navigation_button
 
 
 class Home(ViewInterface):
@@ -36,11 +37,13 @@ class Home(ViewInterface):
 
         with button_column:
             st.write("")
-            if st.button("Import Model", type="primary", use_container_width=True):
-                st.session_state.algorithm = algorithm_mappings[selection]
-                st.session_state.model = model
-                self.navigte_to("Algorithm")
-                st.rerun()
+            navigation_button(
+                label="Import Model",
+                route="Algorithm",
+                use_container_width=True,
+                beforeNavigate=self.__set_model_and_algorithm,
+                args=(model, algorithm_mappings[selection]),
+            )
 
     def render_df_import(self):
         detected_delimiter = ""
@@ -58,14 +61,22 @@ class Home(ViewInterface):
 
         with button_column:
             st.write("")
-            if st.button("Mine from File", type="primary", use_container_width=True):
-                if delimiter == "":
-                    st.session_state.error = "Please enter a delimiter"
-                    st.rerun()
-                    return
-                st.session_state.df = read_file(self.file, delimiter=delimiter)
-                self.navigte_to("ColumnSelection")
-                st.rerun()
+            navigation_button(
+                label="Mine from File",
+                route="ColumnSelection",
+                use_container_width=True,
+                beforeNavigate=self.__set_df,
+                args=(self.file, delimiter),
+            )
 
-    def clear(self):
-        return
+    def __set_model_and_algorithm(self, model, algorithm):
+        st.session_state.model = model
+        st.session_state.algorithm = algorithm
+
+    def __set_df(self, file, delimiter):
+        if delimiter == "":
+            st.session_state.error = "Please enter a delimiter"
+            # change routing to home
+            st.session_state.page = "Home"
+            return
+        st.session_state.df = read_file(file, delimiter=delimiter)
