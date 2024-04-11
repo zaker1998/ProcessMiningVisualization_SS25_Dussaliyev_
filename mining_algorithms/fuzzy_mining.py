@@ -703,27 +703,14 @@ class FuzzyMining(BaseMining):
 
         return succession_matrix
 
-    # TODO: optimize using numpy if possible
     def __create_correlation_dependency_matrix(self):
         # create a matrix with the same shape and fill it with zeros
         correlation_matrix = np.zeros(self.succession_matrix.shape)
-        y = 0
-        for row in self.succession_matrix:
-            # find max value on each row
-            # max_value_in_row = max(row)
-            # sum of outgoing edges means correlation of the node(row)
-            sum_of_outgoing_edges = sum(row)
-            x = 0
-            for i in row:
-                # divide each value by max value
-                if i == 0 and self.succession_matrix[y][x] == 0:
-                    correlation_matrix[y][x] = 0.0
-                else:
-                    correlation_matrix[y][x] = format(
-                        self.succession_matrix[y][x] / sum_of_outgoing_edges, ".2f"
-                    )
-                x += 1
-            y += 1
+        outgoing_edges = np.sum(self.succession_matrix, axis=1)
+
+        correlation_matrix = np.round(
+            self.succession_matrix / outgoing_edges[:, np.newaxis], decimals=2
+        )
 
         return correlation_matrix
 
