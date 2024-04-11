@@ -186,6 +186,9 @@ class BaseGraph:
     def get_nodes(self) -> list[Node]:
         return list(self.nodes.values())
 
+    def get_node_ids(self) -> list[str]:
+        return list(self.nodes.keys())
+
     def get_edges(self) -> list[Edge]:
         return list(self.edges.values())
 

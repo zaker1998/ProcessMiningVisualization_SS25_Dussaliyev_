@@ -137,9 +137,36 @@ class FuzzyMining(BaseMining):
         self.graph.add_starting_edges(start_nodes)
         self.graph.add_ending_edges(end_nodes)
 
-        # TODO: add startign and ending edges for nodes that are
-        # 1. not reachable from the start node
-        # 2. not leading to the end node
+        nodes = self.graph.get_node_ids()
+        nodes = set(nodes) - set(["Start", "End"])
+
+        # nodes with no incoming edges conected to start node
+        for target in nodes:
+            if self.graph.contains_edge("Start", target):
+                continue
+            is_start_node = True
+            for source in nodes:
+                if target == source:
+                    continue
+                if self.graph.contains_edge(source, target):
+                    is_start_node = False
+                    break
+            if is_start_node:
+                self.graph.add_starting_edges([target])
+
+        # nodes with no outgoing edges conected to end node
+        for source in nodes:
+            if self.graph.contains_edge(source, "End"):
+                continue
+            is_end_node = True
+            for target in nodes:
+                if target == source:
+                    continue
+                if self.graph.contains_edge(source, target):
+                    is_end_node = False
+                    break
+            if is_end_node:
+                self.graph.add_ending_edges([source])
 
     def get_node_id(self, node):
         for key, value in self.cluster_id_mapping.items():
