@@ -727,14 +727,13 @@ class FuzzyMining(BaseMining):
 
         return correlation_matrix
 
-    # TODO: understand reasons for this function
     def __calculate_node_significance_matrix(self, significance_values):
-        ret_matrix = np.array(self.succession_matrix)
-        # why each row if it is set accross the columns?
-        # why set the same significance value for each column? unnecessary memory usage
-        significance_each_row = np.array(list(significance_values.values()))
-        for i in range(ret_matrix.shape[1]):
-            ret_matrix[:, i] = significance_each_row
+        ret_matrix = np.zeros(self.succession_matrix.shape)
+        significance_column = np.array(
+            list(significance_values.values()), dtype=np.float64
+        )[:, np.newaxis]
+
+        ret_matrix = ret_matrix + significance_column
         return ret_matrix
 
     def get_significance(self):
