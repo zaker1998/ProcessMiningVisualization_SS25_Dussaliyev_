@@ -291,8 +291,6 @@ class FuzzyMining(BaseMining):
                 self.graph.create_edge(
                     current_cluster, next_cluster, edge_thickness, value
                 )
-                # graph.edge(str(current_cluster), str(next_cluster), penwidth=str(edge_thickness),
-                #           label=str(value))
             else:
                 if current_cluster in self.cluster_id_mapping:
                     current_cluster = self.cluster_id_mapping.get(current_cluster)
