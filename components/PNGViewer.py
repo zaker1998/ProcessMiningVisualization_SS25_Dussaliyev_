@@ -7,6 +7,7 @@ def PNGViewer(png_path: str, height: int = 600):
     png = open(png_path, "rb").read()
 
     # https://pmbaumgartner.github.io/streamlitopedia/sizing-and-images.html
+    # https://discuss.streamlit.io/t/how-to-show-local-gif-image/3408/2
     # Convert the image to a base64 string to be able to display it in the HTML
     png_base64 = base64.b64encode(png).decode("utf-8")
 
