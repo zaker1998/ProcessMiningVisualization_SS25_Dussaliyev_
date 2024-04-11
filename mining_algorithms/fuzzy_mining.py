@@ -10,6 +10,7 @@ from mining_algorithms.base_mining import BaseMining
 # 4. use numpy functions where possible
 
 
+# TODO: remove dictionaries and use numpy arrays instead???
 class FuzzyMining(BaseMining):
     def __init__(self, cases):
         super().__init__(cases)
