@@ -205,6 +205,10 @@ class FuzzyMining(BaseMining):
 
         util_matrix = np.zeros((len(self.events), len(self.events)))
 
+        # if edge cutoff is 0.0, no edge filtering will be done
+        if edge_cutoff == 0.0:
+            return []
+
         # just node-node will be checked
         for i in range(len(self.events)):
             # if util ratio and edge cutoff are zero dont calculate util_matrix
@@ -736,6 +740,10 @@ class FuzzyMining(BaseMining):
 
         correlation_matrix = np.round(
             self.succession_matrix / outgoing_edges[:, np.newaxis], decimals=2
+        )
+
+        correlation_matrix = np.where(
+            np.isnan(correlation_matrix), 0.0, correlation_matrix
         )
 
         return correlation_matrix
