@@ -206,8 +206,8 @@ class FuzzyMining(BaseMining):
         util_matrix = np.zeros((len(self.events), len(self.events)))
 
         # if edge cutoff is 0.0, no edge filtering will be done
-        if edge_cutoff == 0.0:
-            return []
+        # if edge_cutoff == 0.0:
+        #    return []
 
         # just node-node will be checked
         for i in range(len(self.events)):
@@ -231,6 +231,7 @@ class FuzzyMining(BaseMining):
                     continue
 
                 # if not clustered and not removed check for edge filtering
+                # why is this done?
                 val = np.round(
                     sign_after_first_rule[i][j] * utility_ratio
                     + (1 - utility_ratio) * corr_after_first_rule[i][j],
@@ -253,7 +254,7 @@ class FuzzyMining(BaseMining):
 
         print("111-printing correlation \n" + str(corr_after_first_rule))
 
-        # print("Util Matrix-----> \n" + str(util_matrix))
+        print("Util Matrix-----> \n" + str(util_matrix))
 
         print("calculate normalised util. ")
 
