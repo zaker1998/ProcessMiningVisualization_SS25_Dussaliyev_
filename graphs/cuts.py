@@ -2,12 +2,12 @@ from graphs.dfg import DFG
 from collections import deque
 
 
-def exclusive_cut(graph: DFG) -> list[set[str | int], ...]:
+def exclusive_cut(graph: DFG) -> list[set[str | int]]:
     connected_components = graph.get_connected_components()
     return connected_components if len(connected_components) > 1 else None
 
 
-def sequence_cut(graph: DFG) -> list[set[str | int], ...]:
+def sequence_cut(graph: DFG) -> list[set[str | int]]:
     partitions = [{node} for node in graph.get_nodes()]
     nodes = list(graph.get_nodes())
 
@@ -56,7 +56,7 @@ def sequence_cut(graph: DFG) -> list[set[str | int], ...]:
     return partitions if len(partitions) > 1 else None
 
 
-def parallel_cut(graph: DFG) -> list[set[str | int], ...]:
+def parallel_cut(graph: DFG) -> list[set[str | int]]:
     inverted_dfg = create_inverted_dfg(graph)
     partitions = inverted_dfg.get_connected_components()
 
@@ -121,7 +121,7 @@ def parallel_cut(graph: DFG) -> list[set[str | int], ...]:
     return partitions if len(partitions) > 1 else None
 
 
-def loop_cut(graph: DFG) -> list[set[str | int], ...]:
+def loop_cut(graph: DFG) -> list[set[str | int]]:
     partition_1 = set(graph.get_start_nodes().union(graph.get_end_nodes()))
 
     starting_nodes = graph.get_start_nodes()
@@ -136,19 +136,85 @@ def loop_cut(graph: DFG) -> list[set[str | int], ...]:
     if len(connected_components) > 0:
         return None
 
-    # check other conditions for partitions if not fullfiled merge with partition_1
-    for partition in connected_components:
-        pass
-        # check if edges from partition to end node (that is not also a start node) exists if yes merge with partition one
+    only_start_nodes = set(graph.get_start_nodes() - graph.get_end_nodes())
+    only_end_nodes = set(graph.get_end_nodes() - graph.get_start_nodes())
 
-        # check if edges from start nodes (that are not an end node) to partition exists if yes merge with partition one
+    # check other conditions for partitions if not fullfiled merge with partition_1
+
+    # check if there is a conection from a start node (that is not an end node) to a node in the connected component
+    # if there is such a edge, there partition is merged with partition_1
+
+    filtered_partitions = list()
+    for partition in connected_components:
+        partition_merged = False
+        for node in partition:
+            for start_node in only_start_nodes:
+                if graph.contains_edge(start_node, node):
+                    partition_1.update(partition)
+                    partition_merged = True
+                    break
+
+            if partition_merged:
+                break
+        if not partition_merged:
+            filtered_partitions.append(partition)
+
+    connected_components = filtered_partitions
+    filtered_partitions = list()
+
+    # check if there is a conection from a node in the connected component to an end node (that is not a start node)
+    # if there is such a edge, there partition is merged with partition_1
+
+    for partition in connected_components:
+        partition_merged = False
+        for node in partition:
+            for end_node in only_end_nodes:
+                if graph.contains_edge(node, end_node):
+                    partition_1.update(partition)
+                    partition_merged = True
+                    break
+
+            if partition_merged:
+                break
+        if not partition_merged:
+            filtered_partitions.append(partition)
+
+    connected_components = filtered_partitions
+    filtered_partitions = list()
 
     # check for all connected components the following conditions
     # 1. if there is an edge from an end node to a node in the connected component there have to be edges from all end nodes to this node
     # 2. if there is an edge from a node in the connected component to a start node there have to be edges from this node to all start nodes
     # if one of the conditions is not fullfiled merge the connected component with partition_1
 
-    partitions = [partition_1, *connected_components]
+    for partition in connected_components:
+        merged_partition = False
+        for node in partition:
+            for end_node in only_end_nodes:
+                if graph.contains_edge(end_node, node):
+                    for other_end_node in only_end_nodes:
+                        if not graph.contains_edge(other_end_node, node):
+                            partition_1.update(partition)
+                            merged_partition = True
+                            break
+                if merged_partition:
+                    break
+            if merged_partition:
+                break
+            for start_node in only_start_nodes:
+                if graph.contains_edge(node, start_node):
+                    for other_start_node in only_start_nodes:
+                        if not graph.contains_edge(node, other_start_node):
+                            partition_1.update(partition)
+                            merged_partition = True
+                            break
+
+                if merged_partition:
+                    break
+        if not merged_partition:
+            filtered_partitions.append(partition)
+
+    partitions = [partition_1, *filtered_partitions]
     return partitions if len(partitions) > 1 else None
 
 
