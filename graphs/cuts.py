@@ -131,10 +131,8 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
         graph, starting_nodes.union(ending_nodes)
     )
 
-    # create partitions thath ar not connected to each other
+    # create partitions thath are not connected to each other
     connected_components = dfg_without_end_start_nodes.get_connected_components()
-    if len(connected_components) > 0:
-        return None
 
     only_start_nodes = set(graph.get_start_nodes() - graph.get_end_nodes())
     only_end_nodes = set(graph.get_end_nodes() - graph.get_start_nodes())
@@ -220,6 +218,10 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
 
 def create_dfg_without_nodes(graph: DFG, nodes: set[str | int]) -> DFG:
     dfg_without_nodes = DFG()
+
+    for node in graph.get_nodes():
+        if node not in nodes:
+            dfg_without_nodes.add_node(node)
 
     for edge in graph.get_edges():
         source, destination = edge
