@@ -188,9 +188,9 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
     for partition in connected_components:
         merged_partition = False
         for node in partition:
-            for end_node in only_end_nodes:
+            for end_node in ending_nodes:
                 if graph.contains_edge(end_node, node):
-                    for other_end_node in only_end_nodes:
+                    for other_end_node in ending_nodes:
                         if not graph.contains_edge(other_end_node, node):
                             partition_1.update(partition)
                             merged_partition = True
@@ -199,9 +199,9 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
                     break
             if merged_partition:
                 break
-            for start_node in only_start_nodes:
+            for start_node in starting_nodes:
                 if graph.contains_edge(node, start_node):
-                    for other_start_node in only_start_nodes:
+                    for other_start_node in starting_nodes:
                         if not graph.contains_edge(node, other_start_node):
                             partition_1.update(partition)
                             merged_partition = True
