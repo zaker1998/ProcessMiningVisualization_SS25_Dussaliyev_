@@ -1,6 +1,8 @@
 import unittest
 from graphs.dfg import DFG
 from graphs.cuts import sequence_cut
+from utils.io import read_csv
+from utils.transformations import dataframe_to_cases_dict
 
 
 class TestSequenceCut(unittest.TestCase):
@@ -48,6 +50,19 @@ class TestSequenceCut(unittest.TestCase):
         cuts = sequence_cut(dfg)
 
         self.assertIsNone(cuts)
+
+    def test_with_test_csv_dataset(self):
+        log = dataframe_to_cases_dict(
+            read_csv("tests/testcsv/test_csv.csv"), "timestamp", "case", "event"
+        )
+        dfg = DFG(log)
+
+        cuts = sequence_cut(dfg)
+
+        self.assertEqual(len(cuts), 3)
+        self.assertEqual(cuts[0], {"a"})
+        self.assertEqual(cuts[1], {"b", "c", "d"})
+        self.assertEqual(cuts[2], {"e"})
 
 
 if __name__ == "__main__":
