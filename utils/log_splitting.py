@@ -23,7 +23,8 @@ def parallel_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
         for event in trace:
             for i, partition in enumerate(partitions):
                 if event in partition:
-                    sub_traces[i].append
+                    sub_traces[i].append(event)
+                    break
 
         for i, sub_trace in enumerate(sub_traces):
             split_logs[i][tuple(sub_trace)] = (
