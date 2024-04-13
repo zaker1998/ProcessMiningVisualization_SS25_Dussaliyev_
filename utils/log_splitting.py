@@ -26,6 +26,8 @@ def parallel_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
                     sub_traces[i].append
 
         for i, sub_trace in enumerate(sub_traces):
-            split_logs[i][tuple(sub_trace)] = frequency
+            split_logs[i][tuple(sub_trace)] = (
+                split_logs[i].get(tuple(sub_trace), 0) + frequency
+            )
 
     return split_logs
