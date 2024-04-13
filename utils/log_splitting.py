@@ -12,3 +12,20 @@ def exclusive_split(log: dict[tuple[str, ...], int], partitions: list[set[str]])
                 break
 
     return split_logs
+
+
+def parallel_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
+    split_logs = [{} for _ in range(len(partitions))]
+    for trace, frequency in log.items():
+        sub_traces = [[] for _ in range(len(partitions))]
+        if trace == tuple():
+            continue
+        for event in trace:
+            for i, partition in enumerate(partitions):
+                if event in partition:
+                    sub_traces[i].append
+
+        for i, sub_trace in enumerate(sub_traces):
+            split_logs[i][tuple(sub_trace)] = frequency
+
+    return split_logs
