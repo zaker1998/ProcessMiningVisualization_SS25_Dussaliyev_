@@ -61,5 +61,35 @@ def sequence_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
 
 def loop_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
     split_logs = [{} for _ in range(len(partitions))]
+    for trace, frequency in log.items():
+        if trace == tuple():
+            continue
+
+        sub_trace = []
+        index = 0
+        partition = partitions[0]
+        for event in trace:
+            if event not in partition:
+                if len(sub_trace) > 0:
+                    split_logs[index][tuple(sub_trace)] = (
+                        split_logs[index].get(tuple(sub_trace), 0) + frequency
+                    )
+                    sub_trace = []
+                index, partition = find_correct_partition(event, partitions)
+            sub_trace.append(event)
+
+        if len(sub_trace) > 0:
+            split_logs[index][tuple(sub_trace)] = (
+                split_logs[index].get(tuple(sub_trace), 0) + frequency
+            )
 
     return split_logs
+
+
+def find_correct_partition(event: str, partitions: list[set[str]]):
+    for i, partition in enumerate(partitions):
+        if event in partition:
+            return i, partition
+    # If the event is not in any partition, return -1 and an empty set
+    # This should never happen, but is added for completeness
+    return -1, set()
