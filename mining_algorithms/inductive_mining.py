@@ -49,11 +49,32 @@ class InductiveMining(BaseMining):
         elif partitions := sequence_cut(log):
             return ("seq", *sequence_split(log, partitions))
         elif partitions := parallel_cut(log):
-            return ("parallel", *parallel_split(log, partitions))
+            return ("par", *parallel_split(log, partitions))
         elif partitions := loop_cut(log):
             return ("loop", *loop_split(log, partitions))
 
         return None
 
     def fallthrough(self, log):
-        pass
+        log_alphabet = self.get_log_alphabet(log)
+
+        # if there is a empty trace in the log
+        # make an xor split with tau and the inductive mining of the log without the empty trace
+        if tuple() in log:
+            log.remove(tuple())
+            return ("xor", "tau", self.inductive_mining(log))
+
+        # if there is a single event in the log
+        # and it occures more than once in a trace
+        # make a loop split with the event and tau
+        # the event has to occure more than once in a trace,
+        #  otherwise it would be a base case
+        if len(log_alphabet) == 1:
+            return ("loop", log[0][0], "tau")
+
+        # if there are multiple events in the log
+        # return a flower model with all the events
+        return ("loop", "tau", *log_alphabet)
+
+    def get_log_alphabet(self, log):
+        return set([event for case in log for event in case])
