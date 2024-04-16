@@ -54,7 +54,7 @@ class BaseMining:
         return scale_factor
 
     def __get_start_nodes(self):
-        return set([trace[0] for trace in self.log.keys()])
+        return set([trace[0] for trace in self.log.keys() if len(trace) > 0])
 
     def __get_end_nodes(self):
-        return set([trace[-1] for trace in self.log.keys()])
+        return set([trace[-1] for trace in self.log.keys() if len(trace) > 0])
