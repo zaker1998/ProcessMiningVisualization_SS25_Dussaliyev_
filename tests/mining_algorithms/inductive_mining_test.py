@@ -34,9 +34,6 @@ def isProcessTreeEqual(tree1, tree2):
     if type(tree1) != type(tree2):
         return False
 
-    if len(tree1) != len(tree2):
-        return False
-
     if isinstance(tree1, str) or isinstance(tree1, int):
         return tree1 == tree2
 
@@ -76,7 +73,7 @@ class TestInductiveMiner(unittest.TestCase):
         inductive_mining = InductiveMining(log)
         result = inductive_mining.inductive_mining(log)
 
-        self.assertEqual(result, ("seq", 1, 2, 3))
+        self.assertTrue(isProcessTreeEqual(result, ("seq", 1, 2, 3)))
 
     def test_inductive_miner_with_multiple_cuts(self):
         log = {
@@ -91,7 +88,7 @@ class TestInductiveMiner(unittest.TestCase):
 
         expected_tree = ("seq", 1, ("loop", ("par", 2, 3), ("seq", 5, 6)), 4)
 
-        self.assertEqual(result, expected_tree)
+        self.assertTrue(isProcessTreeEqual(result, expected_tree))
 
     def test_inductive_miner_fallthrough_with_empty_sublog(self):
         log = {(1, 2, 3): 2, (1, 3): 1, (): 1}
@@ -101,7 +98,7 @@ class TestInductiveMiner(unittest.TestCase):
 
         expected_tree = ("xor", "tau", ("seq", 1, ("xor", "tau", 2), 3))
 
-        self.assertEqual(result, expected_tree)
+        self.assertTrue(isProcessTreeEqual(result, expected_tree))
 
     def test_fallthrough_with_one_event_more_than_once_in_trace(self):
         log = {(1,): 1, (1, 1, 1): 5, (1, 1): 1}
@@ -109,7 +106,17 @@ class TestInductiveMiner(unittest.TestCase):
         inductive_mining = InductiveMining(log)
         result = inductive_mining.inductive_mining(log)
 
-        self.assertEqual(result, ("loop", 1, "tau"))
+        self.assertTrue(isProcessTreeEqual(result, ("loop", 1, "tau")))
+
+    def test_flower_model_fallthrough(self):
+        log = {(1, 2, 3): 1, (2, 3, 1): 1}
+
+        inductive_mining = InductiveMining(log)
+        result = inductive_mining.inductive_mining(log)
+
+        expected_tree = ("loop", "tau", 1, 2, 3)
+
+        self.assertTrue(isProcessTreeEqual(result, expected_tree))
 
     def test_inductive_miner_with_test_csv(self):
         log = {
