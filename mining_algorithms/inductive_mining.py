@@ -7,6 +7,7 @@ from utils.log_splitting import (
     loop_split,
 )
 from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
+from graphs.dfg import DFG
 
 
 class InductiveMining(BaseMining):
@@ -35,22 +36,24 @@ class InductiveMining(BaseMining):
             return "tau"
 
         if len(log) == 1:
-            if len(log[0]) == 0:
+            trace = list(log.keys())[0]
+            if len(trace) == 0:
                 return "tau"
-            if len(log[0]) == 1:
-                return log[0][0]
+            if len(trace) == 1:
+                return trace[0]
 
         return None
 
     def calulate_cut(self, log):
+        dfg = DFG(log)
 
-        if partitions := exclusive_cut(log):
+        if partitions := exclusive_cut(dfg):
             return ("xor", *exclusive_split(log, partitions))
-        elif partitions := sequence_cut(log):
+        elif partitions := sequence_cut(dfg):
             return ("seq", *sequence_split(log, partitions))
-        elif partitions := parallel_cut(log):
+        elif partitions := parallel_cut(dfg):
             return ("par", *parallel_split(log, partitions))
-        elif partitions := loop_cut(log):
+        elif partitions := loop_cut(dfg):
             return ("loop", *loop_split(log, partitions))
 
         return None
@@ -61,7 +64,7 @@ class InductiveMining(BaseMining):
         # if there is a empty trace in the log
         # make an xor split with tau and the inductive mining of the log without the empty trace
         if tuple() in log:
-            log.remove(tuple())
+            del log[tuple()]
             return ("xor", "tau", self.inductive_mining(log))
 
         # if there is a single event in the log
@@ -70,7 +73,8 @@ class InductiveMining(BaseMining):
         # the event has to occure more than once in a trace,
         #  otherwise it would be a base case
         if len(log_alphabet) == 1:
-            return ("loop", log[0][0], "tau")
+
+            return ("loop", list(log_alphabet)[0], "tau")
 
         # if there are multiple events in the log
         # return a flower model with all the events
