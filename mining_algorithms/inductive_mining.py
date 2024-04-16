@@ -1,5 +1,12 @@
 from mining_algorithms.base_mining import BaseMining
 from utils.transformations import cases_list_to_dict
+from utils.log_splitting import (
+    exclusive_split,
+    parallel_split,
+    sequence_split,
+    loop_split,
+)
+from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
 
 
 class InductiveMining(BaseMining):
@@ -36,7 +43,17 @@ class InductiveMining(BaseMining):
         return None
 
     def calulate_cut(self, log):
-        pass
+
+        if partitions := exclusive_cut(log):
+            return ("xor", *exclusive_split(log, partitions))
+        elif partitions := sequence_cut(log):
+            return ("seq", *sequence_split(log, partitions))
+        elif partitions := parallel_cut(log):
+            return ("parallel", *parallel_split(log, partitions))
+        elif partitions := loop_cut(log):
+            return ("loop", *loop_split(log, partitions))
+
+        return None
 
     def fallthrough(self, log):
         pass

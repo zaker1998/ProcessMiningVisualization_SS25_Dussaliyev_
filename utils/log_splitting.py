@@ -57,3 +57,9 @@ def sequence_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
             )
 
     return split_logs
+
+
+def loop_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
+    split_logs = [{} for _ in range(len(partitions))]
+
+    return split_logs
