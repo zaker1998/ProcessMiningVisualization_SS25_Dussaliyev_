@@ -17,11 +17,18 @@ class BaseMining:
          minimum value starts with 0.0 and the greatest value has 5.0 in this case [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         """
         # cluster the node sizes based on frequency
-        cluster = DensityDistributionClusterAlgorithm(
-            list(self.appearance_frequency.values())
-        )
-        self.freq_sorted = list(cluster.sorted_data)
-        self.freq_labels_sorted = list(cluster.labels_sorted_data)
+        try:
+            cluster = DensityDistributionClusterAlgorithm(
+                list(self.appearance_frequency.values())
+            )
+            self.freq_sorted = list(cluster.sorted_data)
+            self.freq_labels_sorted = list(cluster.labels_sorted_data)
+        except ZeroDivisionError as e:
+            # TODO: use logging
+            print(e)
+            # if there is only one event, we can't cluster, so we just set the size to the minimum
+            self.freq_sorted = [list(self.appearance_frequency.values())[0]]
+            self.freq_labels_sorted = [1.0]
 
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
