@@ -155,3 +155,35 @@ class InductiveGraph(BaseGraph):
         self.add_node(id=node_id, label=" ", shape="point", fillcolor="#FFFFFF")
         self.silent_activities_count += 1
         return node_id
+
+    def node_to_string(self, id: str) -> tuple[str, str]:
+        if "gate" in id or "silent" in id:
+            return self.special_node_to_string(id)
+
+        node = self.get_node(id)
+        description = f"**Event:** {node.get_id()}"
+        if frequency := node.get_data_from_key("frequency"):
+            description = f"""{description}\n**Frequency:** {frequency}"""
+        return node.get_id(), description
+
+    def special_node_to_string(self, id: str) -> tuple[str, str]:
+        title, description = "", ""
+
+        if "exclusive" in id:
+            if "start" in id:
+                title = "Exclusive Start Gate"
+            elif "end" in id:
+                title = "Exclusive End Gate"
+
+            description = "**Exclusive Gateway**"
+        elif "parallel" in id:
+            if "start" in id:
+                title = "Parallel Start Gate"
+            elif "end" in id:
+                title = "Parallel End Gate"
+            description = "**Parallel Gateway**"
+        elif "silent" in id:
+            title = "Silent Activity"
+            description = "**Silent Activity**"
+
+        return title, description
