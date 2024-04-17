@@ -65,6 +65,24 @@ class InductiveGraph(BaseGraph):
 
     # TODO: add sequence, exclusive, parallel, loop methods
 
+    def add_sequence(self, process_tree) -> tuple:
+        start_node, end_node = None, None
+        for section in process_tree:
+            if isinstance(section, tuple):
+                start, end = self.add_section(section)
+            elif isinstance(section, str) or isinstance(section, int):
+                start, end = section, section
+
+            if start_node is None:
+                start_node = start
+
+            if end_node is not None:
+                self.add_edge(end_node, start)
+
+            end_node = end
+
+        return start_node, end_node
+
     def add_gate(self, type: str):
         node_attributes = {
             "shape": "diamond",
