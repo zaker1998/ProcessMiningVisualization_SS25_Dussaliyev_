@@ -40,6 +40,9 @@ def isProcessTreeEqual(tree1, tree2):
     if not isinstance(tree1, tuple):
         raise Exception("Invalid tree type")
 
+    if len(tree1) != len(tree2):
+        return False
+
     operation = tree1[0]
 
     if operation != tree2[0]:
