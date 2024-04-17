@@ -34,7 +34,10 @@ class InductiveGraph(BaseGraph):
 
         width, height = self.node_sizes.get(title, (1.5, 0.5))
         frequency = self.event_frequency.get(title, 0)
-        label = f"{title} \\n {frequency}"
+        if frequency > 0:
+            event_data["frequency"] = frequency
+
+        label = f"{title}\n{frequency}"
         super().add_node(
             id=title,
             label=label,
