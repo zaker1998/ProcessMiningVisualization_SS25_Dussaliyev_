@@ -63,7 +63,7 @@ class InductiveGraph(BaseGraph):
 
         return start_node, end_node
 
-    # TODO: add , parallel, loop methods
+    # TODO: add loop method
 
     def add_sequence(self, process_tree) -> tuple:
         start_node, end_node = None, None
@@ -90,6 +90,25 @@ class InductiveGraph(BaseGraph):
 
     def add_exclusive(self, process_tree) -> tuple:
         start_node, end_node = self.add_gate("xor")
+
+        for section in process_tree:
+            if isinstance(section, tuple):
+                start, end = self.add_section(section)
+            elif isinstance(section, str) or isinstance(section, int):
+                if section == "tau":
+                    silent_activity_id = self.add_silent_activity()
+                    start, end = silent_activity_id, silent_activity_id
+                else:
+                    self.add_event(section)
+                    start, end = section, section
+
+            self.add_edge(start_node, start)
+            self.add_edge(end, end_node)
+
+        return start_node, end_node
+
+    def add_parallel(self, process_tree) -> tuple:
+        start_node, end_node = self.add_gate("par")
 
         for section in process_tree:
             if isinstance(section, tuple):
