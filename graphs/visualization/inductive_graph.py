@@ -107,6 +107,37 @@ class InductiveGraph(BaseGraph):
 
         return start_node, end_node
 
+    def add_loop(self, process_tree) -> tuple:
+        # get start and end of the loop section,
+        # by finding the start and end of the first section
+        if isinstance(process_tree[0], tuple):
+            start_node, end_node = self.add_section(process_tree[0])
+        elif isinstance(process_tree[0], str) or isinstance(process_tree[0], int):
+            if section == "tau":
+                silent_activity_id = self.add_silent_activity()
+                start_node, end_node = silent_activity_id, silent_activity_id
+            else:
+                self.add_event(process_tree[0])
+                start_node, end_node = process_tree[0], process_tree[0]
+
+        for section in process_tree[1:]:
+            if isinstance(section, tuple):
+                start, end = self.add_section(section)
+            elif isinstance(section, str) or isinstance(section, int):
+                if section == "tau":
+                    silent_activity_id = self.add_silent_activity()
+                    start, end = silent_activity_id, silent_activity_id
+                else:
+                    self.add_event(section)
+                    start, end = section, section
+            # add edges to the loop section
+            # the start of the redo section is the end of the loop section
+            # the end of the redo section is the start of the loop section
+            self.add_edge(end_node, start)
+            self.add_edge(end, start_node)
+
+        return start_node, end_node
+
     def add_gate(self, type: str):
         node_attributes = {
             "shape": "diamond",
