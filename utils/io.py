@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import csv
 import os
+import base64
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
@@ -60,3 +61,12 @@ def read_file(
     else:
         # TODO: use a custom io exception
         raise ValueError("File format not supported")
+
+
+def read_img(filePath: str):
+    png = open(filePath, "rb").read()
+    # https://pmbaumgartner.github.io/streamlitopedia/sizing-and-images.html
+    # https://discuss.streamlit.io/t/how-to-show-local-gif-image/3408/2
+    # Convert the image to a base64 string to be able to display it in the HTML
+    png_base64 = base64.b64encode(png).decode("utf-8")
+    return png_base64

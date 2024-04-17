@@ -3,6 +3,7 @@ import streamlit as st
 import pickle
 from components.buttons import navigation_button
 from components.PNGViewer import PNGViewer
+from utils.io import read_img
 
 
 class ExportView(ViewInterface):
@@ -19,8 +20,10 @@ class ExportView(ViewInterface):
 
         graph.export_graph("temp/graph", "png", dpi=self.dpi)
 
+        png = read_img("temp/graph.png")
+
         with st.container(border=True):
-            PNGViewer("temp/graph.png", height=600)
+            PNGViewer(png, height=600)
 
         navigation_button("Back", "Algorithm", type="secondary")
 
