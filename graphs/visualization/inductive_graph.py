@@ -63,7 +63,7 @@ class InductiveGraph(BaseGraph):
 
         return start_node, end_node
 
-    # TODO: add sequence, exclusive, parallel, loop methods
+    # TODO: add , parallel, loop methods
 
     def add_sequence(self, process_tree) -> tuple:
         start_node, end_node = None, None
@@ -117,3 +117,9 @@ class InductiveGraph(BaseGraph):
         self.parallel_gates_count += 1
 
         return start_id, end_id
+
+    def add_silent_activity(self):
+        node_id = f"silent_activity_{self.silent_activities_count}"
+        self.add_node(id=node_id, label=" ", shape="point", fillcolor="#FFFFFF")
+        self.silent_activities_count += 1
+        return node_id
