@@ -71,8 +71,12 @@ class InductiveGraph(BaseGraph):
             if isinstance(section, tuple):
                 start, end = self.add_section(section)
             elif isinstance(section, str) or isinstance(section, int):
-                self.add_event(section)
-                start, end = section, section
+                if section == "tau":
+                    silent_activity_id = self.add_silent_activity()
+                    start, end = silent_activity_id, silent_activity_id
+                else:
+                    self.add_event(section)
+                    start, end = section, section
 
             if start_node is None:
                 start_node = start
