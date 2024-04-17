@@ -53,10 +53,10 @@ class InductiveGraph(BaseGraph):
             start_node, end_node = self.add_sequence(process_tree[1:])
 
         elif process_tree[0] == "xor":
-            start_node, end_node = self.add_exclusive(process_tree[1:])
+            start_node, end_node = self.add_section_with_gate(process_tree[1:], "xor")
 
         elif process_tree[0] == "par":
-            start_node, end_node = self.add_parallel(process_tree[1:])
+            start_node, end_node = self.add_section_with_gate(process_tree[1:], "par")
 
         elif process_tree[0] == "loop":
             start_node, end_node = self.add_loop(process_tree[1:])
@@ -88,27 +88,8 @@ class InductiveGraph(BaseGraph):
 
         return start_node, end_node
 
-    def add_exclusive(self, process_tree) -> tuple:
-        start_node, end_node = self.add_gate("xor")
-
-        for section in process_tree:
-            if isinstance(section, tuple):
-                start, end = self.add_section(section)
-            elif isinstance(section, str) or isinstance(section, int):
-                if section == "tau":
-                    silent_activity_id = self.add_silent_activity()
-                    start, end = silent_activity_id, silent_activity_id
-                else:
-                    self.add_event(section)
-                    start, end = section, section
-
-            self.add_edge(start_node, start)
-            self.add_edge(end, end_node)
-
-        return start_node, end_node
-
-    def add_parallel(self, process_tree) -> tuple:
-        start_node, end_node = self.add_gate("par")
+    def add_section_with_gate(self, process_tree, gate_type: str) -> tuple:
+        start_node, end_node = self.add_gate(gate_type)
 
         for section in process_tree:
             if isinstance(section, tuple):
