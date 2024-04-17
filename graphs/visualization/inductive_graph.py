@@ -49,7 +49,15 @@ class InductiveGraph(BaseGraph):
     def add_section(self, process_tree) -> tuple:
         start_node, end_node = None, None
 
-        if process_tree[0] == "seq":
+        if isinstance(process_tree, str) or isinstance(process_tree, int):
+            if process_tree == "tau":
+                silent_activity_id = self.add_silent_activity()
+                start_node, end_node = silent_activity_id, silent_activity_id
+            else:
+                self.add_event(process_tree)
+                start_node, end_node = process_tree, process_tree
+
+        elif process_tree[0] == "seq":
             start_node, end_node = self.add_sequence(process_tree[1:])
 
         elif process_tree[0] == "xor":
@@ -63,20 +71,10 @@ class InductiveGraph(BaseGraph):
 
         return start_node, end_node
 
-    # TODO: add loop method
-
     def add_sequence(self, process_tree) -> tuple:
         start_node, end_node = None, None
         for section in process_tree:
-            if isinstance(section, tuple):
-                start, end = self.add_section(section)
-            elif isinstance(section, str) or isinstance(section, int):
-                if section == "tau":
-                    silent_activity_id = self.add_silent_activity()
-                    start, end = silent_activity_id, silent_activity_id
-                else:
-                    self.add_event(section)
-                    start, end = section, section
+            start, end = self.add_section(section)
 
             if start_node is None:
                 start_node = start
@@ -92,15 +90,7 @@ class InductiveGraph(BaseGraph):
         start_node, end_node = self.add_gate(gate_type)
 
         for section in process_tree:
-            if isinstance(section, tuple):
-                start, end = self.add_section(section)
-            elif isinstance(section, str) or isinstance(section, int):
-                if section == "tau":
-                    silent_activity_id = self.add_silent_activity()
-                    start, end = silent_activity_id, silent_activity_id
-                else:
-                    self.add_event(section)
-                    start, end = section, section
+            start, end = self.add_section(section)
 
             self.add_edge(start_node, start)
             self.add_edge(end, end_node)
@@ -110,26 +100,10 @@ class InductiveGraph(BaseGraph):
     def add_loop(self, process_tree) -> tuple:
         # get start and end of the loop section,
         # by finding the start and end of the first section
-        if isinstance(process_tree[0], tuple):
-            start_node, end_node = self.add_section(process_tree[0])
-        elif isinstance(process_tree[0], str) or isinstance(process_tree[0], int):
-            if section == "tau":
-                silent_activity_id = self.add_silent_activity()
-                start_node, end_node = silent_activity_id, silent_activity_id
-            else:
-                self.add_event(process_tree[0])
-                start_node, end_node = process_tree[0], process_tree[0]
+        start_node, end_node = self.add_section(process_tree[0])
 
         for section in process_tree[1:]:
-            if isinstance(section, tuple):
-                start, end = self.add_section(section)
-            elif isinstance(section, str) or isinstance(section, int):
-                if section == "tau":
-                    silent_activity_id = self.add_silent_activity()
-                    start, end = silent_activity_id, silent_activity_id
-                else:
-                    self.add_event(section)
-                    start, end = section, section
+            start, end = self.add_section(section)
             # add edges to the loop section
             # the start of the redo section is the end of the loop section
             # the end of the redo section is the start of the loop section
