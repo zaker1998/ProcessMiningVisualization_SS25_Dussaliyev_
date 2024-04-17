@@ -8,14 +8,21 @@ from utils.log_splitting import (
 )
 from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
 from graphs.dfg import DFG
+from graphs.visualization.inductive_graph import InductiveGraph
 
 
 class InductiveMining(BaseMining):
     def __init__(self, log):
         super().__init__(log)
+        self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
 
     def generate_graph(self):
-        pass
+        process_tree = self.inductive_mining(self.log)
+        self.graph = InductiveGraph(
+            process_tree,
+            frequency=self.appearance_frequency,
+            node_sizes=self.node_sizes,
+        )
 
     def inductive_mining(self, log):
         if tree := self.base_cases(log):

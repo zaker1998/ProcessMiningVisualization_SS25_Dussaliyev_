@@ -6,7 +6,7 @@ class InductiveGraph(BaseGraph):
         self,
         process_tree,
         frequency: dict[str, int] = None,
-        node_sizes: dict[str, tuple(float, float)] = None,
+        node_sizes: dict[str, tuple[float, float]] = None,
     ) -> None:
         super().__init__(rankdir="LR")
         self.exclusive_gates_count = 0
@@ -80,7 +80,7 @@ class InductiveGraph(BaseGraph):
                 start_node = start
 
             if end_node is not None:
-                self.add_edge(end_node, start)
+                self.add_edge(end_node, start, weight=None)
 
             end_node = end
 
@@ -92,8 +92,8 @@ class InductiveGraph(BaseGraph):
         for section in process_tree:
             start, end = self.add_section(section)
 
-            self.add_edge(start_node, start)
-            self.add_edge(end, end_node)
+            self.add_edge(start_node, start, weight=None)
+            self.add_edge(end, end_node, weight=None)
 
         return start_node, end_node
 
@@ -107,8 +107,8 @@ class InductiveGraph(BaseGraph):
             # add edges to the loop section
             # the start of the redo section is the end of the loop section
             # the end of the redo section is the start of the loop section
-            self.add_edge(end_node, start)
-            self.add_edge(end, start_node)
+            self.add_edge(end_node, start, weight=None)
+            self.add_edge(end, start_node, weight=None)
 
         return start_node, end_node
 
