@@ -9,6 +9,12 @@ algorithm_mappings = {
     "Fuzzy Mining": "fuzzy",
     "Inductive Mining": "inductive",
 }
+# route : path
+docs_path_mappings = {
+    "heuristic": "docs/algorithms/heuristic_miner.md",
+    "fuzzy": "docs/algorithms/fuzzy_miner.md",
+    "inductive": "docs/algorithms/inductive_miner.md",
+}
 
 # route : view
 algorithm_routes = {

@@ -56,7 +56,21 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         self.read_values_from_session_state()
         self.initialize_values()
 
-        st.title(self.get_page_title())
+        from config import docs_path_mappings
+
+        if st.session_state.algorithm not in docs_path_mappings:
+            st.title(self.get_page_title())
+
+        else:
+            title_column, button_column = st.columns([3, 1])
+            with title_column:
+                st.title(self.get_page_title())
+            with button_column:
+                navigation_button(
+                    "Algorithm Explanation",
+                    "Documentation",
+                    use_container_width=True,
+                )
         with st.sidebar:
             self.render_sidebar()
 
