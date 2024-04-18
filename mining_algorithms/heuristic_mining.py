@@ -14,7 +14,7 @@ class HeuristicMining(BaseMining):
         self.min_edge_thickness = 1
         self.min_frequency = 1
         self.dependency_threshold = 0.5
-        self.max_frequency = 0
+        self.max_frequency = int(np.max(self.succession_matrix))
 
     def create_dependency_graph_with_graphviz(
         self, dependency_threshold, min_frequency
@@ -67,8 +67,6 @@ class HeuristicMining(BaseMining):
                 weight=int(weight),
                 size=edge_thickness,
             )
-
-        self.max_frequency = max(int(np.max(dependency_graph)), self.max_frequency)
 
         # add start and end nodes
         self.graph.add_start_node()
