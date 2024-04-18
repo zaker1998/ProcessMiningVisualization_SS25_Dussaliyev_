@@ -81,13 +81,10 @@ class ColumnSelectionView(ViewInterface):
         st.multiselect(
             "Select the :violet[data columns]", df.columns, key="data_columns"
         )
-
-        st.write("before styling")
         styled_df = df.style.apply(
             axis=0,
             func=self.style_df,
         )
-        st.write("after styling")
 
         st.dataframe(
             styled_df,
