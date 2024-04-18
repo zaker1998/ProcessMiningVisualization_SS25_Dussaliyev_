@@ -27,6 +27,9 @@ class DFG:
             self.start_nodes.add(trace[0])
             self.end_nodes.add(trace[-1])
 
+            self.add_node(trace[0])
+            self.add_node(trace[-1])
+
             for i in range(len(trace) - 1):
                 self.add_edge(trace[i], trace[i + 1], frequency)
 
