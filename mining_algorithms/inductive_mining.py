@@ -71,8 +71,9 @@ class InductiveMining(BaseMining):
         # if there is a empty trace in the log
         # make an xor split with tau and the inductive mining of the log without the empty trace
         if tuple() in log:
+            empty_log = {tuple(): log[tuple()]}
             del log[tuple()]
-            return ("xor", "tau", self.inductive_mining(log))
+            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log))
 
         # if there is a single event in the log
         # and it occures more than once in a trace
