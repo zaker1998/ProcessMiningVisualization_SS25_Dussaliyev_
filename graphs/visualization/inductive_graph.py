@@ -179,15 +179,21 @@ class InductiveGraph(BaseGraph):
             elif "end" in id:
                 title = "Exclusive End Gate"
 
-            description = "**Exclusive Gateway**"
+            description = f"""**Exclusive Gateway**
+            
+            The Exclusive Gateway is used to represent a decision point in the process flow."""
         elif "parallel" in id:
             if "start" in id:
                 title = "Parallel Start Gate"
             elif "end" in id:
                 title = "Parallel End Gate"
-            description = "**Parallel Gateway**"
+            description = f"""**Parallel Gateway**
+            
+            The Parallel Gateway is used to represent a synchronization point in the process flow."""
         elif "silent" in id:
             title = "Silent Activity"
-            description = "**Silent Activity**"
+            description = f"""**Silent Activity**
+            
+            A silent activity is an activity that does not have any effect on the process flow. It is used to represent a transition in the process flow without any actual work being done."""
 
         return title, description
