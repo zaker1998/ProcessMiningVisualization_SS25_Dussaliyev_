@@ -4,6 +4,7 @@ import streamlit as st
 from graphs.visualization.base_graph import BaseGraph
 from components.interactiveGraph import interactiveGraph
 from components.buttons import home_button, to_home, navigation_button
+from time import time
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -42,12 +43,15 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             ):
                 to_home("Home")
 
+            start = time()
             self.controller.create_model(
                 st.session_state.df,
                 st.session_state.time_column,
                 st.session_state.activity_column,
                 st.session_state.case_column,
             )
+            end = time()
+            print(f"Time taken to create model: {end - start} seconds")
 
             del st.session_state.df
             st.session_state.model = self.controller.get_model()
@@ -74,7 +78,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         with st.sidebar:
             self.render_sidebar()
 
+        start = time()
         self.controller.perform_mining()
+        end = time()
+        st.write(f"Time taken: {end - start} seconds")
 
         graph_container = st.container(border=True)
 
