@@ -50,6 +50,7 @@ class Home(ViewInterface):
         try:
             detected_delimiter = detect_delimiter(self.file)
         except Exception as e:
+            # TODO: use logging
             print(e)
 
         delimiter_col, _, button_column = st.columns([1, 3, 1])

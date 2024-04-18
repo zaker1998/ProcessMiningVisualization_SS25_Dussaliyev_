@@ -135,6 +135,8 @@ class InductiveGraph(BaseGraph):
         end_id = f"exclusive_gate_end_{self.exclusive_gates_count}"
 
         self.add_node(id=start_id, label="X", **node_attributes)
+        node_attributes["style"] = node_attributes.get("style", "") + ", bold"
+        node_attributes["fontname"] = "bold"
         self.add_node(id=end_id, label="X", **node_attributes)
         self.exclusive_gates_count += 1
 
@@ -145,6 +147,8 @@ class InductiveGraph(BaseGraph):
         end_id = f"parallel_gate_end_{self.parallel_gates_count}"
 
         self.add_node(id=start_id, label="+", **node_attributes)
+        node_attributes["style"] = node_attributes.get("style", "") + ", bold"
+        node_attributes["fontname"] = "bold"
         self.add_node(id=end_id, label="+", **node_attributes)
         self.parallel_gates_count += 1
 
