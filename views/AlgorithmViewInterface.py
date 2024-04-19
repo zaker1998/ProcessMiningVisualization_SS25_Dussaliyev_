@@ -42,13 +42,15 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                 or "activity_column" not in st.session_state
             ):
                 to_home("Home")
-
+            start = time()
             self.controller.create_model(
                 st.session_state.df,
                 st.session_state.time_column,
                 st.session_state.activity_column,
                 st.session_state.case_column,
             )
+            end = time()
+            print("Time to create model:", end - start)
 
             del st.session_state.df
             st.session_state.model = self.controller.get_model()
@@ -74,8 +76,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                 )
         with st.sidebar:
             self.render_sidebar()
-
+        start = time()
         self.controller.perform_mining()
+        end = time()
+        print("Time to perform mining:", end - start)
 
         graph_container = st.container(border=True)
 
