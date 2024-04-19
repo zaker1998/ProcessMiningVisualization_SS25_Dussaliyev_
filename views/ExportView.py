@@ -4,6 +4,7 @@ import pickle
 from components.buttons import navigation_button
 from components.PNGViewer import PNGViewer
 from utils.io import read_img
+from time import time
 
 
 class ExportView(ViewInterface):
@@ -18,9 +19,17 @@ class ExportView(ViewInterface):
         else:
             self.export_graph(graph, format.lower())
 
+        start = time()
         graph.export_graph("temp/graph", "png", dpi=self.dpi)
+        end = time()
 
+        print("Time to export graph:", end - start)
+
+        start = time()
         png = read_img("temp/graph.png")
+        end = time()
+
+        print("Time to read image:", end - start)
 
         with st.container(border=True):
             PNGViewer(png, height=600)
