@@ -13,7 +13,7 @@ class ExportView(ViewInterface):
     def render(self):
         st.title("Export")
         graph = st.session_state.model.get_graph()
-        format = st.sidebar.selectbox("Export as:", ["PNG", "SVG", "DOT", "Model"])
+        format = st.sidebar.selectbox("Export as:", ["SVG", "PNG", "DOT", "Model"])
         if format.lower() == "model":
             self.export_model(st.session_state.model)
         else:
