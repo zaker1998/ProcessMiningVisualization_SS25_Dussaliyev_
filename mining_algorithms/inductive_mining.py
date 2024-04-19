@@ -39,9 +39,6 @@ class InductiveMining(BaseMining):
         if len(log) > 1:
             return None
 
-        if len(log) == 0:
-            return "tau"
-
         if len(log) == 1:
             trace = list(log.keys())[0]
             if len(trace) == 0:
