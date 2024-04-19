@@ -7,6 +7,8 @@ from exceptions.graph_exceptions import (
 )
 
 
+# TODO: substitute : for ___ in node ids and edges, but not in labels
+# but also substitute ___ for : when getting the node or edge in this application
 class Node:
 
     def __init__(
@@ -158,7 +160,6 @@ class BaseGraph:
             label = ""
         else:
             label = str(weight)
-
         self.graph.edge(
             edge.source,
             edge.destination,
