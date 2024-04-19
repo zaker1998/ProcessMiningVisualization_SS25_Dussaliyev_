@@ -19,7 +19,6 @@ else:
     _component_func = components.declare_component(_COMPONENT_NAME, path=build_dir)
 
 
-# TODO: check onNodeClick type
 def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph") -> None:
     """Wrapper function for the interactiveGraph component
 
