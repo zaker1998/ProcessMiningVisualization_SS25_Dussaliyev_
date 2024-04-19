@@ -141,3 +141,6 @@ dmypy.json
 .DS_Store
 
 secret_data/
+
+**/*.txt
+**/*.ipynb
