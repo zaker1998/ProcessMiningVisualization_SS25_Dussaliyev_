@@ -29,7 +29,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
   function bindAfterRender() {
     resetGraph()
-
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
       const node_id = event.target.__data__.parent.key
@@ -63,11 +62,15 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }, [])
 
   useEffect(() => {
-    graphviz(graph_div_ref.current)
+    console.log(size)
+    graphviz(".graph")
       .width(size.width)
       .height(size.height)
       .fit(true)
-      //.transition()
+      .on("layoutStart", () => console.log("Layout start"))
+      .on("layoutEnd", () => console.log("Layout end"))
+      .on("renderStart", () => console.log("Render start"))
+      .on("renderEnd", () => console.log("Render end"))
       .on("end", bindAfterRender)
       .renderDot(dot_source)
     // eslint-disable-next-line react-hooks/exhaustive-deps
