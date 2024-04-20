@@ -62,17 +62,24 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }, [])
 
   useEffect(() => {
-    console.log(size)
-    graphviz(".graph")
+    if (size.width === 0 || size.height === 0) return
+    const renderer = graphviz(graph_div_ref.current)
+
+    renderer
+      .dot(dot_source)
       .width(size.width)
       .height(size.height)
       .fit(true)
-      .on("layoutStart", () => console.log("Layout start"))
-      .on("layoutEnd", () => console.log("Layout end"))
-      .on("renderStart", () => console.log("Render start"))
-      .on("renderEnd", () => console.log("Render end"))
+      .zoomScaleExtent([0.1, 100])
+      .tweenPaths(false)
+      .tweenShapes(false)
+      //.on("layoutStart", () => console.log("Layout start"))
+      //.on("layoutEnd", () => console.log("Layout end"))
+      //.on("renderStart", () => console.log("Render start"))
+      //.on("renderEnd", () => console.log("Render end"))
       .on("end", bindAfterRender)
-      .renderDot(dot_source)
+      .render()
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dot_source, size])
 
