@@ -5,6 +5,7 @@ from exceptions.graph_exceptions import (
     DuplicateEdgeException,
     NodeDoesNotExistException,
     EdgeDoesNotExistException,
+    InvalidNodeNameException,
 )
 
 
@@ -207,6 +208,44 @@ class TestBaseGraph(unittest.TestCase):
         self.assertEqual(len(edges), 2)
         self.assertEqual(edges[0].get_edge(), ("1", "2", 1))
         self.assertEqual(edges[1].get_edge(), ("2", "3", 1))
+
+    def test_node_id_with_triple_underscore_throws_exception(self):
+        graph = BaseGraph()
+        with self.assertRaises(InvalidNodeNameException):
+            graph.add_node(id="node1___", label="node1___")
+
+    def test_node_id_colon_substituted_with_trible_underscore_graphviz(self):
+        graph = BaseGraph()
+        graph.add_node(id="node1:1")
+        graphviz_string = graph.get_graphviz_string()
+
+        self.assertTrue(graph.contains_node("node1:1"))
+        self.assertTrue("node1___1" in graphviz_string)
+
+    def test_edge_source_colon_substituted_with_trible_underscore_graphviz(self):
+        graph = BaseGraph()
+        graph.add_node(id="node:1")
+        graph.add_node(id="node2")
+        graph.add_edge("node:1", "node2")
+        graphviz_string = graph.get_graphviz_string()
+
+        self.assertTrue(graph.contains_edge("node:1", "node2"))
+        self.assertTrue("node___1 -> node2" in graphviz_string)
+
+    def test_get_node_substitutes_colon_back(self):
+        graph = BaseGraph()
+        graph.add_node(id="node:1")
+        node = graph.get_node("node___1")
+        self.assertEqual(node.id, "node:1")
+
+    def test_get_edge_substitutes_colon_back(self):
+        graph = BaseGraph()
+        graph.add_node(id="node:1")
+        graph.add_node(id="node2")
+        graph.add_edge("node:1", "node2")
+        edge = graph.get_edge("node___1", "node2")
+        self.assertEqual(edge.source, "node:1")
+        self.assertEqual(edge.destination, "node2")
 
 
 if __name__ == "__main__":
