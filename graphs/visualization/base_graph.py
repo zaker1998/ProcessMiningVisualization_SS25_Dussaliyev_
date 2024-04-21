@@ -78,15 +78,19 @@ class BaseGraph:
         data: dict[str, str | int | float] = None,
         **node_attributes,
     ) -> None:
+
         if self.contains_node(id):
             raise DuplicateNodeException(id)
+
         node = Node(id, label, data)
         self.nodes[node.get_id()] = node
+
         if "filled" not in node_attributes.get("style", ""):
             if "style" in node_attributes:
                 node_attributes["style"] += ", filled"
             else:
                 node_attributes["style"] = "filled"
+
         graphviz_id = self.substitiute_colons(node.get_id())
         self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
@@ -148,10 +152,10 @@ class BaseGraph:
         weight: int = 1,
         **edge_attributes,
     ) -> None:
-        if str(source_id) not in self.nodes:
+        if not self.contains_node(source_id):
             raise NodeDoesNotExistException(source_id)
 
-        if str(target_id) not in self.nodes:
+        if not self.contains_node(target_id):
             raise NodeDoesNotExistException(target_id)
 
         if self.contains_edge(source_id, target_id):
@@ -159,6 +163,7 @@ class BaseGraph:
 
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
+
         if weight == None:
             label = ""
         else:
@@ -181,9 +186,11 @@ class BaseGraph:
         return self.nodes[str(node_id)]
 
     def get_edge(self, source: str | int, destination: str | int) -> Edge:
-        if not self.contains_edge(source, destination):
-            raise EdgeDoesNotExistException(source, destination)
-        return self.edges[(str(source), str(destination))]
+        source_id = str(source).replace(self.colon_substitute, ":")
+        destination_id = str(destination).replace(self.colon_substitute, ":")
+        if not self.contains_edge(source_id, destination_id):
+            raise EdgeDoesNotExistException(source_id, destination_id)
+        return self.edges[(source_id, destination_id)]
 
     def contains_node(self, id: str | int) -> bool:
         return str(id) in self.nodes
