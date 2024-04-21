@@ -87,7 +87,7 @@ class BaseGraph:
                 node_attributes["style"] += ", filled"
             else:
                 node_attributes["style"] = "filled"
-        graphviz_id = node.get_id().replace(":", self.colon_substitute)
+        graphviz_id = self.substitiute_colons(node.get_id())
         self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
     def add_start_node(self, id: str = "Start") -> None:
@@ -141,7 +141,6 @@ class BaseGraph:
             else:
                 self.add_edge(node, ending_node, weight=None, **edge_attributes)
 
-    # Need better naming to not collide with the add_edge method from inheritance
     def add_edge(
         self,
         source_id: str | int,
@@ -164,8 +163,10 @@ class BaseGraph:
             label = ""
         else:
             label = str(weight)
-        graphviz_source_id = edge.source.replace(":", self.colon_substitute)
-        graphviz_target_id = edge.destination.replace(":", self.colon_substitute)
+
+        graphviz_source_id = self.substitiute_colons(edge.source)
+        graphviz_target_id = self.substitiute_colons(edge.destination)
+
         self.graph.edge(
             graphviz_source_id,
             graphviz_target_id,
@@ -174,9 +175,10 @@ class BaseGraph:
         )
 
     def get_node(self, id: str | int) -> Node:
-        if not self.contains_node(id):
-            raise NodeDoesNotExistException(id)
-        return self.nodes[str(id)]
+        node_id = str(id).replace(self.colon_substitute, ":")
+        if not self.contains_node(node_id):
+            raise NodeDoesNotExistException(node_id)
+        return self.nodes[str(node_id)]
 
     def get_edge(self, source: str | int, destination: str | int) -> Edge:
         if not self.contains_edge(source, destination):
@@ -216,3 +218,9 @@ class BaseGraph:
             for key, value in node.get_data().items():
                 description += f"\n**{key}:** {value}"
         return node.get_id(), description
+
+    def substitiute_colons(self, string: str) -> str:
+        return string.replace(":", self.colon_substitute)
+
+    def substitute_colons_back(self, string: str) -> str:
+        return string.replace(self.colon_substitute, ":")
