@@ -57,6 +57,9 @@ class Edge:
 
 
 class BaseGraph:
+
+    colon_substitute: str = "___"
+
     def __init__(
         self,
         **graph_attributes,
@@ -84,7 +87,8 @@ class BaseGraph:
                 node_attributes["style"] += ", filled"
             else:
                 node_attributes["style"] = "filled"
-        self.graph.node(node.get_id(), node.get_label(), **node_attributes)
+        graphviz_id = node.get_id().replace(":", self.colon_substitute)
+        self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
     def add_start_node(self, id: str = "Start") -> None:
         self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
@@ -160,9 +164,11 @@ class BaseGraph:
             label = ""
         else:
             label = str(weight)
+        graphviz_source_id = edge.source.replace(":", self.colon_substitute)
+        graphviz_target_id = edge.destination.replace(":", self.colon_substitute)
         self.graph.edge(
-            edge.source,
-            edge.destination,
+            graphviz_source_id,
+            graphviz_target_id,
             label=label,
             **edge_attributes,
         )
