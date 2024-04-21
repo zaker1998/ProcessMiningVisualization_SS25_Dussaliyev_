@@ -41,4 +41,3 @@ class AlgorithmController(ABC):
             df, timestamp_col, activity_col, cases_col, **additional_cols
         )
         self.model = self.create_empty_model(cases)
-        return self.perform_mining()
