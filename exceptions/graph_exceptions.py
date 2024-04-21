@@ -24,3 +24,10 @@ class EdgeDoesNotExistException(Exception):
     def __init__(self, source, target):
         self.message = f"Edge from {source} to {target} does not exist."
         super().__init__(self.message)
+
+
+class InvalidNodeNameException(Exception):
+
+    def __init__(self, node):
+        self.message = f"Node '{node}' is not a valid node name."
+        super().__init__(self.message)

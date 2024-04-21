@@ -4,11 +4,10 @@ from exceptions.graph_exceptions import (
     DuplicateEdgeException,
     NodeDoesNotExistException,
     EdgeDoesNotExistException,
+    InvalidNodeNameException,
 )
 
 
-# TODO: substitute : for ___ in node ids and edges, but not in labels
-# but also substitute ___ for : when getting the node or edge in this application
 class Node:
 
     def __init__(
@@ -78,6 +77,9 @@ class BaseGraph:
         data: dict[str, str | int | float] = None,
         **node_attributes,
     ) -> None:
+
+        if self.colon_substitute in str(id):
+            raise InvalidNodeNameException(id)
 
         if self.contains_node(id):
             raise DuplicateNodeException(id)
