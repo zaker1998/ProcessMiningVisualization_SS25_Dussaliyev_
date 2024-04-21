@@ -5,6 +5,7 @@ from graphs.visualization.base_graph import BaseGraph
 from components.interactiveGraph import interactiveGraph
 from components.buttons import home_button, to_home, navigation_button
 from time import time
+from exceptions.graph_exceptions import InvalidNodeNameException
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -77,7 +78,17 @@ class AlgorithmViewInterface(ViewInterface, ABC):
         with st.sidebar:
             self.render_sidebar()
         start = time()
-        self.controller.perform_mining()
+        try:
+            self.controller.perform_mining()
+        except InvalidNodeNameException as ex:
+            # TODO: add logging
+            print(ex)
+            st.session_state.error = (
+                ex.message
+                + "\n Please check the input data. The string '___' is not allowed in node names."
+            )
+            to_home()
+
         end = time()
         print("Time to perform mining:", end - start)
 

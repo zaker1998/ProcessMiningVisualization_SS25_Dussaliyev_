@@ -4,11 +4,10 @@ from exceptions.graph_exceptions import (
     DuplicateEdgeException,
     NodeDoesNotExistException,
     EdgeDoesNotExistException,
+    InvalidNodeNameException,
 )
 
 
-# TODO: substitute : for ___ in node ids and edges, but not in labels
-# but also substitute ___ for : when getting the node or edge in this application
 class Node:
 
     def __init__(
@@ -57,6 +56,9 @@ class Edge:
 
 
 class BaseGraph:
+
+    colon_substitute: str = "___"
+
     def __init__(
         self,
         **graph_attributes,
@@ -75,16 +77,24 @@ class BaseGraph:
         data: dict[str, str | int | float] = None,
         **node_attributes,
     ) -> None:
+
+        if self.colon_substitute in str(id):
+            raise InvalidNodeNameException(id)
+
         if self.contains_node(id):
             raise DuplicateNodeException(id)
+
         node = Node(id, label, data)
         self.nodes[node.get_id()] = node
+
         if "filled" not in node_attributes.get("style", ""):
             if "style" in node_attributes:
                 node_attributes["style"] += ", filled"
             else:
                 node_attributes["style"] = "filled"
-        self.graph.node(node.get_id(), node.get_label(), **node_attributes)
+
+        graphviz_id = self.substitiute_colons(node.get_id())
+        self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
     def add_start_node(self, id: str = "Start") -> None:
         self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
@@ -137,7 +147,6 @@ class BaseGraph:
             else:
                 self.add_edge(node, ending_node, weight=None, **edge_attributes)
 
-    # Need better naming to not collide with the add_edge method from inheritance
     def add_edge(
         self,
         source_id: str | int,
@@ -145,10 +154,10 @@ class BaseGraph:
         weight: int = 1,
         **edge_attributes,
     ) -> None:
-        if str(source_id) not in self.nodes:
+        if not self.contains_node(source_id):
             raise NodeDoesNotExistException(source_id)
 
-        if str(target_id) not in self.nodes:
+        if not self.contains_node(target_id):
             raise NodeDoesNotExistException(target_id)
 
         if self.contains_edge(source_id, target_id):
@@ -156,26 +165,34 @@ class BaseGraph:
 
         edge = Edge(source_id, target_id, weight)
         self.edges[(edge.source, edge.destination)] = edge
+
         if weight == None:
             label = ""
         else:
             label = str(weight)
+
+        graphviz_source_id = self.substitiute_colons(edge.source)
+        graphviz_target_id = self.substitiute_colons(edge.destination)
+
         self.graph.edge(
-            edge.source,
-            edge.destination,
+            graphviz_source_id,
+            graphviz_target_id,
             label=label,
             **edge_attributes,
         )
 
     def get_node(self, id: str | int) -> Node:
-        if not self.contains_node(id):
-            raise NodeDoesNotExistException(id)
-        return self.nodes[str(id)]
+        node_id = str(id).replace(self.colon_substitute, ":")
+        if not self.contains_node(node_id):
+            raise NodeDoesNotExistException(node_id)
+        return self.nodes[str(node_id)]
 
     def get_edge(self, source: str | int, destination: str | int) -> Edge:
-        if not self.contains_edge(source, destination):
-            raise EdgeDoesNotExistException(source, destination)
-        return self.edges[(str(source), str(destination))]
+        source_id = str(source).replace(self.colon_substitute, ":")
+        destination_id = str(destination).replace(self.colon_substitute, ":")
+        if not self.contains_edge(source_id, destination_id):
+            raise EdgeDoesNotExistException(source_id, destination_id)
+        return self.edges[(source_id, destination_id)]
 
     def contains_node(self, id: str | int) -> bool:
         return str(id) in self.nodes
@@ -210,3 +227,9 @@ class BaseGraph:
             for key, value in node.get_data().items():
                 description += f"\n**{key}:** {value}"
         return node.get_id(), description
+
+    def substitiute_colons(self, string: str) -> str:
+        return string.replace(":", self.colon_substitute)
+
+    def substitute_colons_back(self, string: str) -> str:
+        return string.replace(self.colon_substitute, ":")
