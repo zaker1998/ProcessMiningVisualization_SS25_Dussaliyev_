@@ -85,7 +85,7 @@ class AlgorithmViewInterface(ViewInterface, ABC):
             print(ex)
             st.session_state.error = (
                 ex.message
-                + "\n Please check the input data. The string'___' is not allowed in node names."
+                + "\n Please check the input data. The string '___' is not allowed in node names."
             )
             to_home()
 
