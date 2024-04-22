@@ -97,7 +97,7 @@ class DFG:
         return self.predecessor_list.get(node, set())
 
     def get_nodes(self) -> set[str | int]:
-        return self.successor_list.keys()
+        return set(self.successor_list.keys())
 
     def get_edges(self) -> dict[tuple[str | int, str | int], int]:
         edges = set()
