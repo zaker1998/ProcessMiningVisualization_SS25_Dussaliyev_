@@ -142,3 +142,17 @@ class DFG:
                     visited.add(node)
 
         return False
+
+    def get_reachable_nodes(self, node: str | int) -> set[str | int]:
+        queue = deque([node])
+        visited = set([node])
+
+        while queue:
+            current_node = queue.popleft()
+
+            for node in self.nodes:
+                if node not in visited and (current_node, node) in self.edges:
+                    queue.append(node)
+                    visited.add(node)
+
+        return visited
