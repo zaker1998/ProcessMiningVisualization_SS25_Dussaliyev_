@@ -33,14 +33,9 @@ class DFG:
             self.add_node(trace[-1])
 
             for i in range(len(trace) - 1):
-                self.add_edge(trace[i], trace[i + 1], frequency)
+                self.add_edge(trace[i], trace[i + 1])
 
-    def add_edge(
-        self, source: str | int, destination: str | int, weight: int = 1
-    ) -> None:
-
-        if weight <= 0:
-            raise ValueError("Weight must be a positive integer.")
+    def add_edge(self, source: str | int, destination: str | int) -> None:
 
         if not self.contains_node(source):
             self.add_node(source)
