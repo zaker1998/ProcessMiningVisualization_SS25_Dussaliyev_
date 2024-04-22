@@ -15,13 +15,13 @@ type nodeClickData = {
 const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
   const key = args["key"]
+  const height: number = args["height"]
   const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
   const [nodeClickData, setNodeClickData] = useState<nodeClickData>({
     clickId: 0,
     nodeId: "",
   })
-  const height: number = 600
-  const [size, setSize] = useState({ width: 0, height: height })
+  const [width, setWidth] = useState(0)
 
   function resetGraph() {
     graphviz(".graph").fit(true).resetZoom()
@@ -45,10 +45,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
     const onResize = () => {
       if (graph_div_ref.current) {
-        setSize({
-          width: graph_div_ref.current.clientWidth,
-          height: graph_div_ref.current.clientHeight,
-        })
+        setWidth(graph_div_ref.current.clientWidth)
       }
     }
 
@@ -59,17 +56,18 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     return () => {
       window.removeEventListener("resize", onResize)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (size.width === 0 || size.height === 0) return
+    if (width === 0 || height === 0) return
 
     const render_timeout = setTimeout(() => {
-      console.log(size)
+      console.log(width, height)
       graphviz(graph_div_ref.current)
         .dot(dot_source)
-        .width(size.width)
-        .height(size.height)
+        .width(width)
+        .height(height)
         .fit(true)
         .zoomScaleExtent([0.1, 100])
         .tweenPaths(false)
@@ -87,7 +85,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dot_source, size])
+  }, [dot_source, width, height])
 
   useEffect(() => {
     Streamlit.setComponentValue(nodeClickData)

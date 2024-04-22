@@ -19,7 +19,9 @@ else:
     _component_func = components.declare_component(_COMPONENT_NAME, path=build_dir)
 
 
-def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph") -> None:
+def interactiveGraph(
+    graph: BaseGraph, onNodeClick, key="interactiveGraph", height=600
+) -> None:
     """Wrapper function for the interactiveGraph component
 
     Parameters
@@ -34,7 +36,7 @@ def interactiveGraph(graph: BaseGraph, onNodeClick, key="interactiveGraph") -> N
         st.session_state[state_name] = 0
 
     component_value = _component_func(
-        graphviz_string=graph.get_graphviz_string(), key=key
+        graphviz_string=graph.get_graphviz_string(), key=key, height=height
     )
     del st.session_state[key]
     if (
