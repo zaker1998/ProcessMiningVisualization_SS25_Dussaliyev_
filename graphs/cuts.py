@@ -3,6 +3,11 @@ from collections import deque
 
 
 def exclusive_cut(graph: DFG) -> list[set[str | int]]:
+    # check if the graph has only one start node or one end node
+    # if this is the case return None, as no exclusive cut is possible
+    if len(graph.get_start_nodes()) == 1 or len(graph.get_end_nodes()) == 1:
+        return None
+
     connected_components = graph.get_connected_components()
     return connected_components if len(connected_components) > 1 else None
 
@@ -57,6 +62,11 @@ def sequence_cut(graph: DFG) -> list[set[str | int]]:
 
 
 def parallel_cut(graph: DFG) -> list[set[str | int]]:
+    # check if the graph has only one start node or one end node
+    # if this is the case return None, as no exclusive cut is possible
+    if len(graph.get_start_nodes()) == 1 or len(graph.get_end_nodes()) == 1:
+        return None
+
     inverted_dfg = create_inverted_dfg(graph)
     partitions = inverted_dfg.get_connected_components()
 
