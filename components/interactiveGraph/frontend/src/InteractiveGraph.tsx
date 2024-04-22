@@ -63,22 +63,28 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
   useEffect(() => {
     if (size.width === 0 || size.height === 0) return
-    const renderer = graphviz(graph_div_ref.current)
 
-    renderer
-      .dot(dot_source)
-      .width(size.width)
-      .height(size.height)
-      .fit(true)
-      .zoomScaleExtent([0.1, 100])
-      .tweenPaths(false)
-      .tweenShapes(false)
-      //.on("layoutStart", () => console.log("Layout start"))
-      //.on("layoutEnd", () => console.log("Layout end"))
-      //.on("renderStart", () => console.log("Render start"))
-      //.on("renderEnd", () => console.log("Render end"))
-      .on("end", bindAfterRender)
-      .render()
+    const render_timeout = setTimeout(() => {
+      console.log(size)
+      graphviz(graph_div_ref.current)
+        .dot(dot_source)
+        .width(size.width)
+        .height(size.height)
+        .fit(true)
+        .zoomScaleExtent([0.1, 100])
+        .tweenPaths(false)
+        .tweenShapes(false)
+        //.on("layoutStart", () => console.log("Layout start"))
+        //.on("layoutEnd", () => console.log("Layout end"))
+        //.on("renderStart", () => console.log("Render start"))
+        //.on("renderEnd", () => console.log("Render end"))
+        .on("end", bindAfterRender)
+        .render()
+    }, 100)
+
+    return () => {
+      clearTimeout(render_timeout)
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dot_source, size])
