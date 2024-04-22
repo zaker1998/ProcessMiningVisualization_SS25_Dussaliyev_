@@ -6,9 +6,10 @@ import {
 import React, { useEffect, useRef, useState } from "react"
 import { graphviz } from "d3-graphviz"
 import { selectAll } from "d3"
+import { v4 as uuidv4 } from "uuid"
 
 type nodeClickData = {
-  clickId: number
+  clickId: string
   nodeId: string
 }
 
@@ -18,7 +19,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const height: number = args["height"]
   const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
   const [nodeClickData, setNodeClickData] = useState<nodeClickData>({
-    clickId: 0,
+    clickId: "",
     nodeId: "",
   })
   const [width, setWidth] = useState(0)
@@ -33,10 +34,10 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       event.preventDefault()
       const node_id = event.target.__data__.parent.key
       console.log(node_id)
-      setNodeClickData((previous) => ({
-        clickId: previous.clickId + 1,
+      setNodeClickData({
+        clickId: uuidv4(),
         nodeId: node_id,
-      }))
+      })
     })
   }
 
