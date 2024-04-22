@@ -77,7 +77,6 @@ class DFG:
 
         while queue:
             current_node = queue.popleft()
-
             neighbors = self.get_successors(current_node)
 
             if not directed:

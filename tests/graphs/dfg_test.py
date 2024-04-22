@@ -77,6 +77,12 @@ class TestDFG(unittest.TestCase):
         self.assertIn({"D", "E"}, connected_components)
         self.assertIn({"A", "B", "C"}, connected_components)
 
+    def test_get_reachable_nodes(self):
+        self.assertEqual(self.dfg.get_reachable_nodes("A"), {"A", "B", "C"})
+        self.assertEqual(self.dfg.get_reachable_nodes("B"), {"B", "C"})
+        self.assertEqual(self.dfg.get_reachable_nodes("C"), {"C", "B"})
+        self.assertEqual(self.dfg.get_reachable_nodes("D"), {"D"})
+
 
 if __name__ == "__main__":
     unittest.main()
