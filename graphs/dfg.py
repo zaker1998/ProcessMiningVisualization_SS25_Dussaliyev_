@@ -80,7 +80,7 @@ class DFG:
             neighbors = self.get_successors(current_node)
 
             if not directed:
-                neighbors.update(self.get_predecessors(current_node))
+                neighbors = neighbors.union(self.get_predecessors(current_node))
 
             for neighbor in neighbors:
                 if neighbor not in visited:
