@@ -76,7 +76,6 @@ class DFG:
 
         return connected_components
 
-    # TODO: update to new internal dfg structure
     def __bfs(self, starting_node: str | int, directed=True) -> set[str | int]:
         queue = deque([starting_node])
         visited = set([starting_node])
