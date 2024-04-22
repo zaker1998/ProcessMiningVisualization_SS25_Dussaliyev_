@@ -8,8 +8,10 @@ class DFG:
     def __init__(self, log: list[list[str]] = None) -> None:
         self.start_nodes: set[str | int] = set()
         self.end_nodes: set[str | int] = set()
-        self.nodes: set[str | int] = set()
-        self.edges: dict[tuple[str | int, str | int], int] = dict()
+        self.successor_list: dict[str | int, set[str | int]] = dict()
+        self.predecessor_list: dict[str | int, set[str | int]] = dict()
+        # self.nodes: set[str | int] = set()
+        # self.edges: dict[tuple[str | int, str | int], int] = dict()
         if log:
             self.__build_graph_from_log(log)
 
@@ -40,20 +42,29 @@ class DFG:
         if weight <= 0:
             raise ValueError("Weight must be a positive integer.")
 
-        if source not in self.nodes:
-            self.nodes.add(source)
+        if not self.contains_node(source):
+            self.add_node(source)
 
-        if destination not in self.nodes:
-            self.nodes.add(destination)
+        if not self.contains_node(destination):
+            self.add_node(destination)
 
-        if (source, destination) in self.edges:
-            self.edges[(source, destination)] += weight
-        else:
-            self.edges[(source, destination)] = weight
+        if source not in self.successor_list:
+            self.successor_list[source] = set()
+
+        if destination not in self.predecessor_list:
+            self.predecessor_list[destination] = set()
+
+        self.successor_list[source].add(destination)
+        self.predecessor_list[destination].add(source)
 
     def add_node(self, node: str | int) -> None:
-        self.nodes.add(node)
+        if node not in self.successor_list:
+            self.successor_list[node] = set()
 
+        if node not in self.predecessor_list:
+            self.predecessor_list[node] = set()
+
+    # TODO: update to new internal dfg structure
     def get_connected_components(self) -> list[set[str | int]]:
         connected_components = []
         visited = set()
@@ -66,6 +77,7 @@ class DFG:
 
         return connected_components
 
+    # TODO: update to new internal dfg structure
     def __bfs(self, starting_node: str | int) -> set[str | int]:
         """Breadth-first search to find all reachable nodes from a starting node, without considering the direction of the edges."""
         queue = deque([starting_node])
@@ -85,28 +97,20 @@ class DFG:
         return visited
 
     def get_successors(self, node: str | int) -> set[str | int]:
-        successors = set()
-
-        for source, destination in self.edges:
-            if source == node:
-                successors.add(destination)
-
-        return successors
+        return self.successor_list.get(node, set())
 
     def get_predecessors(self, node: str | int) -> set[str | int]:
-        predecessors = set()
-
-        for source, destination in self.edges:
-            if destination == node:
-                predecessors.add(source)
-
-        return predecessors
+        return self.predecessor_list.get(node, set())
 
     def get_nodes(self) -> set[str | int]:
-        return self.nodes
+        return self.successor_list.keys()
 
     def get_edges(self) -> dict[tuple[str | int, str | int], int]:
-        return self.edges
+        edges = set()
+        for source, destinations in self.successor_list.items():
+            for destination in destinations:
+                edges.add((source, destination))
+        return edges
 
     def get_start_nodes(self) -> set[str | int]:
         return self.start_nodes
@@ -121,27 +125,10 @@ class DFG:
         return node in self.end_nodes
 
     def contains_node(self, node: str | int) -> bool:
-        return node in self.nodes
+        return node in self.successor_list.keys()
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
-        return (source, destination) in self.edges
-
-    def is_reachable(self, source: str | int, destination: str | int) -> bool:
-        queue = deque([source])
-        visited = set([source])
-
-        while queue:
-            current_node = queue.popleft()
-
-            for node in self.nodes:
-                if node not in visited and (current_node, node) in self.edges:
-                    if node == destination:
-                        return True
-
-                    queue.append(node)
-                    visited.add(node)
-
-        return False
+        return destination in self.successor_list.get(source, set())
 
     def get_reachable_nodes(self, node: str | int) -> set[str | int]:
         queue = deque([node])
