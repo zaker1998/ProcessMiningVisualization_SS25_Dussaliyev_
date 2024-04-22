@@ -16,12 +16,14 @@ def sequence_cut(graph: DFG) -> list[set[str | int]]:
     partitions = [{node} for node in graph.get_nodes()]
     nodes = list(graph.get_nodes())
 
+    reachable_nodes = {node: graph.get_reachable_nodes(node) for node in nodes}
+
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             node_1 = nodes[i]
             node_2 = nodes[j]
-            is_j_reachable_from_i = graph.is_reachable(node_1, node_2)
-            is_i_reachable_from_j = graph.is_reachable(node_2, node_1)
+            is_j_reachable_from_i = node_2 in reachable_nodes[node_1]
+            is_i_reachable_from_j = node_1 in reachable_nodes[node_2]
 
             # merge partitions if the nodes are reachable from each other or not reachable from each other
             if (is_j_reachable_from_i and is_i_reachable_from_j) or (
@@ -48,8 +50,9 @@ def sequence_cut(graph: DFG) -> list[set[str | int]]:
     for i in range(len(partitions)):
         min_partition_index = i
         for j in range(i + 1, len(partitions)):
-            if graph.is_reachable(
-                next(iter(partitions[j])), next(iter(partitions[min_partition_index]))
+            if (
+                next(iter(partitions[min_partition_index]))
+                in reachable_nodes[next(iter(partitions[j]))]
             ):
                 min_partition_index = j
 
