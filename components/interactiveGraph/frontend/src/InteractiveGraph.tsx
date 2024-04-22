@@ -4,8 +4,8 @@ import {
   ComponentProps,
 } from "streamlit-component-lib"
 import React, { useEffect, useRef, useState } from "react"
-import { graphviz } from "d3-graphviz"
-import { selectAll } from "d3"
+import { Graphviz, graphviz } from "d3-graphviz"
+import { BaseType, selectAll } from "d3"
 import { v4 as uuidv4 } from "uuid"
 
 type nodeClickData = {
@@ -23,6 +23,12 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     nodeId: "",
   })
   const [width, setWidth] = useState(0)
+  const [graphvizInstance, setGraphvizInstance] = useState<Graphviz<
+    BaseType,
+    any,
+    BaseType,
+    any
+  > | null>(null)
 
   function resetGraph() {
     graphviz(".graph").fit(true).resetZoom()
@@ -40,6 +46,14 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       })
     })
   }
+
+  useEffect(() => {
+    const instance = graphviz(graph_div_ref.current).dot(dot_source)
+    //.on("layoutStart", () => console.log("Layout start"))
+    //.on("layoutEnd", () => console.log("Layout end"))
+
+    setGraphvizInstance(instance)
+  }, [dot_source])
 
   useEffect(() => {
     Streamlit.setFrameHeight(height)
@@ -62,19 +76,17 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
   useEffect(() => {
     if (width === 0 || height === 0) return
+    if (graphvizInstance === null) return
 
     const render_timeout = setTimeout(() => {
       console.log(width, height)
-      graphviz(graph_div_ref.current)
-        .dot(dot_source)
+      graphvizInstance
         .width(width)
         .height(height)
         .fit(true)
         .zoomScaleExtent([0.1, 100])
         .tweenPaths(false)
         .tweenShapes(false)
-        //.on("layoutStart", () => console.log("Layout start"))
-        //.on("layoutEnd", () => console.log("Layout end"))
         //.on("renderStart", () => console.log("Render start"))
         //.on("renderEnd", () => console.log("Render end"))
         .on("end", bindAfterRender)
@@ -86,7 +98,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dot_source, width, height])
+  }, [graphvizInstance, width, height])
 
   useEffect(() => {
     Streamlit.setComponentValue(nodeClickData)
