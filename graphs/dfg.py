@@ -64,35 +64,35 @@ class DFG:
         if node not in self.predecessor_list:
             self.predecessor_list[node] = set()
 
-    # TODO: update to new internal dfg structure
     def get_connected_components(self) -> list[set[str | int]]:
         connected_components = []
         visited = set()
 
-        for node in self.nodes:
+        for node in self.get_nodes():
             if node not in visited:
-                component = self.__bfs(node)
+                component = self.__bfs(node, directed=False)
                 connected_components.append(component)
                 visited.update(component)
 
         return connected_components
 
     # TODO: update to new internal dfg structure
-    def __bfs(self, starting_node: str | int) -> set[str | int]:
-        """Breadth-first search to find all reachable nodes from a starting node, without considering the direction of the edges."""
+    def __bfs(self, starting_node: str | int, directed=True) -> set[str | int]:
         queue = deque([starting_node])
         visited = set([starting_node])
 
         while queue:
             current_node = queue.popleft()
 
-            for node in self.nodes:
-                if node not in visited and (
-                    (current_node, node) in self.edges
-                    or (node, current_node) in self.edges
-                ):
-                    queue.append(node)
-                    visited.add(node)
+            neighbors = self.get_successors(current_node)
+
+            if not directed:
+                neighbors.update(self.get_predecessors(current_node))
+
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+                    visited.add(neighbor)
 
         return visited
 
@@ -131,15 +131,6 @@ class DFG:
         return destination in self.successor_list.get(source, set())
 
     def get_reachable_nodes(self, node: str | int) -> set[str | int]:
-        queue = deque([node])
-        visited = set([node])
-
-        while queue:
-            current_node = queue.popleft()
-
-            for node in self.nodes:
-                if node not in visited and (current_node, node) in self.edges:
-                    queue.append(node)
-                    visited.add(node)
+        visited = self.__bfs(node)
 
         return visited
