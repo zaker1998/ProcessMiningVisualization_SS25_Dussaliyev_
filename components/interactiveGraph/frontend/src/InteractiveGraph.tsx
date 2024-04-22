@@ -30,6 +30,8 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     any
   > | null>(null)
 
+  const [isRendering, setIsRendering] = useState(true)
+
   function resetGraph() {
     graphviz(".graph").fit(true).resetZoom()
   }
@@ -45,6 +47,8 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
         nodeId: node_id,
       })
     })
+
+    setIsRendering(false)
   }
 
   useEffect(() => {
@@ -79,6 +83,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     if (graphvizInstance === null) return
 
     const render_timeout = setTimeout(() => {
+      setIsRendering(true)
       console.log(width, height)
       graphvizInstance
         .width(width)
@@ -140,6 +145,8 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       >
         Reset
       </button>
+
+      {isRendering && <div>Loading</div>}
     </div>
   )
 }
