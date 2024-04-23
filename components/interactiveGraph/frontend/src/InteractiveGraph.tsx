@@ -37,7 +37,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }
 
   function bindAfterRender() {
-    resetGraph()
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
       const node_id = event.target.__data__.parent.key
@@ -47,16 +46,20 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
         nodeId: node_id,
       })
     })
-
     setIsRendering(false)
   }
 
   useEffect(() => {
-    const instance = graphviz(graph_div_ref.current).dot(dot_source)
-    //.on("layoutStart", () => console.log("Layout start"))
-    //.on("layoutEnd", () => console.log("Layout end"))
-
-    setGraphvizInstance(instance)
+    setIsRendering(true)
+    const instance = graphviz(graph_div_ref.current, true)
+      .dot(dot_source)
+      //.on("layoutStart", () => {
+      //  console.log("started layout")
+      //})
+      .on("layoutEnd", () => {
+        console.log("layout end")
+        setGraphvizInstance(instance)
+      })
   }, [dot_source])
 
   useEffect(() => {
@@ -85,6 +88,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     const render_timeout = setTimeout(() => {
       setIsRendering(true)
       console.log(width, height)
+
       graphvizInstance
         .width(width)
         .height(height)
@@ -92,8 +96,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
         .zoomScaleExtent([0.1, 100])
         .tweenPaths(false)
         .tweenShapes(false)
-        //.on("renderStart", () => console.log("Render start"))
-        //.on("renderEnd", () => console.log("Render end"))
         .on("end", bindAfterRender)
         .render()
     }, 100)
