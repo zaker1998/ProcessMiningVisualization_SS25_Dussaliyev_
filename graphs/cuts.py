@@ -70,7 +70,7 @@ def parallel_cut(graph: DFG) -> list[set[str | int]]:
     if len(graph.get_start_nodes()) == 1 or len(graph.get_end_nodes()) == 1:
         return None
 
-    inverted_dfg = create_inverted_dfg(graph)
+    inverted_dfg = graph.invert()
     partitions = inverted_dfg.get_connected_components()
 
     if len(partitions) == 1:
@@ -140,8 +140,8 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
     starting_nodes = graph.get_start_nodes()
     ending_nodes = graph.get_end_nodes()
 
-    dfg_without_end_start_nodes = create_dfg_without_nodes(
-        graph, starting_nodes.union(ending_nodes)
+    dfg_without_end_start_nodes = graph.create_dfg_without_nodes(
+        starting_nodes.union(ending_nodes)
     )
 
     # create partitions thath are not connected to each other
@@ -227,41 +227,3 @@ def loop_cut(graph: DFG) -> list[set[str | int]]:
 
     partitions = [partition_1, *filtered_partitions]
     return partitions if len(partitions) > 1 else None
-
-
-def create_dfg_without_nodes(graph: DFG, nodes: set[str | int]) -> DFG:
-    dfg_without_nodes = DFG()
-
-    for node in graph.get_nodes():
-        if node not in nodes:
-            dfg_without_nodes.add_node(node)
-
-    for edge in graph.get_edges():
-        source, destination = edge
-        if source not in nodes and destination not in nodes:
-            dfg_without_nodes.add_edge(source, destination)
-
-    return dfg_without_nodes
-
-
-def create_inverted_dfg(graph: DFG) -> DFG:
-    inverted_dfg = DFG()
-
-    edges = graph.get_edges()
-    nodes = list(graph.get_nodes())
-
-    for node in nodes:
-        inverted_dfg.add_node(node)
-
-    for i in range(len(nodes)):
-        for j in range(i + 1, len(nodes)):
-            node_1 = nodes[i]
-            node_2 = nodes[j]
-
-            if not graph.contains_edge(node_1, node_2) or not graph.contains_edge(
-                node_2, node_1
-            ):
-                inverted_dfg.add_edge(node_1, node_2)
-                inverted_dfg.add_edge(node_2, node_1)
-
-    return inverted_dfg

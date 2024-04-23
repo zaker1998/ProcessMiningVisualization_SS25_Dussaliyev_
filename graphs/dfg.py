@@ -127,3 +127,37 @@ class DFG:
         visited = self.__bfs(node)
 
         return visited
+
+    def invert(self) -> "DFG":
+        inverted_dfg = DFG()
+        nodes = list(self.get_nodes())
+
+        for node in nodes:
+            inverted_dfg.add_node(node)
+
+        for i in range(len(nodes)):
+            for j in range(i + 1, len(nodes)):
+                node_1 = nodes[i]
+                node_2 = nodes[j]
+
+                if not self.contains_edge(node_1, node_2) or not self.contains_edge(
+                    node_2, node_1
+                ):
+                    inverted_dfg.add_edge(node_1, node_2)
+                    inverted_dfg.add_edge(node_2, node_1)
+
+        return inverted_dfg
+
+    def create_dfg_without_nodes(self, nodes: set[str | int]) -> "DFG":
+        dfg_without_nodes = DFG()
+
+        for node in self.get_nodes():
+            if node not in nodes:
+                dfg_without_nodes.add_node(node)
+
+        for edge in self.get_edges():
+            source, destination = edge
+            if source not in nodes and destination not in nodes:
+                dfg_without_nodes.add_edge(source, destination)
+
+        return dfg_without_nodes
