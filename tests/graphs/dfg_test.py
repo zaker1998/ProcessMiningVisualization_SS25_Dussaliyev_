@@ -83,6 +83,10 @@ class TestDFG(unittest.TestCase):
         self.assertEqual(self.dfg.get_reachable_nodes("C"), {"C", "B"})
         self.assertEqual(self.dfg.get_reachable_nodes("D"), {"D"})
 
+    def test_reachable_nodes_with_node_without_edges(self):
+        self.dfg.add_node("D")
+        self.assertEqual(self.dfg.get_reachable_nodes("D"), {"D"})
+
     def test_node_without_edges_is_stored_in_dfg(self):
         log = [["A", "B"], ["B", "C"], ["C", "A"], ["D", "E"], ["D", "A"], ["F"]]
 
