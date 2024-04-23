@@ -17,7 +17,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
   const key = args["key"]
   const height: number = args["height"]
-  const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
+  const div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
   const [nodeClickData, setNodeClickData] = useState<nodeClickData>({
     clickId: "",
     nodeId: "",
@@ -51,13 +51,10 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
   useEffect(() => {
     setIsRendering(true)
-    const instance = graphviz(graph_div_ref.current, true)
+    setGraphvizInstance(null)
+    const instance = graphviz(".graph")
       .dot(dot_source)
-      //.on("layoutStart", () => {
-      //  console.log("started layout")
-      //})
       .on("layoutEnd", () => {
-        console.log("layout end")
         setGraphvizInstance(instance)
       })
   }, [dot_source])
@@ -66,8 +63,8 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     Streamlit.setFrameHeight(height)
 
     const onResize = () => {
-      if (graph_div_ref.current) {
-        setWidth(graph_div_ref.current.clientWidth)
+      if (div_ref.current) {
+        setWidth(div_ref.current.clientWidth)
       }
     }
 
@@ -114,6 +111,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   return (
     <div
       id={key}
+      ref={div_ref}
       style={{
         position: "absolute",
         height: "100%",
@@ -122,7 +120,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       }}
     >
       <div
-        ref={graph_div_ref}
         className="graph"
         style={{
           position: "absolute",
