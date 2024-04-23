@@ -31,6 +31,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   }
 
   function bindAfterRender() {
+    resetGraph()
     selectAll(".node").on("click", (event) => {
       event.preventDefault()
       const node_id = event.target.__data__.parent.key
