@@ -5,7 +5,7 @@ from graphs.visualization.base_graph import BaseGraph
 
 # Template for the component from https://docs.streamlit.io/library/components/publish and https://github.com/streamlit/component-template/tree/master/template/my_component
 
-_RELEASE = False
+_RELEASE = True
 _COMPONENT_NAME = "interactive-graph"
 
 if not _RELEASE:
