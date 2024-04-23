@@ -127,25 +127,38 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
           width: "100%",
         }}
       ></div>
-      <button
-        onClick={resetGraph}
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          backgroundColor: "#F0F0F0",
-          borderRadius: "0.5rem",
-          minHeight: "38px",
-          padding: "0.25 rem 0.75rem",
-          margin: "0.25rem",
-          border: "none",
-          outline: "none",
-        }}
-      >
-        Reset
-      </button>
-
-      {isRendering && <div>Loading</div>}
+      {isRendering ? (
+        <div
+          style={{
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            backgroundColor: "#FEFEFE",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <p>Loading</p>
+        </div>
+      ) : (
+        <button
+          onClick={resetGraph}
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            backgroundColor: "#F0F0F0",
+            borderRadius: "0.5rem",
+            minHeight: "38px",
+            padding: "0.25 rem 0.75rem",
+            margin: "0.25rem",
+            border: "none",
+            outline: "none",
+          }}
+        >
+          Reset
+        </button>
+      )}
     </div>
   )
 }
