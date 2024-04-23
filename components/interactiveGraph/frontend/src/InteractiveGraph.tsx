@@ -4,8 +4,8 @@ import {
   ComponentProps,
 } from "streamlit-component-lib"
 import React, { useEffect, useRef, useState } from "react"
-import { Graphviz, graphviz } from "d3-graphviz"
-import { BaseType, selectAll } from "d3"
+import { graphviz } from "d3-graphviz"
+import { selectAll } from "d3"
 import { v4 as uuidv4 } from "uuid"
 
 type nodeClickData = {
@@ -23,12 +23,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     nodeId: "",
   })
   const [width, setWidth] = useState(0)
-  const [graphvizInstance, setGraphvizInstance] = useState<Graphviz<
-    BaseType,
-    any,
-    BaseType,
-    any
-  > | null>(null)
 
   const [isRendering, setIsRendering] = useState(true)
 
@@ -48,16 +42,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     })
     setIsRendering(false)
   }
-
-  useEffect(() => {
-    setIsRendering(true)
-    setGraphvizInstance(null)
-    const instance = graphviz(".graph")
-      .dot(dot_source)
-      .on("layoutEnd", () => {
-        setGraphvizInstance(instance)
-      })
-  }, [dot_source])
 
   useEffect(() => {
     Streamlit.setFrameHeight(height)
@@ -80,13 +64,11 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
 
   useEffect(() => {
     if (width === 0 || height === 0) return
-    if (graphvizInstance === null) return
 
     const render_timeout = setTimeout(() => {
       setIsRendering(true)
-      console.log(width, height)
-
-      graphvizInstance
+      graphviz(".graph")
+        .dot(dot_source)
         .width(width)
         .height(height)
         .fit(true)
@@ -102,7 +84,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphvizInstance, width, height])
+  }, [dot_source, width, height])
 
   useEffect(() => {
     Streamlit.setComponentValue(nodeClickData)
@@ -130,6 +112,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       {isRendering ? (
         <div
           style={{
+            position: "absolute",
             display: "flex",
             height: "100%",
             width: "100%",
@@ -139,11 +122,11 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
             flexDirection: "column",
           }}
         >
-          <p style={{ fontSize: "2em" }}>
+          <p style={{ fontSize: "2em", color: "black" }}>
             The Graph is being rendered. For larger graphs this may take a
             while.
           </p>
-          <p style={{ fontSize: "2em" }}>
+          <p style={{ fontSize: "2em", color: "black" }}>
             Try changing the parameters to reduce the graph size.
           </p>
         </div>
