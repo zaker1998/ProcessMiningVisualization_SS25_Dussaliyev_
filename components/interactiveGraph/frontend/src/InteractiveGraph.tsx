@@ -136,9 +136,16 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
             backgroundColor: "#FEFEFE",
             alignItems: "center",
             justifyContent: "center",
+            flexDirection: "column",
           }}
         >
-          <p>Loading</p>
+          <p style={{ fontSize: "2em" }}>
+            The Graph is being rendered. For larger graphs this may take a
+            while.
+          </p>
+          <p style={{ fontSize: "2em" }}>
+            Try changing the parameters to reduce the graph size.
+          </p>
         </div>
       ) : (
         <button
