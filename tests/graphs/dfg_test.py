@@ -83,6 +83,66 @@ class TestDFG(unittest.TestCase):
         self.assertEqual(self.dfg.get_reachable_nodes("C"), {"C", "B"})
         self.assertEqual(self.dfg.get_reachable_nodes("D"), {"D"})
 
+    def test_node_without_edges_is_stored_in_dfg(self):
+        log = [["A", "B"], ["B", "C"], ["C", "A"], ["D", "E"], ["D", "A"], ["F"]]
+
+        dfg = DFG(log)
+
+        self.assertEqual(dfg.get_nodes(), {"A", "B", "C", "D", "E", "F"})
+
+    def test_inverting_dfg(self):
+        inverted_dfg = self.dfg.invert()
+
+        self.assertEqual(inverted_dfg.get_nodes(), {"A", "B", "C"})
+        self.assertEqual(
+            inverted_dfg.get_edges(),
+            {("A", "B"), ("B", "A"), ("A", "C"), ("C", "A")},
+        )
+
+    def test_inverting_graph_with_no_edges(self):
+        dfg = DFG([["A"], ["B"], ["C"]])
+
+        inverted_dfg = dfg.invert()
+
+        self.assertEqual(inverted_dfg.get_nodes(), {"A", "B", "C"})
+        self.assertEqual(
+            inverted_dfg.get_edges(),
+            {("A", "B"), ("B", "A"), ("A", "C"), ("C", "A"), ("B", "C"), ("C", "B")},
+        )
+
+    def test_inverting_dfg_with_node_without_edges(self):
+        self.dfg.add_node("D")
+        inverted_dfg = self.dfg.invert()
+
+        self.assertEqual(inverted_dfg.get_nodes(), {"A", "B", "C", "D"})
+        self.assertEqual(
+            inverted_dfg.get_edges(),
+            {
+                ("A", "B"),
+                ("B", "A"),
+                ("A", "C"),
+                ("C", "A"),
+                ("A", "D"),
+                ("D", "A"),
+                ("B", "D"),
+                ("D", "B"),
+                ("C", "D"),
+                ("D", "C"),
+            },
+        )
+
+    def test_create_dfg_without_nodes_whithout_edges(self):
+        dfg_without_nodes = self.dfg.create_dfg_without_nodes({"A", "B"})
+
+        self.assertEqual(dfg_without_nodes.get_nodes(), {"C"})
+        self.assertEqual(dfg_without_nodes.get_edges(), set())
+
+    def test_create_dfg_without_nodes_with_edges(self):
+        dfg_without_nodes = self.dfg.create_dfg_without_nodes({"A"})
+
+        self.assertEqual(dfg_without_nodes.get_nodes(), {"B", "C"})
+        self.assertEqual(dfg_without_nodes.get_edges(), {("B", "C"), ("C", "B")})
+
 
 if __name__ == "__main__":
     unittest.main()
