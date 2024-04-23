@@ -6,22 +6,25 @@ import {
 import React, { useEffect, useRef, useState } from "react"
 import { graphviz } from "d3-graphviz"
 import { selectAll } from "d3"
+import { v4 as uuidv4 } from "uuid"
 
 type nodeClickData = {
-  clickId: number
+  clickId: string
   nodeId: string
 }
 
 const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   const dot_source = args["graphviz_string"]
   const key = args["key"]
-  const graph_div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
+  const height: number = args["height"]
+  const div_ref: React.Ref<HTMLDivElement> = useRef<HTMLDivElement>(null)
   const [nodeClickData, setNodeClickData] = useState<nodeClickData>({
-    clickId: 0,
+    clickId: "",
     nodeId: "",
   })
-  const height: number = 600
-  const [size, setSize] = useState({ width: 0, height: height })
+  const [width, setWidth] = useState(0)
+
+  const [isRendering, setIsRendering] = useState(true)
 
   function resetGraph() {
     graphviz(".graph").fit(true).resetZoom()
@@ -33,22 +36,20 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       event.preventDefault()
       const node_id = event.target.__data__.parent.key
       console.log(node_id)
-      setNodeClickData((previous) => ({
-        clickId: previous.clickId + 1,
+      setNodeClickData({
+        clickId: uuidv4(),
         nodeId: node_id,
-      }))
+      })
     })
+    setIsRendering(false)
   }
 
   useEffect(() => {
     Streamlit.setFrameHeight(height)
 
     const onResize = () => {
-      if (graph_div_ref.current) {
-        setSize({
-          width: graph_div_ref.current.clientWidth,
-          height: graph_div_ref.current.clientHeight,
-        })
+      if (div_ref.current) {
+        setWidth(div_ref.current.clientWidth)
       }
     }
 
@@ -59,29 +60,32 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
     return () => {
       window.removeEventListener("resize", onResize)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (size.width === 0 || size.height === 0) return
-    const renderer = graphviz(graph_div_ref.current)
+    if (width === 0 || height === 0) return
 
-    renderer
-      .dot(dot_source)
-      .width(size.width)
-      .height(size.height)
-      .fit(true)
-      .zoomScaleExtent([0.1, 100])
-      .tweenPaths(false)
-      .tweenShapes(false)
-      //.on("layoutStart", () => console.log("Layout start"))
-      //.on("layoutEnd", () => console.log("Layout end"))
-      //.on("renderStart", () => console.log("Render start"))
-      //.on("renderEnd", () => console.log("Render end"))
-      .on("end", bindAfterRender)
-      .render()
+    const render_timeout = setTimeout(() => {
+      setIsRendering(true)
+      graphviz(".graph")
+        .dot(dot_source)
+        .width(width)
+        .height(height)
+        .fit(true)
+        .zoomScaleExtent([0.1, 100])
+        .tweenPaths(false)
+        .tweenShapes(false)
+        .on("end", bindAfterRender)
+        .render()
+    }, 100)
+
+    return () => {
+      clearTimeout(render_timeout)
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dot_source, size])
+  }, [dot_source, width, height])
 
   useEffect(() => {
     Streamlit.setComponentValue(nodeClickData)
@@ -90,6 +94,7 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   return (
     <div
       id={key}
+      ref={div_ref}
       style={{
         position: "absolute",
         height: "100%",
@@ -98,7 +103,6 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
       }}
     >
       <div
-        ref={graph_div_ref}
         className="graph"
         style={{
           position: "absolute",
@@ -106,23 +110,46 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
           width: "100%",
         }}
       ></div>
-      <button
-        onClick={resetGraph}
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          backgroundColor: "#F0F0F0",
-          borderRadius: "0.5rem",
-          minHeight: "38px",
-          padding: "0.25 rem 0.75rem",
-          margin: "0.25rem",
-          border: "none",
-          outline: "none",
-        }}
-      >
-        Reset
-      </button>
+      {isRendering ? (
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            height: "100%",
+            width: "100%",
+            backgroundColor: "#FEFEFE",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <p style={{ fontSize: "2em", color: "black" }}>
+            The Graph is being rendered. For larger graphs this may take a
+            while.
+          </p>
+          <p style={{ fontSize: "2em", color: "black" }}>
+            Try changing the parameters to reduce the graph size.
+          </p>
+        </div>
+      ) : (
+        <button
+          onClick={resetGraph}
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            backgroundColor: "#F0F0F0",
+            borderRadius: "0.5rem",
+            minHeight: "38px",
+            padding: "0.25 rem 0.75rem",
+            margin: "0.25rem",
+            border: "none",
+            outline: "none",
+          }}
+        >
+          Reset
+        </button>
+      )}
     </div>
   )
 }
