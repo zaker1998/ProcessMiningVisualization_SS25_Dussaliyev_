@@ -8,8 +8,10 @@ class DFG:
     def __init__(self, log: list[list[str]] = None) -> None:
         self.start_nodes: set[str | int] = set()
         self.end_nodes: set[str | int] = set()
-        self.nodes: set[str | int] = set()
-        self.edges: dict[tuple[str | int, str | int], int] = dict()
+        self.successor_list: dict[str | int, set[str | int]] = dict()
+        self.predecessor_list: dict[str | int, set[str | int]] = dict()
+        # self.nodes: set[str | int] = set()
+        # self.edges: dict[tuple[str | int, str | int], int] = dict()
         if log:
             self.__build_graph_from_log(log)
 
@@ -31,82 +33,77 @@ class DFG:
             self.add_node(trace[-1])
 
             for i in range(len(trace) - 1):
-                self.add_edge(trace[i], trace[i + 1], frequency)
+                self.add_edge(trace[i], trace[i + 1])
 
-    def add_edge(
-        self, source: str | int, destination: str | int, weight: int = 1
-    ) -> None:
+    def add_edge(self, source: str | int, destination: str | int) -> None:
 
-        if weight <= 0:
-            raise ValueError("Weight must be a positive integer.")
+        if not self.contains_node(source):
+            self.add_node(source)
 
-        if source not in self.nodes:
-            self.nodes.add(source)
+        if not self.contains_node(destination):
+            self.add_node(destination)
 
-        if destination not in self.nodes:
-            self.nodes.add(destination)
+        if source not in self.successor_list:
+            self.successor_list[source] = set()
 
-        if (source, destination) in self.edges:
-            self.edges[(source, destination)] += weight
-        else:
-            self.edges[(source, destination)] = weight
+        if destination not in self.predecessor_list:
+            self.predecessor_list[destination] = set()
+
+        self.successor_list[source].add(destination)
+        self.predecessor_list[destination].add(source)
 
     def add_node(self, node: str | int) -> None:
-        self.nodes.add(node)
+        if node not in self.successor_list:
+            self.successor_list[node] = set()
+
+        if node not in self.predecessor_list:
+            self.predecessor_list[node] = set()
 
     def get_connected_components(self) -> list[set[str | int]]:
         connected_components = []
         visited = set()
 
-        for node in self.nodes:
+        for node in self.get_nodes():
             if node not in visited:
-                component = self.__bfs(node)
+                component = self.__bfs(node, directed=False)
                 connected_components.append(component)
                 visited.update(component)
 
         return connected_components
 
-    def __bfs(self, starting_node: str | int) -> set[str | int]:
-        """Breadth-first search to find all reachable nodes from a starting node, without considering the direction of the edges."""
+    def __bfs(self, starting_node: str | int, directed=True) -> set[str | int]:
         queue = deque([starting_node])
         visited = set([starting_node])
 
         while queue:
             current_node = queue.popleft()
+            neighbors = self.get_successors(current_node)
 
-            for node in self.nodes:
-                if node not in visited and (
-                    (current_node, node) in self.edges
-                    or (node, current_node) in self.edges
-                ):
-                    queue.append(node)
-                    visited.add(node)
+            if not directed:
+                neighbors = neighbors.union(self.get_predecessors(current_node))
+
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+                    visited.add(neighbor)
 
         return visited
 
     def get_successors(self, node: str | int) -> set[str | int]:
-        successors = set()
-
-        for source, destination in self.edges:
-            if source == node:
-                successors.add(destination)
-
-        return successors
+        return self.successor_list.get(node, set())
 
     def get_predecessors(self, node: str | int) -> set[str | int]:
-        predecessors = set()
-
-        for source, destination in self.edges:
-            if destination == node:
-                predecessors.add(source)
-
-        return predecessors
+        return self.predecessor_list.get(node, set())
 
     def get_nodes(self) -> set[str | int]:
-        return self.nodes
+        return set(self.successor_list.keys())
 
     def get_edges(self) -> dict[tuple[str | int, str | int], int]:
-        return self.edges
+        edges = set()
+        for source, destinations in self.successor_list.items():
+            for destination in destinations:
+                edges.add((source, destination))
+        return edges
 
     def get_start_nodes(self) -> set[str | int]:
         return self.start_nodes
@@ -121,24 +118,46 @@ class DFG:
         return node in self.end_nodes
 
     def contains_node(self, node: str | int) -> bool:
-        return node in self.nodes
+        return node in self.successor_list.keys()
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
-        return (source, destination) in self.edges
+        return destination in self.successor_list.get(source, set())
 
-    def is_reachable(self, source: str | int, destination: str | int) -> bool:
-        queue = deque([source])
-        visited = set([source])
+    def get_reachable_nodes(self, node: str | int) -> set[str | int]:
+        visited = self.__bfs(node)
 
-        while queue:
-            current_node = queue.popleft()
+        return visited
 
-            for node in self.nodes:
-                if node not in visited and (current_node, node) in self.edges:
-                    if node == destination:
-                        return True
+    def invert(self) -> "DFG":
+        inverted_dfg = DFG()
+        nodes = list(self.get_nodes())
 
-                    queue.append(node)
-                    visited.add(node)
+        for node in nodes:
+            inverted_dfg.add_node(node)
 
-        return False
+        for i in range(len(nodes)):
+            for j in range(i + 1, len(nodes)):
+                node_1 = nodes[i]
+                node_2 = nodes[j]
+
+                if not self.contains_edge(node_1, node_2) or not self.contains_edge(
+                    node_2, node_1
+                ):
+                    inverted_dfg.add_edge(node_1, node_2)
+                    inverted_dfg.add_edge(node_2, node_1)
+
+        return inverted_dfg
+
+    def create_dfg_without_nodes(self, nodes: set[str | int]) -> "DFG":
+        dfg_without_nodes = DFG()
+
+        for node in self.get_nodes():
+            if node not in nodes:
+                dfg_without_nodes.add_node(node)
+
+        for edge in self.get_edges():
+            source, destination = edge
+            if source not in nodes and destination not in nodes:
+                dfg_without_nodes.add_edge(source, destination)
+
+        return dfg_without_nodes
