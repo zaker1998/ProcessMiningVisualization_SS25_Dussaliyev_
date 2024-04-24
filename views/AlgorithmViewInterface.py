@@ -5,7 +5,7 @@ from graphs.visualization.base_graph import BaseGraph
 from components.interactiveGraph import interactiveGraph
 from components.buttons import home_button, to_home, navigation_button
 from time import time
-from exceptions.graph_exceptions import InvalidNodeNameException
+from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
 
 
 class AlgorithmViewInterface(ViewInterface, ABC):
@@ -88,6 +88,12 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                 + "\n Please check the input data. The string '___' is not allowed in node names."
             )
             to_home()
+        except GraphException as ex:
+            # TODO: add logging
+            print(ex)
+            st.warning(
+                "Do not change the parameters while mining. This will cause an error. Wait until the mining is finished."
+            )
 
         end = time()
         print("Time to perform mining:", end - start)
@@ -98,9 +104,10 @@ class AlgorithmViewInterface(ViewInterface, ABC):
 
         self.node_info_container = st.container()
         with graph_container:
-            interactiveGraph(
-                self.controller.get_graph(), onNodeClick=self.display_node_info
-            )
+            if self.controller.get_graph() is not None:
+                interactiveGraph(
+                    self.controller.get_graph(), onNodeClick=self.display_node_info
+                )
         with button_container:
             columns = st.columns([1, 1, 1])
             with columns[0]:
@@ -110,6 +117,7 @@ class AlgorithmViewInterface(ViewInterface, ABC):
                     "Export",
                     "Export",
                     use_container_width=True,
+                    disabled=self.controller.get_graph() is None,
                 )
 
     def display_node_info(self, node_name: str, node_description: str):
