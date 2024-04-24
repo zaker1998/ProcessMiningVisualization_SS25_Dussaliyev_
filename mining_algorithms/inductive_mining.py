@@ -17,15 +17,15 @@ class InductiveMining(BaseMining):
         super().__init__(log)
         self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
         self.activity_threshold = 1.0
-        self.minimum_traces_frequency = 1
+        self.traces_threshold = 0.8
         self.filtered_log = None
-        self.maximum_trace_frequency = int(max(self.log.values()))
 
-    def generate_graph(self, activity_threshold, min_traces_frequency):
+    def generate_graph(self, activity_threshold, traces_threshold):
         self.activity_threshold = activity_threshold
-        self.minimum_traces_frequency = min_traces_frequency
+        self.traces_threshold = traces_threshold
 
         events_to_remove = self.get_events_to_remove(activity_threshold)
+        min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
 
         filtered_log = filter_traces(self.log, min_traces_frequency)
         filtered_log = filter_events(filtered_log, events_to_remove)
@@ -109,8 +109,5 @@ class InductiveMining(BaseMining):
     def get_activity_threshold(self):
         return self.activity_threshold
 
-    def get_mininum_traces_frequency(self):
-        return self.minimum_traces_frequency
-
-    def get_maximum_trace_frequency(self):
-        return self.maximum_trace_frequency
+    def get_traces_threshold(self):
+        return self.traces_threshold

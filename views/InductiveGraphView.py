@@ -23,22 +23,20 @@ class InductiveGraphView(AlgorithmViewInterface):
                 self.controller.get_activity_threshold()
             )
 
-        if "minimum_traces_frequency" not in st.session_state:
-            st.session_state.minimum_traces_frequency = (
-                self.controller.get_minimum_traces_frequency()
-            )
-
-        self.maximum_trace_frequency = self.controller.get_maximum_trace_frequency()
+        if "traces_treshold" not in st.session_state:
+            st.session_state.traces_treshold = self.controller.get_traces_threshold()
 
     def render_sidebar(self):
 
         slider(
-            label="Minimum Traces Frequency",
-            min_value=1,
-            max_value=self.maximum_trace_frequency,
-            key="minimum_traces_frequency",
-            setValue=self.controller.set_minimum_traces_frequency,
-            tooltip="The minimum traces frequency parameter determines the minimum frequency of a trace to be included in the graph.",
+            label="Traces Threshold",
+            min_value=0.0,
+            max_value=1.0,
+            key="traces_treshold",
+            setValue=self.controller.set_traces_threshold,
+            tooltip="""The traces threshold parameter determines the minimum frequency of a trace to be included in the graph. 
+            All traces with a frequency that is lower than (1-treshold) * max_trace_frequency will be removed.
+            The higher the value, the more traces will be used for the mining process.""",
         )
 
         slider(

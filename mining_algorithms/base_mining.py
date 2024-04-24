@@ -103,3 +103,13 @@ class BaseMining:
                 if freq < minimum_event_freq
             ]
         )
+
+    def calulate_minimum_traces_frequency(self, threshold):
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+
+        minimum_trace_freq = round(max(self.log.values()) * (1 - threshold))
+
+        return minimum_trace_freq
