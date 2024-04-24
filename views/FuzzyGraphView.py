@@ -63,7 +63,7 @@ class FuzzyGraphView(AlgorithmViewInterface):
             label="Utility Ration",
             min_value=0.0,
             max_value=1.0,
-            key="utility_ration",
+            key="utility_ratio",
             setValue=self.controller.set_utility_ratio,
             tooltip="A configuratable utility ratio determines the weight and a larger value for utility ratio will perserve more significant edges, while a smaller value will favor highly correlated edges",
         )
