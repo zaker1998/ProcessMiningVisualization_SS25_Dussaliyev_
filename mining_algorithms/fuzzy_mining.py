@@ -24,10 +24,10 @@ class FuzzyMining(BaseMining):
         self.clustered_nodes = None
         self.sign_dict = None
 
-        self.significance = None
-        self.correlation = None
-        self.edge_cutoff = None
-        self.utility_ratio = None
+        self.significance = 0.0
+        self.correlation = 0.0
+        self.edge_cutoff = 0.0
+        self.utility_ratio = 0.0
         """
         stores the cluster_id as an value and the nodes int the cluster as the key. The node ids are separated by a '-'
         """
