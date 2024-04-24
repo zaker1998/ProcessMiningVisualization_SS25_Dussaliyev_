@@ -5,6 +5,9 @@ from mining_algorithms.base_mining import BaseMining
 
 
 class FuzzyMining(BaseMining):
+
+    cluster_seperator = "---"
+
     def __init__(self, cases):
         super().__init__(cases)
         self.minimum_correlation = None
@@ -22,7 +25,7 @@ class FuzzyMining(BaseMining):
         self.edge_cutoff = 0.0
         self.utility_ratio = 0.0
         """
-        stores the cluster_id as an value and the nodes int the cluster as the key. The node ids are separated by a '-'
+        stores the cluster_id as an value and the nodes int the cluster as the key. The node ids are separated by a the cluster seperator
         """
         self.cluster_id_mapping = None
 
@@ -119,10 +122,21 @@ class FuzzyMining(BaseMining):
         self.graph.add_start_node()
         self.graph.add_end_node()
 
-        # add starting and ending edges from the log
+        # add starting and ending edges from the log, only consider nodes which were not removed from the graph
         # if nodes are merged to cluster, get the cluster id
-        start_nodes = set(map(lambda node: self.get_node_id(node), self.start_nodes))
-        end_nodes = set(map(lambda node: self.get_node_id(node), self.end_nodes))
+
+        start_nodes = set(
+            map(
+                lambda node: self.get_node_id(node),
+                self.start_nodes.intersection(nodes_after_first_rule),
+            )
+        )
+        end_nodes = set(
+            map(
+                lambda node: self.get_node_id(node),
+                self.end_nodes.intersection(nodes_after_first_rule),
+            )
+        )
 
         # print("Start nodes: " + str(start_nodes))
         # print("End nodes: " + str(end_nodes))
@@ -314,6 +328,7 @@ class FuzzyMining(BaseMining):
                 # print("yes - " + str(current_cluster)+ "->" + str(next_cluster) + " is in list_of_removed")
                 if [current_cluster, next_cluster] in list_of_filtered_edges:
                     continue
+
                 self.graph.create_edge(
                     current_cluster, next_cluster, edge_thickness, value
                 )
@@ -505,7 +520,7 @@ class FuzzyMining(BaseMining):
 
     def __get_clustered_node(self, list_of_clustered_nodes, event):
         for cluster in list_of_clustered_nodes:
-            cluster_events = cluster.split("-")
+            cluster_events = cluster.split(self.cluster_seperator)
             if event in cluster_events:
                 return cluster
         return None
@@ -523,12 +538,7 @@ class FuzzyMining(BaseMining):
         list_of_clustered_nodes,
     ):
         for node in nodes_after_first_rule:
-            if node == "activity: Gasthof Straßreith":
-                print("found")
-                print(node not in list_of_clustered_nodes)
             if node not in list_of_clustered_nodes:
-                if node == "activity: Gasthof Straßreith":
-                    print("node added")
                 w, h = self.calulate_node_size(node)
                 node_sign = self.sign_dict.get(node)
                 self.graph.add_event(node, node_sign, (w, h))
@@ -536,7 +546,7 @@ class FuzzyMining(BaseMining):
     def __convert_clustered_nodes_to_list(self, clustered_nodes):
         ret_nodes = []
         for event in clustered_nodes:
-            cluster_events = event.split("-")
+            cluster_events = event.split(self.cluster_seperator)
             for node in cluster_events:
                 if node not in ret_nodes:
                     ret_nodes.append(node)
@@ -549,7 +559,7 @@ class FuzzyMining(BaseMining):
         # 1. find average sum of significance e.g. sig_a+sig_b/2
         # 2. don't change correlation, but consider current cluster as one node(a-b)
         for event in clustered_nodes_after_sec_rule:
-            cluster_events = event.split("-")
+            cluster_events = event.split(self.cluster_seperator)
             sign_after_first_rule = self.__calculate_sign_for_events(
                 sign_after_first_rule, cluster_events
             )
@@ -621,7 +631,7 @@ class FuzzyMining(BaseMining):
                 # current node just by itself, it means all nodes already in global_clustered_nodes but not current node !
 
                 # join events from set
-                cluster = "-".join(sorted(events_to_cluster))
+                cluster = self.cluster_seperator.join(sorted(events_to_cluster))
                 # check if permutation in cluster(true/false)
                 if not self.__permutation_exists(cluster, main_cluster_list):
                     main_cluster_list.append(cluster)
@@ -631,10 +641,10 @@ class FuzzyMining(BaseMining):
         return main_cluster_list
 
     def __permutation_exists(self, current_cluster, main_cluster_list):
-        sorted_cluster = sorted(current_cluster.split("-"))
+        sorted_cluster = sorted(current_cluster.split(self.cluster_seperator))
 
         for cluster in main_cluster_list:
-            cluster_events = cluster.split("-")
+            cluster_events = cluster.split(self.cluster_seperator)
             if sorted_cluster == sorted(cluster_events):
                 return True
         return False
@@ -642,7 +652,7 @@ class FuzzyMining(BaseMining):
     def __add_clustered_nodes_to_graph(self, graph, nodes, sign_dict):
         counter = 1
         for cluster in nodes:
-            cluster_events = cluster.split("-")
+            cluster_events = cluster.split(self.cluster_seperator)
             string_cluster = "Cluster " + str(counter)
             # needed to later find the cluster id and to draw the edges
             self.cluster_id_mapping[cluster] = string_cluster
