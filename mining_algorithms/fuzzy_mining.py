@@ -3,14 +3,7 @@ import numpy as np
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 from mining_algorithms.base_mining import BaseMining
 
-# TODO: improve code readability
-# 1. remove unnecessary comments
-# 2. remove (comment out) unnecessary print statements (use logging instead)
-# 3. improve for loops (e.g. use enumerate if value and index are needed)
-# 4. use numpy functions where possible
 
-
-# TODO: remove dictionaries and use numpy arrays instead???
 class FuzzyMining(BaseMining):
     def __init__(self, cases):
         super().__init__(cases)
@@ -101,7 +94,7 @@ class FuzzyMining(BaseMining):
         self.sign_dict = self.__get_significance_dict_after_clustering(
             sign_after_sec_rule
         )
-        print("avg_Significance after clustering: " + str(self.sign_dict))
+        # print("avg_Significance after clustering: " + str(self.sign_dict))
 
         # print clustered nodes
         self.__add_clustered_nodes_to_graph(
@@ -131,9 +124,10 @@ class FuzzyMining(BaseMining):
         start_nodes = set(map(lambda node: self.get_node_id(node), self.start_nodes))
         end_nodes = set(map(lambda node: self.get_node_id(node), self.end_nodes))
 
-        print("Start nodes: " + str(start_nodes))
-        print("End nodes: " + str(end_nodes))
+        # print("Start nodes: " + str(start_nodes))
+        # print("End nodes: " + str(end_nodes))
 
+        # can cause exception needs fix, for some reason there can be a node which is not in the graph, needs to be checked
         self.graph.add_starting_edges(start_nodes)
         self.graph.add_ending_edges(end_nodes)
 
@@ -195,8 +189,8 @@ class FuzzyMining(BaseMining):
 
             max_values[self.events[i]] = column_max
             min_values[self.events[i]] = column_min
-        print("Maxx------: " + str(max_values))
-        print("Minn------: " + str(min_values))
+        # print("Maxx------: " + str(max_values))
+        # print("Minn------: " + str(min_values))
         return min_values, max_values
 
     def __find_removed_edges_after_edge_filtering(
@@ -249,14 +243,14 @@ class FuzzyMining(BaseMining):
 
         minU, maxU = self.__find_min_and_max_util_value(util_matrix)
 
-        print("111-printing utility ratio value \n" + str(utility_ratio))
-        print("111-printing significance \n" + str(sign_after_first_rule))
+        # print("111-printing utility ratio value \n" + str(utility_ratio))
+        # print("111-printing significance \n" + str(sign_after_first_rule))
 
-        print("111-printing correlation \n" + str(corr_after_first_rule))
+        # print("111-printing correlation \n" + str(corr_after_first_rule))
 
-        print("Util Matrix-----> \n" + str(util_matrix))
+        # print("Util Matrix-----> \n" + str(util_matrix))
 
-        print("calculate normalised util. ")
+        # print("calculate normalised util. ")
 
         normalised_util_matrix = self.__calculate_normalised_util(
             util_matrix, edge_cutoff, minU, maxU, utility_ratio, corr_after_first_rule
@@ -266,7 +260,7 @@ class FuzzyMining(BaseMining):
             removed_indices = np.argwhere(
                 (corr_after_first_rule > 0.0) & (normalised_util_matrix == 0.0)
             )
-        print("removed_indices = \n" + str(removed_indices))
+        # print("removed_indices = \n" + str(removed_indices))
         return removed_indices
 
     def __calculate_normalised_util(
@@ -304,7 +298,7 @@ class FuzzyMining(BaseMining):
                     normalised_matrix[i][j] = 0.0
 
                 # print("i = " + str(i) + "-" + str(self.events[i]) + " j = " + str(j) + "-" + str(self.events[j]) + " min_val = " + str(min_val) + " max_val = " + str(max_val) + " normalised_val = " + str(normalised_matrix[i][j]))
-        print("normalised_matrix = \n" + str(normalised_matrix))
+        # print("normalised_matrix = \n" + str(normalised_matrix))
         return normalised_matrix
 
     def __add_edges_to_graph_for_each_method(
@@ -461,14 +455,14 @@ class FuzzyMining(BaseMining):
                     else:
                         ret_node_to_node_edge[pair] = correlation_after_first_rule[i][j]
 
-        print("node_to_cluster: " + str(ret_node_to_cluster_edge))
-        print("cluster_to_node: " + str(ret_cluster_to_node_edge))
-        print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge))
-        print("node_to_node: " + str(ret_node_to_node_edge))
-
-        print("node_to_cluster: " + str(ret_node_to_cluster_edge_counter))
-        print("cluster_to_node: " + str(ret_cluster_to_node_edge_counter))
-        print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge_counter))
+        # print("node_to_cluster: " + str(ret_node_to_cluster_edge))
+        # print("cluster_to_node: " + str(ret_cluster_to_node_edge))
+        # print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge))
+        # print("node_to_node: " + str(ret_node_to_node_edge))
+        #
+        # print("node_to_cluster: " + str(ret_node_to_cluster_edge_counter))
+        # print("cluster_to_node: " + str(ret_cluster_to_node_edge_counter))
+        # print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge_counter))
 
         node_to_cluster_avg = self.__calculate_avg(
             ret_node_to_cluster_edge, ret_node_to_cluster_edge_counter
@@ -480,9 +474,9 @@ class FuzzyMining(BaseMining):
             ret_cluster_to_cluster_edge, ret_cluster_to_cluster_edge_counter
         )
 
-        print("node_to_cluster_avg--" + str(node_to_cluster_avg))
-        print("cluster_to_node_avg--" + str(cluster_to_node_avg))
-        print("cluster_to_cluster_avg--" + str(cluster_to_cluster_avg))
+        # print("node_to_cluster_avg--" + str(node_to_cluster_avg))
+        # print("cluster_to_node_avg--" + str(cluster_to_node_avg))
+        # print("cluster_to_cluster_avg--" + str(cluster_to_cluster_avg))
 
         return (
             node_to_cluster_avg,
@@ -529,7 +523,12 @@ class FuzzyMining(BaseMining):
         list_of_clustered_nodes,
     ):
         for node in nodes_after_first_rule:
+            if node == "activity: Gasthof Straßreith":
+                print("found")
+                print(node not in list_of_clustered_nodes)
             if node not in list_of_clustered_nodes:
+                if node == "activity: Gasthof Straßreith":
+                    print("node added")
                 w, h = self.calulate_node_size(node)
                 node_sign = self.sign_dict.get(node)
                 self.graph.add_event(node, node_sign, (w, h))
@@ -571,7 +570,7 @@ class FuzzyMining(BaseMining):
                 for j in range(len(self.events)):
                     significance_matrix[i][j] = new_value
 
-        print("putting new value: " + str(new_value))
+        # print("putting new value: " + str(new_value))
         return significance_matrix
 
     def __calculate_clustered_nodes(
@@ -648,7 +647,7 @@ class FuzzyMining(BaseMining):
             # needed to later find the cluster id and to draw the edges
             self.cluster_id_mapping[cluster] = string_cluster
             sign = sign_dict.get(cluster_events[0])
-            print(string_cluster + ": " + str(cluster))
+            # print(string_cluster + ": " + str(cluster))
             self.graph.add_cluster(string_cluster, sign, (1.5, 1.0), cluster_events)
             counter += 1
 
@@ -664,7 +663,7 @@ class FuzzyMining(BaseMining):
                     and self.events[i] not in ret_sign_nodes
                 ):
                     ret_sign_nodes.append(self.events[i])
-        print("sign-rr-> " + str(ret_sign_nodes))
+        # print("sign-rr-> " + str(ret_sign_nodes))
         return ret_sign_nodes
 
     # __cluster_based_on_significance_dependency
