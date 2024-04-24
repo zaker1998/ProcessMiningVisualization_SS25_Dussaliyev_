@@ -7,7 +7,6 @@ from mining_algorithms.base_mining import BaseMining
 class HeuristicMining(BaseMining):
     def __init__(self, log):
         super().__init__(log)
-        self.succession_matrix = self.__create_succession_matrix()
         self.dependency_matrix = self.__create_dependency_matrix()
 
         # Graph modifiers
@@ -91,18 +90,6 @@ class HeuristicMining(BaseMining):
 
     def get_threshold(self):
         return self.dependency_threshold
-
-    def __create_succession_matrix(self):
-        succession_matrix = np.zeros((len(self.events), len(self.events)))
-        mapping = {event: i for i, event in enumerate(self.events)}
-        for trace, frequency in self.log.items():
-            indices = [mapping[event] for event in trace]
-            source_indices = indices[:-1]
-            target_indices = indices[1:]
-            # https://numpy.org/doc/stable/reference/generated/numpy.ufunc.at.html
-            np.add.at(succession_matrix, (source_indices, target_indices), frequency)
-
-        return succession_matrix
 
     def __create_dependency_matrix(self):
         dependency_matrix = np.zeros(self.succession_matrix.shape)

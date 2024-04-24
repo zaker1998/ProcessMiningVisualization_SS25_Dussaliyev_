@@ -8,6 +8,7 @@ class BaseMining:
         self.graph = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_frequency = self.__filter_out_all_events()
+        self.succession_matrix = self.__create_succession_matrix()
 
         """  
         Info about DensityDistributionClusterAlgorithm DDCAL:
@@ -65,3 +66,15 @@ class BaseMining:
 
     def __get_end_nodes(self):
         return set([trace[-1] for trace in self.log.keys() if len(trace) > 0])
+
+    def __create_succession_matrix(self):
+        succession_matrix = np.zeros((len(self.events), len(self.events)))
+        mapping = {event: i for i, event in enumerate(self.events)}
+        for trace, frequency in self.log.items():
+            indices = [mapping[event] for event in trace]
+            source_indices = indices[:-1]
+            target_indices = indices[1:]
+            # https://numpy.org/doc/stable/reference/generated/numpy.ufunc.at.html
+            np.add.at(succession_matrix, (source_indices, target_indices), frequency)
+
+        return succession_matrix

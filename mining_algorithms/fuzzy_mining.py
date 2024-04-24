@@ -11,7 +11,6 @@ class FuzzyMining(BaseMining):
     def __init__(self, cases):
         super().__init__(cases)
         self.minimum_correlation = None
-        self.succession_matrix = self.__create_succession_matrix()
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()
         self.significance_of_nodes = self.__calculate_significance()
         self.node_significance_matrix = self.__calculate_node_significance_matrix(
@@ -730,18 +729,6 @@ class FuzzyMining(BaseMining):
             new_sign = format(value / max_value, ".2f")
             dict[key] = new_sign
         return dict
-
-    def __create_succession_matrix(self):
-        succession_matrix = np.zeros((len(self.events), len(self.events)))
-        mapping = {event: i for i, event in enumerate(self.events)}
-        for trace, frequency in self.log.items():
-            indices = [mapping[event] for event in trace]
-            source_indices = indices[:-1]
-            target_indices = indices[1:]
-            # https://numpy.org/doc/stable/reference/generated/numpy.ufunc.at.html
-            np.add.at(succession_matrix, (source_indices, target_indices), frequency)
-
-        return succession_matrix
 
     def __create_correlation_dependency_matrix(self):
         # create a matrix with the same shape and fill it with zeros
