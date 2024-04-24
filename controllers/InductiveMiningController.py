@@ -4,6 +4,7 @@ from utils.transformations import dataframe_to_cases_dict
 
 
 class InductiveMiningController(AlgorithmController):
+    activity_threshold = 1.0
 
     def __init__(self, model=None):
         self.model = model
@@ -12,10 +13,15 @@ class InductiveMiningController(AlgorithmController):
         return InductiveMining(cases)
 
     def have_parameters_changed(self):
-        return False
+        return self.get_activity_threshold() != self.activity_threshold
 
     def perform_mining(self) -> None:
         if self.get_graph() is not None and not self.have_parameters_changed():
             return
+        self.model.generate_graph(self.activity_threshold, 0.8)
 
-        self.model.generate_graph()
+    def set_activity_threshold(self, value):
+        self.activity_threshold = value
+
+    def get_activity_threshold(self):
+        return self.model.get_activity_threshold()
