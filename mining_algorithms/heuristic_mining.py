@@ -34,17 +34,6 @@ class HeuristicMining(BaseMining):
             w, h = self.calulate_node_size(node)
             self.graph.add_event(node, node_freq, (w, h))
 
-        # cluster the edge thickness sizes based on frequency
-        edge_frequencies = self.dependency_matrix.flatten()
-        edge_frequencies = edge_frequencies[edge_frequencies >= 0.0]
-        edge_frequencies = np.unique(edge_frequencies)
-        # print(edge_frequencies)
-
-        # TODO: move in base class if used in other algorithms
-        cluster = DensityDistributionClusterAlgorithm(edge_frequencies)
-        freq_sorted = list(cluster.sorted_data)
-        freq_labels_sorted = list(cluster.labels_sorted_data)
-
         # add edges to graph
         sources, targets = np.nonzero(dependency_graph)
         for source, target, weight in zip(
@@ -54,10 +43,7 @@ class HeuristicMining(BaseMining):
                 edge_thickness = 0.1
             else:
                 edge_thickness = (
-                    freq_labels_sorted[
-                        freq_sorted.index(self.dependency_matrix[source][target])
-                    ]
-                    + self.min_edge_thickness
+                    self.get_edge_scale_factor(source, target) + self.min_edge_thickness
                 )
 
             self.graph.create_edge(

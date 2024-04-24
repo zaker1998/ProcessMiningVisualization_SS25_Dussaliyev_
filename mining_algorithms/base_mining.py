@@ -9,31 +9,30 @@ class BaseMining:
         self.graph = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_frequency = self.__filter_out_all_events()
+        self.event_positions = {event: i for i, event in enumerate(self.events)}
         self.succession_matrix = self.__create_succession_matrix()
+        self.edge_freq = self.succession_matrix.flatten()
+        self.edge_freq = np.unique(self.edge_freq[self.edge_freq >= 0.0])
 
-        """  
-        Info about DensityDistributionClusterAlgorithm DDCAL:
-         If we have a dictionary like dict={'a':123, 'c': 234, 'e': 345, 'b': 433, 'd': 456}
-         after using cluster.sorted_data we get a sorted array[123, 234, 345, 433, 456]
-         after using cluster.labels_sorted_data we get a normalized array with float numbers
-         minimum value starts with 0.0 and the greatest value has 5.0 in this case [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
-        """
-        # cluster the node sizes based on frequency
-        try:
-            cluster = DensityDistributionClusterAlgorithm(
-                list(self.appearance_frequency.values())
-            )
-            self.event_freq_sorted = list(cluster.sorted_data)
-            self.event_freq_labels_sorted = list(cluster.labels_sorted_data)
-        except ZeroDivisionError as e:
-            # TODO: use logging
-            print(e)
-            # if there is only one event, we can't cluster, so we just set the size to the minimum
-            self.event_freq_sorted = [list(self.appearance_frequency.values())[0]]
-            self.event_freq_labels_sorted = [1.0]
+        self.event_freq_sorted, self.event_freq_labels_sorted = self.__get_clusters(
+            list(self.appearance_frequency.values())
+        )
+
+        self.edge_freq_sorted, self.edge_freq_labels_sorted = self.__get_clusters(
+            self.edge_freq
+        )
 
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
+
+    def __get_clusters(self, frequency):
+        try:
+            cluster = DensityDistributionClusterAlgorithm(frequency)
+            return list(cluster.sorted_data), list(cluster.labels_sorted_data)
+        except ZeroDivisionError as e:
+            # TODO: use logging
+            print(e)
+            return [frequency[0]], [1.0]
 
     def __filter_out_all_events(self):
         dic = {}
@@ -64,6 +63,12 @@ class BaseMining:
         ]
         return scale_factor
 
+    def get_edge_scale_factor(self, source, target):
+        scale_factor = self.edge_freq_labels_sorted[
+            self.edge_freq_sorted.index(self.succession_matrix[source][target])
+        ]
+        return scale_factor
+
     def __get_start_nodes(self):
         return set([trace[0] for trace in self.log.keys() if len(trace) > 0])
 
@@ -72,9 +77,8 @@ class BaseMining:
 
     def __create_succession_matrix(self):
         succession_matrix = np.zeros((len(self.events), len(self.events)))
-        mapping = {event: i for i, event in enumerate(self.events)}
         for trace, frequency in self.log.items():
-            indices = [mapping[event] for event in trace]
+            indices = [self.event_positions[event] for event in trace]
             source_indices = indices[:-1]
             target_indices = indices[1:]
             # https://numpy.org/doc/stable/reference/generated/numpy.ufunc.at.html
