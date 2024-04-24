@@ -86,7 +86,7 @@ class BaseMining:
 
         return succession_matrix
 
-    def path_filter(self, threshold):
+    def get_paths_to_remove(self, threshold):
         if threshold > 1.0:
             threshold = 1.0
         elif threshold < 0.0:
@@ -107,7 +107,7 @@ class BaseMining:
 
         return removed_edges
 
-    def activity_filter(self, threshold):
+    def get_events_to_remove(self, threshold):
         if threshold > 1.0:
             threshold = 1.0
         elif threshold < 0.0:
