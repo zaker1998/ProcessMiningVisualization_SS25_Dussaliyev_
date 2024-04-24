@@ -85,3 +85,45 @@ class BaseMining:
             np.add.at(succession_matrix, (source_indices, target_indices), frequency)
 
         return succession_matrix
+
+    def path_filter(self, threshold):
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+
+        number_of_unique_freq = round(len(self.edge_freq_sorted) * threshold)
+
+        minimum_edge_freq = self.edge_freq_sorted[::-1][number_of_unique_freq - 1]
+
+        if minimum_edge_freq == 0:
+            return set()
+
+        source, target = np.where(self.succession_matrix < minimum_edge_freq)
+
+        removed_edges = set()
+        for s, t in zip(source, target):
+            removed_edges.add((self.events[s], self.events[t]))
+
+        return removed_edges
+
+    def activity_filter(self, threshold):
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+
+        number_of_unique_freq = round(len(self.edge_freq_sorted) * threshold)
+
+        minimum_event_freq = self.event_freq_sorted[::-1][number_of_unique_freq - 1]
+
+        if minimum_event_freq == 0:
+            return set()
+
+        return set(
+            [
+                event
+                for event, freq in self.appearance_frequency.items()
+                if freq < minimum_event_freq
+            ]
+        )
