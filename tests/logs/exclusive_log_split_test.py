@@ -1,4 +1,4 @@
-from utils.log_splitting import exclusive_split
+from logs.splits import exclusive_split
 import unittest
 
 
