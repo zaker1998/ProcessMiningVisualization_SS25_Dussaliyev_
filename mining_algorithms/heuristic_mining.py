@@ -1,5 +1,4 @@
 import numpy as np
-from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 from graphs.visualization.heuristic_graph import HeuristicGraph
 from mining_algorithms.base_mining import BaseMining
 
@@ -14,6 +13,13 @@ class HeuristicMining(BaseMining):
         self.min_frequency = 1
         self.dependency_threshold = 0.5
         self.max_frequency = int(np.max(self.succession_matrix))
+
+        self.edge_freq = self.succession_matrix.flatten()
+        self.edge_freq = np.unique(self.edge_freq[self.edge_freq >= 0.0])
+
+        self.edge_freq_sorted, self.edge_freq_labels_sorted = self.get_clusters(
+            self.edge_freq
+        )
 
     def create_dependency_graph_with_graphviz(
         self, dependency_threshold, min_frequency
@@ -118,3 +124,9 @@ class HeuristicMining(BaseMining):
         # edges from and to the same node are not considered
         np.fill_diagonal(filter_matrix, True)
         return np.where(filter_matrix.all(axis=axis))[0]
+
+    def get_edge_scale_factor(self, source, target):
+        scale_factor = self.edge_freq_labels_sorted[
+            self.edge_freq_sorted.index(self.succession_matrix[source][target])
+        ]
+        return scale_factor

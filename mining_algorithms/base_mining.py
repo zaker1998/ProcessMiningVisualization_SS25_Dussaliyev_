@@ -11,21 +11,15 @@ class BaseMining:
         self.events, self.appearance_frequency = self.__filter_out_all_events()
         self.event_positions = {event: i for i, event in enumerate(self.events)}
         self.succession_matrix = self.__create_succession_matrix()
-        self.edge_freq = self.succession_matrix.flatten()
-        self.edge_freq = np.unique(self.edge_freq[self.edge_freq >= 0.0])
 
-        self.event_freq_sorted, self.event_freq_labels_sorted = self.__get_clusters(
+        self.event_freq_sorted, self.event_freq_labels_sorted = self.get_clusters(
             list(self.appearance_frequency.values())
-        )
-
-        self.edge_freq_sorted, self.edge_freq_labels_sorted = self.__get_clusters(
-            self.edge_freq
         )
 
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
 
-    def __get_clusters(self, frequency):
+    def get_clusters(self, frequency):
         try:
             cluster = DensityDistributionClusterAlgorithm(frequency)
             return list(cluster.sorted_data), list(cluster.labels_sorted_data)
@@ -60,12 +54,6 @@ class BaseMining:
         node_freq = self.appearance_frequency.get(node)
         scale_factor = self.event_freq_labels_sorted[
             self.event_freq_sorted.index(node_freq)
-        ]
-        return scale_factor
-
-    def get_edge_scale_factor(self, source, target):
-        scale_factor = self.edge_freq_labels_sorted[
-            self.edge_freq_sorted.index(self.succession_matrix[source][target])
         ]
         return scale_factor
 
