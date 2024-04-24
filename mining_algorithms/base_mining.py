@@ -86,16 +86,13 @@ class BaseMining:
 
         return succession_matrix
 
-    def get_paths_to_remove(self, threshold):
+    def get_edges_to_remove(self, threshold):
         if threshold > 1.0:
             threshold = 1.0
         elif threshold < 0.0:
             threshold = 0.0
 
-        number_of_unique_freq = round(len(self.edge_freq_sorted) * threshold)
-
-        minimum_edge_freq = self.edge_freq_sorted[::-1][number_of_unique_freq - 1]
-
+        minimum_edge_freq = round(max(self.edge_freq) * (1 - threshold))
         if minimum_edge_freq == 0:
             return set()
 
@@ -113,12 +110,9 @@ class BaseMining:
         elif threshold < 0.0:
             threshold = 0.0
 
-        number_of_unique_freq = round(len(self.edge_freq_sorted) * threshold)
-
-        minimum_event_freq = self.event_freq_sorted[::-1][number_of_unique_freq - 1]
-
-        if minimum_event_freq == 0:
-            return set()
+        minimum_event_freq = round(
+            max(self.appearance_frequency.values()) * (1 - threshold)
+        )
 
         return set(
             [
