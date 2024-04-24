@@ -1,3 +1,9 @@
+class GraphException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class DuplicateNodeException(GraphException):
 
     def __init__(self, node):
@@ -30,10 +36,4 @@ class InvalidNodeNameException(GraphException):
 
     def __init__(self, node):
         self.message = f"Node '{node}' is not a valid node name."
-        super().__init__(self.message)
-
-
-def GraphException(Exception):
-    def __init__(self, message):
-        self.message = message
         super().__init__(self.message)
