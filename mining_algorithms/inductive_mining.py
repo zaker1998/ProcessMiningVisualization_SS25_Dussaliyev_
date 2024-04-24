@@ -16,8 +16,8 @@ class InductiveMining(BaseMining):
     def __init__(self, log):
         super().__init__(log)
         self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
-        self.activity_threshold = 1.0
-        self.traces_threshold = 0.8
+        self.activity_threshold = 0.0
+        self.traces_threshold = 0.2
         self.filtered_log = None
 
     def generate_graph(self, activity_threshold, traces_threshold):

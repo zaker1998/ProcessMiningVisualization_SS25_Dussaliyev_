@@ -80,9 +80,7 @@ class BaseMining:
         elif threshold < 0.0:
             threshold = 0.0
 
-        minimum_event_freq = round(
-            max(self.appearance_frequency.values()) * (1 - threshold)
-        )
+        minimum_event_freq = round(max(self.appearance_frequency.values()) * threshold)
 
         return set(
             [
@@ -98,6 +96,6 @@ class BaseMining:
         elif threshold < 0.0:
             threshold = 0.0
 
-        minimum_trace_freq = round(max(self.log.values()) * (1 - threshold))
+        minimum_trace_freq = round(max(self.log.values()) * threshold)
 
         return minimum_trace_freq

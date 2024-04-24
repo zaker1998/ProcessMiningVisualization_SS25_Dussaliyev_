@@ -35,8 +35,7 @@ class InductiveGraphView(AlgorithmViewInterface):
             key="traces_treshold",
             setValue=self.controller.set_traces_threshold,
             tooltip="""The traces threshold parameter determines the minimum frequency of a trace to be included in the graph. 
-            All traces with a frequency that is lower than (1-treshold) * max_trace_frequency will be removed.
-            The higher the value, the more traces will be used for the mining process.""",
+            All traces with a frequency that is lower than treshold * max_trace_frequency will be removed. The higher the value, the less traces will be included in the graph.""",
         )
 
         slider(
@@ -46,8 +45,8 @@ class InductiveGraphView(AlgorithmViewInterface):
             key="activity_threshold",
             setValue=self.controller.set_activity_threshold,
             tooltip="""The activity threshold parameter determines the minimum frequency of an activity to be included in the graph. 
-            All activities with a frequency that is lower than (1-treshold) * max_event_frequency will be removed.
-            The higher the value, the more activities will be included in the graph.""",
+            All activities with a frequency that is lower than treshold * max_event_frequency will be removed.
+            The higher the value, the less activities will be included in the graph.""",
         )
 
     def get_page_title(self) -> str:
