@@ -9,9 +9,7 @@ from logs.splits import (
 from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
 from graphs.dfg import DFG
 from graphs.visualization.inductive_graph import InductiveGraph
-from logs.filters import filter_events
-
-# from logs.filters import filter_edges
+from logs.filters import filter_events, filter_traces
 
 
 class InductiveMining(BaseMining):
@@ -19,18 +17,18 @@ class InductiveMining(BaseMining):
         super().__init__(log)
         self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
         self.activity_threshold = 1.0
-        self.path_threshold = 0.8
+        self.minimum_traces_frequency = 1
         self.filtered_log = None
+        self.maximum_trace_frequency = int(max(self.log.values()))
 
-    def generate_graph(self, activity_threshold, path_threshold):
+    def generate_graph(self, activity_threshold, min_traces_frequency):
         self.activity_threshold = activity_threshold
-        self.path_threshold = path_threshold
+        self.minimum_traces_frequency = min_traces_frequency
 
         events_to_remove = self.get_events_to_remove(activity_threshold)
-        # edges_to_remove = self.get_edges_to_remove(path_threshold)
 
-        filtered_log = filter_events(self.log, events_to_remove)
-        # filtered_log = filter_edges(filtered_log, edges_to_remove)
+        filtered_log = filter_traces(self.log, min_traces_frequency)
+        filtered_log = filter_events(filtered_log, events_to_remove)
 
         if filtered_log == self.filtered_log:
             return
@@ -111,5 +109,8 @@ class InductiveMining(BaseMining):
     def get_activity_threshold(self):
         return self.activity_threshold
 
-    def get_path_threshold(self):
-        return self.path_threshold
+    def get_mininum_traces_frequency(self):
+        return self.minimum_traces_frequency
+
+    def get_maximum_trace_frequency(self):
+        return self.maximum_trace_frequency

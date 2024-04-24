@@ -23,7 +23,24 @@ class InductiveGraphView(AlgorithmViewInterface):
                 self.controller.get_activity_threshold()
             )
 
+        if "minimum_traces_frequency" not in st.session_state:
+            st.session_state.minimum_traces_frequency = (
+                self.controller.get_minimum_traces_frequency()
+            )
+
+        self.maximum_trace_frequency = self.controller.get_maximum_trace_frequency()
+
     def render_sidebar(self):
+
+        slider(
+            label="Minimum Traces Frequency",
+            min_value=1,
+            max_value=self.maximum_trace_frequency,
+            key="minimum_traces_frequency",
+            setValue=self.controller.set_minimum_traces_frequency,
+            tooltip="The minimum traces frequency parameter determines the minimum frequency of a trace to be included in the graph.",
+        )
+
         slider(
             label="Activity Threshold",
             min_value=0.0,

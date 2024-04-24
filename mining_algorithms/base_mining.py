@@ -86,24 +86,6 @@ class BaseMining:
 
         return succession_matrix
 
-    def get_edges_to_remove(self, threshold):
-        if threshold > 1.0:
-            threshold = 1.0
-        elif threshold < 0.0:
-            threshold = 0.0
-
-        minimum_edge_freq = round(max(self.edge_freq) * (1 - threshold))
-        if minimum_edge_freq == 0:
-            return set()
-
-        source, target = np.where(self.succession_matrix < minimum_edge_freq)
-
-        removed_edges = set()
-        for s, t in zip(source, target):
-            removed_edges.add((self.events[s], self.events[t]))
-
-        return removed_edges
-
     def get_events_to_remove(self, threshold):
         if threshold > 1.0:
             threshold = 1.0

@@ -8,3 +8,12 @@ def filter_events(log, events_to_remove):
             )
 
     return filtered_log
+
+
+def filter_traces(log, min_frequency):
+    filtered_log = {}
+    for trace, frequency in log.items():
+        if frequency >= min_frequency:
+            filtered_log[trace] = frequency
+
+    return filtered_log

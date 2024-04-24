@@ -68,8 +68,7 @@ class HeuristicMining(BaseMining):
         self.graph.add_ending_edges(sink_nodes - self.end_nodes)
 
     def get_max_frequency(self):
-        # +1 to be able to remove all edges, not sure if it's correct or needed, but all edges can be deleted with this setting
-        return self.max_frequency + 1
+        return self.max_frequency
 
     def get_min_frequency(self):
         return self.min_frequency
