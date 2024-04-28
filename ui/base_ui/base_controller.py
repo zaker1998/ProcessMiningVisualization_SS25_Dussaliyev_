@@ -59,6 +59,7 @@ class BaseController(ABC):
         slected_view.set_controller(self)
         slected_view.create_layout()
         self.display_messages()
+        self.run(slected_view, pos)
 
     @abstractmethod
     def run(self, slected_view, index):
