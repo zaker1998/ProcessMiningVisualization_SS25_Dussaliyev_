@@ -1,21 +1,27 @@
 import streamlit as st
+from abc import ABC, abstractmethod
 
 
-# TODO: chnage structure to allow multiple views, that can be chosen by a value from  a session state.
-# Create own function to choose a view, and store it in a variable in the controller.
-class BaseController:
+class BaseController(ABC):
 
-    def __init__(self, view=None, model=None):
-        if view is not None:
-            self.view = view
+    def __init__(self, views=None):
 
-        if model is not None:
-            self.model = model
+        if views is None:
+            # TODO: change to a more specific exception, add logging
+            raise ValueError("At least one view must be provided to the controller")
+
+        if isinstance(views, list) or isinstance(views, tuple):
+            self.views = list(views)
+        else:
+            self.views = [views]
 
         self.error_message = None
         self.info_message = None
         self.success_message = None
         self.warning_message = None
+
+    def select_view(self):
+        return self.views[0], 0
 
     def read_values_from_session_state(self):
         if "error" in st.session_state:
@@ -47,8 +53,13 @@ class BaseController:
         if self.warning_message is not None:
             self.view.display_warning_message(self.warning_message)
 
-    def run(self):
+    def start(self):
         self.read_values_from_session_state()
-        self.view.set_controller(self)
-        self.view.create_layout()
+        slected_view, pos = self.select_view()
+        slected_view.set_controller(self)
+        slected_view.create_layout()
         self.display_messages()
+
+    @abstractmethod
+    def run(self, slected_view, index):
+        raise NotImplementedError("Method run must be implemented in the child class")
