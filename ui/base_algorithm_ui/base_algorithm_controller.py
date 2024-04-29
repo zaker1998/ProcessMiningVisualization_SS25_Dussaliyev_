@@ -15,7 +15,7 @@ class BaseAlgorithmController(BaseController):
         raise NotImplementedError("perform_mining() method not implemented")
 
     @abstractmethod
-    def create_empty_model(self, log_data: tuple):
+    def create_empty_model(self, *log_data):
         raise NotImplementedError("create_empty_model() method not implemented")
 
     @abstractmethod
@@ -28,7 +28,8 @@ class BaseAlgorithmController(BaseController):
 
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
         # TODO: implement this  method using a df transformation model
-        return (dataframe_to_cases_dict(df, **selected_columns),)
+        cases_dict = dataframe_to_cases_dict(df, **selected_columns)
+        return (cases_dict,)
 
     def process_session_state(self):
         super().read_values_from_session_state()
@@ -50,7 +51,7 @@ class BaseAlgorithmController(BaseController):
             log_data = self.transform_df_to_log(
                 st.session_state.df, **st.session_state.selected_columns
             )
-            st.session_state.model = self.create_empty_model(log_data)
+            st.session_state.model = self.create_empty_model(*log_data)
             self.mining_model = st.session_state.model
 
     def run(self, view, pos):
