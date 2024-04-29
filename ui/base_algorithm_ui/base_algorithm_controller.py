@@ -26,6 +26,10 @@ class BaseAlgorithmController(BaseController):
     def is_correct_model_type(self, model) -> bool:
         raise NotImplementedError("is_correct_model_type() method not implemented")
 
+    @abstractmethod
+    def get_sidebar_values(self) -> dict[str, any]:
+        raise NotImplementedError("get_sidebar_values() method not implemented")
+
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
         # TODO: implement this  method using a df transformation model
         cases_dict = dataframe_to_cases_dict(df, **selected_columns)
@@ -58,6 +62,6 @@ class BaseAlgorithmController(BaseController):
         if self.have_parameters_changed():
             self.perform_mining()
 
-        view.display_sidebar()
+        view.display_sidebar(self.get_sidebar_values())
         view.display_graph(self.model.get_graph())
         view.display_navigation_buttons()

@@ -15,14 +15,14 @@ class BaseAlgorithmView(BaseView):
         self.node_data_container = st.container()
 
     @abstractmethod
-    def render_sidebar(self):
+    def render_sidebar(self, sidebar_values: dict[str, any]) -> None:
         raise NotImplementedError("render_sidebar() method not implemented")
 
-    def display_sidebar(self):
+    def display_sidebar(self) -> None:
         with self.sidebar:
             self.render_sidebar()
 
-    def display_navigation_buttons(self):
+    def display_navigation_buttons(self) -> None:
         with self.back_button_column:
             back_button_column, _, export_button_column = st.columns([1, 1, 1])
 
@@ -36,18 +36,18 @@ class BaseAlgorithmView(BaseView):
                 use_container_width=True,
             )
 
-    def display_graph(self, graph):
+    def display_graph(self, graph) -> None:
         with self.graph_container:
             if graph is not None:
                 interactiveGraph(graph, onNodeClick=self.display_node_data)
 
-    def display_node_info(self, node_name: str, node_description: str):
+    def display_node_info(self, node_name: str, node_description: str) -> None:
         with self.node_data_container:
             with st.expander(f"Node: {node_name}"):
                 for line in node_description.split("\n"):
                     st.write(line)
 
-    def display_page_title(self, title):
+    def display_page_title(self, title) -> None:
         from config import docs_path_mappings
 
         with self.title_container:
