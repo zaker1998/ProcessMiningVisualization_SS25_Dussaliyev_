@@ -32,6 +32,7 @@ def dataframe_to_cases_dict(
     timeLabel: str = "timestamp",
     caseLabel: str = "case",
     eventLabel: str = "event",
+    **additional_columns
 ) -> dict[tuple[str, ...], int]:
     cases_list = dataframe_to_cases_list(df, timeLabel, caseLabel, eventLabel)
     return cases_list_to_dict(cases_list)
