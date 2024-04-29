@@ -23,7 +23,7 @@ class BaseController(ABC):
     def select_view(self):
         return self.views[0], 0
 
-    def read_values_from_session_state(self):
+    def process_session_state(self):
         if "error" in st.session_state:
             self.error_message = st.session_state.error
             del st.session_state.error
@@ -53,12 +53,19 @@ class BaseController(ABC):
         if self.warning_message is not None:
             self.view.display_warning_message(self.warning_message)
 
+    @abstractmethod
+    def get_page_title(self) -> str:
+        raise NotImplementedError(
+            "Method get_page_title must be implemented in the child class"
+        )
+
     def start(self):
-        self.read_values_from_session_state()
+        self.process_session_state()
         slected_view, pos = self.select_view()
         slected_view.set_controller(self)
         slected_view.create_layout()
         self.display_messages()
+        select_view.display_page_title(self.get_page_title())
         self.run(slected_view, pos)
 
     @abstractmethod
