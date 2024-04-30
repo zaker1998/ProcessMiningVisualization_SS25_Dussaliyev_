@@ -49,18 +49,18 @@ class BaseController(ABC):
             self.warning_message = st.session_state.warning
             del st.session_state.warning
 
-    def display_messages(self):
+    def display_messages(self, view):
         if self.error_message is not None:
-            self.view.display_error_message(self.error_message)
+            view.display_error_message(self.error_message)
 
         if self.info_message is not None:
-            self.view.display_info_message(self.info_message)
+            view.display_info_message(self.info_message)
 
         if self.success_message is not None:
-            self.view.display_success_message(self.success_message)
+            view.display_success_message(self.success_message)
 
         if self.warning_message is not None:
-            self.view.display_warning_message(self.warning_message)
+            view.display_warning_message(self.warning_message)
 
     @abstractmethod
     def get_page_title(self) -> str:
@@ -70,12 +70,12 @@ class BaseController(ABC):
 
     def start(self):
         self.process_session_state()
-        slected_view, pos = self.select_view()
-        slected_view.set_controller(self)
-        self.display_messages()
-        slected_view.display_page_title(self.get_page_title())
-        self.run(slected_view, pos)
+        selected_view, pos = self.select_view()
+        selected_view.set_controller(self)
+        self.display_messages(selected_view)
+        selected_view.display_page_title(self.get_page_title())
+        self.run(selected_view, pos)
 
     @abstractmethod
-    def run(self, slected_view, index):
+    def run(self, selected_view, index):
         raise NotImplementedError("Method run must be implemented in the child class")
