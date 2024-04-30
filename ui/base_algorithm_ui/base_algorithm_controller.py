@@ -81,6 +81,7 @@ class BaseAlgorithmController(BaseController):
 
         view.display_sidebar(self.get_sidebar_values())
         view.display_back_button()
+        view.display_export_button(disabled=True)
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:
             start = time()
             try:
@@ -104,4 +105,4 @@ class BaseAlgorithmController(BaseController):
             end = time()
             print("Time to perform mining:", end - start)
         view.display_graph(self.mining_model.get_graph())
-        view.display_export_button()
+        view.display_export_button(disabled=False)

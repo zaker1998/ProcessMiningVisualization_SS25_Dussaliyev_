@@ -29,6 +29,7 @@ def navigation_button(
     beforeNavigate=None,
     args=None,
     disabled=False,
+    key=None,
 ) -> None:
     if args is None:
         args = ()
@@ -39,6 +40,7 @@ def navigation_button(
         args=(route, beforeNavigate, *args),
         use_container_width=use_container_width,
         disabled=disabled,
+        key=key,
     )
 
 

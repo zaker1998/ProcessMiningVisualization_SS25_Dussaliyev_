@@ -17,9 +17,10 @@ class BaseAlgorithmView(BaseView):
         button_container = st.container()
         self.node_data_container = st.container()
         with button_container:
-            self.back_button_column, _, self.export_button_column = st.columns(
-                [1, 1, 1]
-            )
+            self.back_button_column, _, export_button_column = st.columns([1, 1, 1])
+
+        with export_button_column:
+            self.export_button_container = st.empty()
 
     @abstractmethod
     def render_sidebar(self, sidebar_values: dict[str, any]) -> None:
@@ -33,12 +34,14 @@ class BaseAlgorithmView(BaseView):
         with self.back_button_column:
             home_button("Back", use_container_width=True)
 
-    def display_export_button(self) -> None:
-        with self.export_button_column:
+    def display_export_button(self, disabled=False) -> None:
+        with self.export_button_container:
             navigation_button(
                 "Export",
                 "Export",
                 use_container_width=True,
+                disabled=disabled,
+                key="export_button-" + str(disabled),
             )
 
     def display_graph(self, graph) -> None:
