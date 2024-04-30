@@ -6,11 +6,12 @@ from abc import abstractmethod
 
 
 class BaseAlgorithmView(BaseView):
+    graph_height = 600
 
     def create_layout(self):
-        super().create_layout()
-        self.sidebar = st.sidebar
-        self.graph_container = st.container(border=True)
+        self.graph_container = st.container(
+            border=True, height=self.graph_height + 40
+        )  # add 40 to height to account for padding
         button_container = st.container()
         self.node_data_container = st.container()
         with button_container:
@@ -23,7 +24,7 @@ class BaseAlgorithmView(BaseView):
         raise NotImplementedError("render_sidebar() method not implemented")
 
     def display_sidebar(self, sidebar_values: dict[str, any]) -> None:
-        with self.sidebar:
+        with st.sidebar:
             self.render_sidebar(sidebar_values)
 
     def display_back_button(self) -> None:
@@ -41,7 +42,11 @@ class BaseAlgorithmView(BaseView):
     def display_graph(self, graph) -> None:
         with self.graph_container:
             if graph is not None:
-                interactiveGraph(graph, onNodeClick=self.display_node_info)
+                interactiveGraph(
+                    graph,
+                    onNodeClick=self.display_node_info,
+                    height=self.graph_height,
+                )
 
     def display_node_info(self, node_name: str, node_description: str) -> None:
         with self.node_data_container:
@@ -52,18 +57,16 @@ class BaseAlgorithmView(BaseView):
     def display_page_title(self, title) -> None:
         from config import docs_path_mappings
 
-        with self.title_container:
+        if st.session_state.algorithm not in docs_path_mappings:
+            st.title(title)
 
-            if st.session_state.algorithm not in docs_path_mappings:
+        else:
+            title_column, button_column = st.columns([3, 1])
+            with title_column:
                 st.title(title)
-
-            else:
-                title_column, button_column = st.columns([3, 1])
-                with title_column:
-                    st.title(title)
-                with button_column:
-                    navigation_button(
-                        "Algorithm Explanation",
-                        "Documentation",
-                        use_container_width=True,
-                    )
+            with button_column:
+                navigation_button(
+                    "Algorithm Explanation",
+                    "Documentation",
+                    use_container_width=True,
+                )

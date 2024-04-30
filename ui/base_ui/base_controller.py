@@ -72,7 +72,6 @@ class BaseController(ABC):
         self.process_session_state()
         slected_view, pos = self.select_view()
         slected_view.set_controller(self)
-        slected_view.create_layout()
         self.display_messages()
         slected_view.display_page_title(self.get_page_title())
         self.run(slected_view, pos)
