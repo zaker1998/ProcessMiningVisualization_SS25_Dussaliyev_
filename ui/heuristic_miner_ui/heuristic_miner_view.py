@@ -3,8 +3,6 @@ import streamlit as st
 
 
 class HeuristicMinerView(BaseAlgorithmView):
-    def __init__(self):
-        super().__init__()
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
