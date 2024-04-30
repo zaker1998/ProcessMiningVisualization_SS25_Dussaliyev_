@@ -3,6 +3,7 @@ from abc import abstractmethod
 from ui.base_ui.base_controller import BaseController
 from utils.transformations import dataframe_to_cases_dict
 from components.buttons import to_home
+from time import time
 
 
 class BaseAlgorithmController(BaseController):
@@ -56,7 +57,7 @@ class BaseAlgorithmController(BaseController):
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
                 to_home("Home")
                 st.rerun()
-
+            start = time()
             log_data = self.transform_df_to_log(
                 st.session_state.df,
                 timeLabel=st.session_state.time_column,
@@ -64,6 +65,8 @@ class BaseAlgorithmController(BaseController):
                 caseLabel=st.session_state.case_column,  # **st.session_state.selected_columns
             )
             st.session_state.model = self.create_empty_model(*log_data)
+            end = time()
+            print("Time to create model:", end - start)
             self.mining_model = st.session_state.model
 
             del st.session_state.df
@@ -74,7 +77,26 @@ class BaseAlgorithmController(BaseController):
 
     def run(self, view, pos):
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:
-            self.perform_mining()
+            start = time()
+            try:
+                self.controller.perform_mining()
+            except InvalidNodeNameException as ex:
+                # TODO: add logging
+                print(ex)
+                st.session_state.error = (
+                    ex.message
+                    + "\n Please check the input data. The string '___' is not allowed in node names."
+                )
+                to_home()
+            except GraphException as ex:
+                # TODO: add logging
+                print(ex)
+                st.warning(
+                    "Do not change the parameters while mining. This will cause an error. Wait until the mining is finished."
+                )
+
+            end = time()
+            print("Time to perform mining:", end - start)
 
         view.display_sidebar(self.get_sidebar_values())
         view.display_graph(self.mining_model.get_graph())
