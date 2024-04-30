@@ -12,13 +12,13 @@ class HeuristicMinerController(BaseAlgorithmController):
 
     def process_session_state(self):
         super().process_session_state()
-
+        # read values from session state
         if "threshold" not in st.session_state:
             st.session_state.threshold = self.mining_model.get_threshold()
 
         if "frequency" not in st.session_state:
             st.session_state.frequency = self.mining_model.get_min_frequency()
-
+        # set instance variables from session state
         if "threshold" in st.session_state:
             self.threshold = st.session_state.threshold
 
@@ -48,4 +48,4 @@ class HeuristicMinerController(BaseAlgorithmController):
             "threshold": (0.0, 1.0),
         }
 
-        return self.mining_model.get_heuristic_sidebar_values()
+        return sidebar_values
