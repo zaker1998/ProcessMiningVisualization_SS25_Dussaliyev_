@@ -59,9 +59,9 @@ class BaseAlgorithmController(BaseController):
             self.mining_model = st.session_state.model
 
     def run(self, view, pos):
-        if self.have_parameters_changed():
+        if self.have_parameters_changed() or self.mining_model.get_graph() is None:
             self.perform_mining()
 
         view.display_sidebar(self.get_sidebar_values())
-        view.display_graph(self.model.get_graph())
+        view.display_graph(self.mining_model.get_graph())
         view.display_navigation_buttons()
