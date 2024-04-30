@@ -34,7 +34,10 @@ class HeuristicMinerController(BaseAlgorithmController):
         return HeuristicMining(*log_data)
 
     def have_parameters_changed(self) -> bool:
-        return self.mining_model.have_heuristic_parameters_changed()
+        return (
+            self.mining_model.get_threshold() != self.threshold
+            or self.mining_model.get_min_frequency() != self.frequency
+        )
 
     def is_correct_model_type(self, model) -> bool:
         return isinstance(model, HeuristicMining)
