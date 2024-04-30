@@ -1,7 +1,8 @@
 import streamlit as st
+from abc import ABC
 
 
-class BaseView:
+class BaseView(ABC):
     controller = None
 
     def create_layout(self):
@@ -29,4 +30,9 @@ class BaseView:
             st.title(title)
 
     def set_controller(self, controller):
+        from ui.base_ui.base_controller import BaseController
+
+        if not issubclass(controller, BaseController):
+            # TODO: add a logger and custom exception
+            raise ValueError("All controllers must be subclasses of BaseController")
         self.controller = controller

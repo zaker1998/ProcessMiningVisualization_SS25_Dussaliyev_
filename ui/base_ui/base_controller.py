@@ -10,9 +10,18 @@ class BaseController(ABC):
             # TODO: change to a more specific exception, add logging
             raise ValueError("At least one view must be provided to the controller")
 
+        from base_ui.base_view import BaseView
+
         if isinstance(views, list) or isinstance(views, tuple):
+            for view in views:
+                if not issubclass(view, BaseView):
+                    # TODO: change to a more specific exception, add logging
+                    raise ValueError("All views must be subclasses of BaseView")
             self.views = list(views)
         else:
+            if not issubclass(views, BaseView):
+                # TODO: change to a more specific exception, add logging
+                raise ValueError("All views must be subclasses of BaseView")
             self.views = [views]
 
         self.error_message = None
