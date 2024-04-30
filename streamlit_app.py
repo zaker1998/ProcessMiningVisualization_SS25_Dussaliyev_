@@ -1,5 +1,5 @@
 import streamlit as st
-from views.Home import Home
+from ui.home_ui.home_controller import HomeController
 from views.ColumnSelectionView import ColumnSelectionView
 from views.ExportView import ExportView
 from views.AlgorithmDocView import AlgorithmDocView
@@ -16,12 +16,8 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-if "error" in st.session_state:
-    st.error(st.session_state.error)
-    del st.session_state.error
-
 if st.session_state.page == "Home":
-    Home().render()
+    HomeController().start()
 elif st.session_state.page == "Algorithm":
     get_algorithm_view(st.session_state.algorithm).start()
 elif st.session_state.page == "ColumnSelection":
