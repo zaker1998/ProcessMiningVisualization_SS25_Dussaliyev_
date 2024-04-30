@@ -3,6 +3,7 @@ from abc import abstractmethod
 from ui.base_ui.base_controller import BaseController
 from utils.transformations import dataframe_to_cases_dict
 from components.buttons import to_home
+from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
 from time import time
 
 
@@ -79,7 +80,7 @@ class BaseAlgorithmController(BaseController):
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:
             start = time()
             try:
-                self.controller.perform_mining()
+                self.perform_mining()
             except InvalidNodeNameException as ex:
                 # TODO: add logging
                 print(ex)
@@ -97,7 +98,7 @@ class BaseAlgorithmController(BaseController):
 
             end = time()
             print("Time to perform mining:", end - start)
-
         view.display_sidebar(self.get_sidebar_values())
         view.display_graph(self.mining_model.get_graph())
-        view.display_navigation_buttons()
+        view.display_export_button()
+        view.display_back_button()
