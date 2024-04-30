@@ -56,7 +56,7 @@ class BaseAlgorithmController(BaseController):
                 or "activity_column" not in st.session_state
             ):
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
-                to_home("Home")
+                to_home()
                 st.rerun()
             start = time()
             log_data = self.transform_df_to_log(
@@ -84,7 +84,7 @@ class BaseAlgorithmController(BaseController):
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:
             start = time()
             try:
-                self.perform_mining()
+                view.display_loading_spinner("Mining...", self.perform_mining)
             except InvalidNodeNameException as ex:
                 # TODO: add logging
                 print(ex)
@@ -93,6 +93,7 @@ class BaseAlgorithmController(BaseController):
                     + "\n Please check the input data. The string '___' is not allowed in node names."
                 )
                 to_home()
+                st.rerun()
             except GraphException as ex:
                 # TODO: add logging
                 print(ex)

@@ -9,9 +9,11 @@ class BaseAlgorithmView(BaseView):
     graph_height = 600
 
     def create_layout(self):
-        self.graph_container = st.container(
+        graph_wrapper_container = st.container(
             border=True, height=self.graph_height + 40
         )  # add 40 to height to account for padding
+        with graph_wrapper_container:
+            self.graph_container = st.empty()
         button_container = st.container()
         self.node_data_container = st.container()
         with button_container:
@@ -47,6 +49,11 @@ class BaseAlgorithmView(BaseView):
                     onNodeClick=self.display_node_info,
                     height=self.graph_height,
                 )
+
+    def display_loading_spinner(self, message: str, operation) -> None:
+        with self.graph_container:
+            with st.spinner(message):
+                operation()
 
     def display_node_info(self, node_name: str, node_description: str) -> None:
         with self.node_data_container:

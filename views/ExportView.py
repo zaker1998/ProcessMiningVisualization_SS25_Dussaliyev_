@@ -53,7 +53,7 @@ class ExportView(ViewInterface):
 
         print("Time to read image:", end - start)
 
-        with st.container(border=True):
+        with st.container(border=True, height=640):
             PNGViewer(png, height=600)
 
         navigation_button("Back", "Algorithm", type="secondary")
