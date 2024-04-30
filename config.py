@@ -1,6 +1,6 @@
-from views.HeuristicGraphView import HeuristicGraphView
-from views.FuzzyGraphView import FuzzyGraphView
-from views.InductiveGraphView import InductiveGraphView
+from ui.heuristic_miner_ui.heuristic_miner_controller import HeuristicMinerController
+from ui.fuzzy_miner_ui.fuzzy_miner_controller import FuzzyMinerController
+from ui.inductive_miner_ui.inductive_miner_controller import InductiveMinerController
 import streamlit as st
 
 # name : route
@@ -18,9 +18,9 @@ docs_path_mappings = {
 
 # route : view
 algorithm_routes = {
-    "heuristic": HeuristicGraphView(),
-    "fuzzy": FuzzyGraphView(),
-    "inductive": InductiveGraphView(),
+    "heuristic": HeuristicMinerController(),
+    "fuzzy": FuzzyMinerController(),
+    "inductive": InductiveMinerController(),
 }
 
 

@@ -10,6 +10,9 @@ class HeuristicMinerController(BaseAlgorithmController):
             views = [HeuristicMinerView()]
         super().__init__(views, model)
 
+    def get_page_title(self) -> str:
+        return "Heuristic Mining"
+
     def process_session_state(self):
         super().process_session_state()
         # read values from session state

@@ -4,9 +4,6 @@ import streamlit as st
 
 class HeuristicMinerView(BaseAlgorithmView):
 
-    def get_page_title(self) -> str:
-        return "Heuristic Mining"
-
     def render_sidebar(
         self, sidebar_values: dict[str, tuple[int | float, int | float]]
     ) -> None:

@@ -10,6 +10,9 @@ class InductiveMinerController(BaseAlgorithmController):
             views = [InductiveMinerView()]
         super().__init__(views, model)
 
+    def get_page_title(self) -> str:
+        return "Inductive Mining"
+
     def process_session_state(self):
         super().process_session_state()
         # read values from session state
@@ -36,8 +39,8 @@ class InductiveMinerController(BaseAlgorithmController):
 
     def have_parameters_changed(self) -> bool:
         return (
-            self.get_activity_threshold() != self.activity_threshold
-            or self.get_traces_threshold() != self.traces_threshold
+            self.mining_model.get_activity_threshold() != self.activity_threshold
+            or self.mining_model.get_traces_threshold() != self.traces_threshold
         )
 
     def is_correct_model_type(self, model) -> bool:

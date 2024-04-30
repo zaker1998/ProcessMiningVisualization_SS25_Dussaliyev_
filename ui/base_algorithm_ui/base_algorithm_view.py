@@ -1,5 +1,5 @@
 import streamlit as st
-from base_ui.base_view import BaseView
+from ui.base_ui.base_view import BaseView
 from components.buttons import home_button, navigation_button
 from components.interactiveGraph import interactiveGraph
 from abc import abstractmethod
@@ -9,8 +9,8 @@ class BaseAlgorithmView(BaseView):
 
     def create_layout(self):
         super().create_layout()
-        self.sidebar = st.sidebar()
-        self.graph_container = st.container()
+        self.sidebar = st.sidebar
+        self.graph_container = st.container(border=True)
         self.button_container = st.container()
         self.node_data_container = st.container()
 
@@ -18,12 +18,12 @@ class BaseAlgorithmView(BaseView):
     def render_sidebar(self, sidebar_values: dict[str, any]) -> None:
         raise NotImplementedError("render_sidebar() method not implemented")
 
-    def display_sidebar(self) -> None:
+    def display_sidebar(self, sidebar_values: dict[str, any]) -> None:
         with self.sidebar:
-            self.render_sidebar()
+            self.render_sidebar(sidebar_values)
 
     def display_navigation_buttons(self) -> None:
-        with self.back_button_column:
+        with self.button_container:
             back_button_column, _, export_button_column = st.columns([1, 1, 1])
 
         with back_button_column:
@@ -39,7 +39,7 @@ class BaseAlgorithmView(BaseView):
     def display_graph(self, graph) -> None:
         with self.graph_container:
             if graph is not None:
-                interactiveGraph(graph, onNodeClick=self.display_node_data)
+                interactiveGraph(graph, onNodeClick=self.display_node_info)
 
     def display_node_info(self, node_name: str, node_description: str) -> None:
         with self.node_data_container:

@@ -6,8 +6,8 @@ class BaseView(ABC):
     controller = None
 
     def create_layout(self):
-        self.banner_container = st.container(use_container_width=True)
-        self.title_container = st.container(use_container_width=True)
+        self.banner_container = st.container()
+        self.title_container = st.container()
 
     def display_error_message(self, error_message):
         with self.banner_container:
@@ -32,7 +32,7 @@ class BaseView(ABC):
     def set_controller(self, controller):
         from ui.base_ui.base_controller import BaseController
 
-        if not issubclass(controller, BaseController):
+        if not isinstance(controller, BaseController):
             # TODO: add a logger and custom exception
             raise ValueError("All controllers must be subclasses of BaseController")
         self.controller = controller

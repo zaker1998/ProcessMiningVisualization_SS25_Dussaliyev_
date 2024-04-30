@@ -11,6 +11,9 @@ class FuzzyMinerController(BaseAlgorithmController):
             views = [FuzzyMinerView()]
         super().__init__(views, model)
 
+    def get_page_title(self) -> str:
+        return "Fuzzy Mining"
+
     def process_session_state(self):
         super().process_session_state()
 
@@ -41,7 +44,7 @@ class FuzzyMinerController(BaseAlgorithmController):
             self.utility_ratio = st.session_state.utility_ratio
 
     def perform_mining(self) -> None:
-        self.model.create_graph_with_graphviz(
+        self.mining_model.create_graph_with_graphviz(
             self.significance, self.correlation, self.edge_cutoff, self.utility_ratio
         )
 

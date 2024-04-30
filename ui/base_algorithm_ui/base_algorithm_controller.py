@@ -2,6 +2,7 @@ import streamlit as st
 from abc import abstractmethod
 from ui.base_ui.base_controller import BaseController
 from utils.transformations import dataframe_to_cases_dict
+from components.buttons import to_home
 
 
 class BaseAlgorithmController(BaseController):
@@ -36,7 +37,7 @@ class BaseAlgorithmController(BaseController):
         return (cases_dict,)
 
     def process_session_state(self):
-        super().read_values_from_session_state()
+        super().process_session_state()
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
                 st.session_state.error = "Invalid model type."
@@ -44,19 +45,32 @@ class BaseAlgorithmController(BaseController):
                 st.rerun()
             self.mining_model = st.session_state.model
         else:
+            # TODO: revert back to store selcted columns ina dict in session state
             if (
                 "df" not in st.session_state
-                or "selected_columns" not in st.session_state
+                # or "selected_columns" not in st.session_state
+                or "time_column" not in st.session_state
+                or "case_column" not in st.session_state
+                or "activity_column" not in st.session_state
             ):
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
                 to_home("Home")
                 st.rerun()
 
             log_data = self.transform_df_to_log(
-                st.session_state.df, **st.session_state.selected_columns
+                st.session_state.df,
+                timeLabel=st.session_state.time_column,
+                eventLabel=st.session_state.activity_column,
+                caseLabel=st.session_state.case_column,  # **st.session_state.selected_columns
             )
             st.session_state.model = self.create_empty_model(*log_data)
             self.mining_model = st.session_state.model
+
+            del st.session_state.df
+            del st.session_state.time_column
+            del st.session_state.activity_column
+            del st.session_state.case_column
+            # del st.session_state.selected_columns
 
     def run(self, view, pos):
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:

@@ -10,11 +10,11 @@ class BaseController(ABC):
             # TODO: change to a more specific exception, add logging
             raise ValueError("At least one view must be provided to the controller")
 
-        from base_ui.base_view import BaseView
+        from ui.base_ui.base_view import BaseView
 
         if isinstance(views, list) or isinstance(views, tuple):
             for view in views:
-                if not issubclass(view, BaseView):
+                if not isinstance(view, BaseView):
                     # TODO: change to a more specific exception, add logging
                     raise ValueError("All views must be subclasses of BaseView")
             self.views = list(views)
@@ -74,7 +74,7 @@ class BaseController(ABC):
         slected_view.set_controller(self)
         slected_view.create_layout()
         self.display_messages()
-        select_view.display_page_title(self.get_page_title())
+        slected_view.display_page_title(self.get_page_title())
         self.run(slected_view, pos)
 
     @abstractmethod

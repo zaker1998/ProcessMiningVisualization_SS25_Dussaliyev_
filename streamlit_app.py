@@ -23,7 +23,7 @@ if "error" in st.session_state:
 if st.session_state.page == "Home":
     Home().render()
 elif st.session_state.page == "Algorithm":
-    get_algorithm_view(st.session_state.algorithm).render()
+    get_algorithm_view(st.session_state.algorithm).start()
 elif st.session_state.page == "ColumnSelection":
     ColumnSelectionView().render()
 elif st.session_state.page == "Export":

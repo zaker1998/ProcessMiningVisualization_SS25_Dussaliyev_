@@ -3,11 +3,6 @@ import streamlit as st
 
 
 class FuzzyMinerView(BaseAlgorithmView):
-    def __init__(self):
-        super().__init__()
-
-    def get_page_title(self) -> str:
-        return "Fuzzy Mining"
 
     def render_sidebar(
         self, sidebar_values: dict[str, tuple[int | float, int | float]]
