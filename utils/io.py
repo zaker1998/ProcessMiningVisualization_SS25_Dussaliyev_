@@ -26,25 +26,9 @@ def pickle_load(path: str | UploadedFile) -> object:
     return load_instance
 
 
-def detect_delimiter(filePath: str | UploadedFile) -> str:
-    if isinstance(filePath, UploadedFile):
-        dialect = csv.Sniffer().sniff(filePath.readline().decode("utf-8"))
-        filePath.seek(0)
-    else:
-        with open(filePath, "r") as f:
-            dialect = csv.Sniffer().sniff(f.readline())
-
-    delimiter = dialect.delimiter
-    return delimiter
-
-
 def read_csv(filePath: str | UploadedFile, delimiter: str = ",") -> pd.DataFrame:
     df = pd.read_csv(filePath, delimiter=delimiter)
     return df
-
-
-def read_excel(filePath: str) -> pd.DataFrame:
-    return pd.read_excel(filePath)
 
 
 def read_file(
