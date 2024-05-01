@@ -16,8 +16,8 @@ class HomeController(BaseController):
         return ""
 
     def process_file(self, file):
+        # TODO: move io logic to a model
         if file.name.endswith(".csv"):
-            # TODO: move io logic to a model
             detected_delimiter = ""
             try:
                 detected_delimiter = detect_delimiter(file)
