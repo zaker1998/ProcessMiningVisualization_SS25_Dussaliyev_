@@ -24,7 +24,7 @@ class PredictionModel:
         list[str]
             list of columns that have the specified type. eg. all columns that have "time" or "date" in their name.
         """
-        if column_type not in self.column_types:
+        if column_type not in self.column_types_predictions_values.keys():
             return []
 
         predicted_columns = []
@@ -51,7 +51,7 @@ class PredictionModel:
         """
         for column_type, values in self.column_types_predictions_values.items():
             for value in values:
-                if value in column_name.lower():
+                if value in needed_column_name.lower():
                     return column_type
 
         return None

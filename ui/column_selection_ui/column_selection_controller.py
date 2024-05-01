@@ -2,12 +2,15 @@ import streamlit as st
 from ui.base_ui.base_controller import BaseController
 from components.buttons import to_home
 from config import algorithm_mappings
+from analysis.predictions_model import PredictionModel
 
 
 class ColumnSelectionController(BaseController):
     max_rows_shown = 200
 
     def __init__(self, views=None):
+
+        self.predictions_model = PredictionModel()
         if views is None:
             from ui.column_selection_ui.standard_column_selection_view import (
                 StandardColumnSelectionView,
@@ -41,28 +44,7 @@ class ColumnSelectionController(BaseController):
         self.df = st.session_state.df
 
     def predict_columns(self, needed_columns, columns):
-        # TODO: move this method in a model class
-        predicted_columns = [None for _ in needed_columns]
-        for index, needed_column in enumerate(needed_columns):
-            if "time" in needed_column:
-                for column in columns:
-                    if "time" in column.lower() or "date" in column.lower():
-                        predicted_columns[index] = column
-                        break
-
-            if "case" in needed_column:
-                for column in columns:
-                    if "case" in column.lower():
-                        predicted_columns[index] = column
-                        break
-
-            if "activity" in needed_column or "event" in needed_column:
-                for column in columns:
-                    if "activity" in column.lower() or "event" in column.lower():
-                        predicted_columns[index] = column
-                        break
-
-        return predicted_columns
+        return self.predictions_model.predict_columns(columns, needed_columns)
 
     def style_df(self, df, column_styles, default_style):
         # TODO: move this method in a model class
