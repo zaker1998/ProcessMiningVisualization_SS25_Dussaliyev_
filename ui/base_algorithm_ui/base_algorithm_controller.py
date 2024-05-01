@@ -45,7 +45,7 @@ class BaseAlgorithmController(BaseController):
             df,
             timeLabel=selected_columns["time_column"],
             caseLabel=selected_columns["case_column"],
-            activityLabel=selected_columns["activity_column"],
+            eventLabel=selected_columns["activity_column"],
         )
         return (cases_dict,)
 
