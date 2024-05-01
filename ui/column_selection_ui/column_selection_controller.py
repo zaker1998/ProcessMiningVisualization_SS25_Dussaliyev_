@@ -108,6 +108,14 @@ class ColumnSelectionController(BaseController):
         if not all(self.selected_columns.values()):
             st.session_state.error = "Please select a column for all columns"
             st.session_state.page = "ColumnSelection"
-        else:
-            st.session_state.algorithm = algorithm_mappings[self.selected_algorithm]
-            st.session_state.selected_columns = self.selected_columns
+            return
+
+        if len(set(self.selected_columns.values())) != len(
+            self.selected_columns.values()
+        ):
+            st.session_state.error = "Please select a different column for each column"
+            st.session_state.page = "ColumnSelection"
+            return
+
+        st.session_state.algorithm = algorithm_mappings[self.selected_algorithm]
+        st.session_state.selected_columns = self.selected_columns
