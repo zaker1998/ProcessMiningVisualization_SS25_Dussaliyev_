@@ -1,0 +1,89 @@
+from ui.base_ui.base_controller import BaseController
+from ui.export_ui.export_view import ExportView
+import streamlit as st
+from components.buttons import to_home, navigate_to
+from utils.io import read_img
+import pickle
+
+
+class ExportController(BaseController):
+    formats = ["SVG", "PNG", "DOT"]
+
+    def __init__(self, views=None):
+        if views is None:
+            from ui.export_ui.export_view import ExportView
+
+            views = [ExportView()]
+        super().__init__(views)
+
+    def get_page_title(self) -> str:
+        return "Export"
+
+    def process_session_state(self):
+        super().process_session_state()
+        if "model" not in st.session_state:
+            st.session_state.error = "Model not selected"
+            to_home("Home")
+            st.rerun()
+
+        self.mining_model = st.session_state.model
+
+        if self.mining_model.graph is None:
+            st.session_state.error = "Graph not generated"
+            navigate_to("Algorithm")
+
+        if "dpi" not in st.session_state:
+            st.session_state.dpi = 96
+
+        if "export_format" not in st.session_state:
+            st.session_state.export_format = "SVG"
+
+        self.graph = self.mining_model.graph
+        self.dpi = st.session_state.dpi
+        self.export_format = st.session_state.export_format
+
+    def export_graph(self, format):
+        # TODO: move io logic to a model
+        file_path = "temp/graph"
+        self.graph.export_graph(file_path, format.lower(), dpi=self.dpi)
+        return file_path + "." + format.lower()
+
+    def read_png(self, file_path):
+        # TODO: move io logic to a model
+        return read_img(file_path)
+
+    def pickle_model(self):
+        # TODO: move io logic to a model
+        return pickle.dumps(self.mining_model)
+
+    def read_file(self, file_path):
+        # TODO: move io logic to a model
+        mime = (
+            "image/" + self.export_format.lower()
+            if self.export_format != "DOT"
+            else "text/plain"
+        )
+        with open(file_path, "rb") as file:
+            return file.read(), mime
+
+    def run(self, selected_view, index):
+        selected_view.display_back_button()
+        selected_view.display_export_format(self.formats)
+        if self.export_format == "PNG":
+            selected_view.display_dpi_input(50, self.dpi, 1)
+
+        selected_view.display_model_export_button("model.pickle", self.pickle_model())
+
+        file_path = self.export_graph(format=self.export_format)
+        file, mime = self.read_file(file_path)
+
+        selected_view.display_export_button(
+            "graph." + self.export_format.lower(), file, mime
+        )
+        if self.export_format != "PNG":
+            png_file_path = self.export_graph(format="PNG")
+        else:
+            png_file_path = file_path
+        png_file = self.read_png(png_file_path)
+
+        selected_view.display_png(png_file)
