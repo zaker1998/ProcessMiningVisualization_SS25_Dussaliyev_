@@ -1,11 +1,13 @@
 import streamlit as st
 from ui.base_ui.base_controller import BaseController
-from utils.io import read_file, detect_delimiter, pickle_load
+from utils.io import read_file, pickle_load
+from analysis.detection_model import DetectionModel
 
 
 class HomeController(BaseController):
 
     def __init__(self, views=None):
+        self.detection_model = DetectionModel()
         if views is None:
             from ui.home_ui.home_view import HomeView
 
@@ -18,13 +20,9 @@ class HomeController(BaseController):
     def process_file(self, file):
         # TODO: move io logic to a model
         if file.name.endswith(".csv"):
-            detected_delimiter = ""
-            try:
-                detected_delimiter = detect_delimiter(file)
-            except Exception as e:
-                # TODO: use logging
-                print(e)
-
+            line = file.readline().decode("utf-8")
+            detected_delimiter = self.detection_model.detect_delimiter(line)
+            file.seek(0)
             self.selected_view.display_df_import(detected_delimiter)
         elif file.name.endswith(".pickle"):
             model = pickle_load(file)
