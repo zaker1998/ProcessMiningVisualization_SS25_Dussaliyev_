@@ -74,6 +74,7 @@ class BaseController(ABC):
         selected_view.set_controller(self)
         self.display_messages(selected_view)
         selected_view.display_page_title(self.get_page_title())
+        selected_view.create_layout()
         self.run(selected_view, pos)
 
     @abstractmethod

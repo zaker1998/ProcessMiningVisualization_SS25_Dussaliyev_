@@ -18,12 +18,7 @@ docs_path_mappings = {
 
 # route : view
 algorithm_routes = {
-    "heuristic": HeuristicMinerController(),
-    "fuzzy": FuzzyMinerController(),
-    "inductive": InductiveMinerController(),
+    "heuristic": HeuristicMinerController,
+    "fuzzy": FuzzyMinerController,
+    "inductive": InductiveMinerController,
 }
-
-
-@st.cache_data
-def get_algorithm_view(algorithm: str):
-    return algorithm_routes[algorithm]

@@ -38,7 +38,6 @@ class AlgorithmExplanationController(BaseController):
 
     def run(self, selected_view, index):
         self.selected_view = selected_view
-        selected_view.create_layout()
         selected_view.display_back_button()
         file_content = self.read_algorithm_file()
         selected_view.display_algorithm_file(file_content)

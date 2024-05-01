@@ -5,6 +5,9 @@ from abc import ABC
 class BaseView(ABC):
     controller = None
 
+    def create_layout(self):
+        return
+
     def display_error_message(self, error_message):
         st.error(error_message)
 

@@ -9,6 +9,7 @@ class BaseAlgorithmView(BaseView):
     graph_height = 600
 
     def create_layout(self):
+        super().create_layout()
         graph_wrapper_container = st.container(
             border=True, height=self.graph_height + 40
         )  # add 40 to height to account for padding

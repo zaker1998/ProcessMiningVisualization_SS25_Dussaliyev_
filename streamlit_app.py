@@ -6,7 +6,7 @@ from ui.algorithm_explanation_ui.algorithm_explanation_controller import (
     AlgorithmExplanationController,
 )
 
-from config import algorithm_routes, get_algorithm_view
+from config import algorithm_routes
 
 
 st.set_page_config(
@@ -21,7 +21,7 @@ if "page" not in st.session_state:
 if st.session_state.page == "Home":
     HomeController().start()
 elif st.session_state.page == "Algorithm":
-    get_algorithm_view(st.session_state.algorithm).start()
+    algorithm_routes[st.session_state.algorithm]().start()
 elif st.session_state.page == "ColumnSelection":
     ColumnSelectionView().render()
 elif st.session_state.page == "Export":

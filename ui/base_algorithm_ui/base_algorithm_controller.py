@@ -77,7 +77,6 @@ class BaseAlgorithmController(BaseController):
             # del st.session_state.selected_columns
 
     def run(self, view, pos):
-        view.create_layout()
 
         view.display_sidebar(self.get_sidebar_values())
         view.display_back_button()

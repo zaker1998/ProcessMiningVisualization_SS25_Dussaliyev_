@@ -45,6 +45,5 @@ class HomeController(BaseController):
 
     def run(self, selected_view, index):
         self.selected_view = selected_view
-        selected_view.create_layout()
         selected_view.display_intro()
         selected_view.display_file_upload()

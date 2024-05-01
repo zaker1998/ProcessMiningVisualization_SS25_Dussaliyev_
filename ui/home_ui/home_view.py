@@ -7,6 +7,7 @@ from components.buttons import navigation_button
 class HomeView(BaseView):
 
     def create_layout(self):
+        super().create_layout()
         _, self.content_column, _ = st.columns([1, 3, 1])
 
     def display_intro(self):
