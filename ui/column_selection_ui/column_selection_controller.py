@@ -20,8 +20,11 @@ class ColumnSelectionController(BaseController):
         return "Column Selection"
 
     def select_view(self):
-        # needs to be changed to return the correct view, if there are multiple views
-        return self.views[0], 0
+        if self.selected_algorithm == "":
+            # choose other view depending on chosen algorithm
+            pass
+        else:
+            return self.views[0], 0
 
     def process_session_state(self):
         super().process_session_state()
