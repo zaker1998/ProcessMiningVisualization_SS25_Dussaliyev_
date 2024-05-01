@@ -2,7 +2,9 @@ import streamlit as st
 from ui.home_ui.home_controller import HomeController
 from views.ColumnSelectionView import ColumnSelectionView
 from views.ExportView import ExportView
-from views.AlgorithmDocView import AlgorithmDocView
+from ui.algorithm_explanation_ui.algorithm_explanation_controller import (
+    AlgorithmExplanationController,
+)
 
 from config import algorithm_routes, get_algorithm_view
 
@@ -25,4 +27,4 @@ elif st.session_state.page == "ColumnSelection":
 elif st.session_state.page == "Export":
     ExportView().render()
 elif st.session_state.page == "Documentation":
-    AlgorithmDocView().render()
+    AlgorithmExplanationController().start()
