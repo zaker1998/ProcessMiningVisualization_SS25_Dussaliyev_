@@ -41,7 +41,12 @@ class BaseAlgorithmController(BaseController):
 
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
         # TODO: implement this  method using a df transformation model
-        cases_dict = dataframe_to_cases_dict(df, **selected_columns)
+        cases_dict = dataframe_to_cases_dict(
+            df,
+            timeLabel=selected_columns["time_column"],
+            caseLabel=selected_columns["case_column"],
+            activityLabel=selected_columns["activity_column"],
+        )
         return (cases_dict,)
 
     def process_session_state(self):
@@ -53,23 +58,16 @@ class BaseAlgorithmController(BaseController):
                 st.rerun()
             self.mining_model = st.session_state.model
         else:
-            # TODO: revert back to store selcted columns ina dict in session state
             if (
                 "df" not in st.session_state
-                # or "selected_columns" not in st.session_state
-                or "time_column" not in st.session_state
-                or "case_column" not in st.session_state
-                or "activity_column" not in st.session_state
+                or "selected_columns" not in st.session_state
             ):
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
                 to_home()
                 st.rerun()
             start = time()
             log_data = self.transform_df_to_log(
-                st.session_state.df,
-                timeLabel=st.session_state.time_column,
-                eventLabel=st.session_state.activity_column,
-                caseLabel=st.session_state.case_column,  # **st.session_state.selected_columns
+                st.session_state.df, **st.session_state.selected_columns
             )
             st.session_state.model = self.create_empty_model(*log_data)
             end = time()
@@ -77,10 +75,7 @@ class BaseAlgorithmController(BaseController):
             self.mining_model = st.session_state.model
 
             del st.session_state.df
-            del st.session_state.time_column
-            del st.session_state.activity_column
-            del st.session_state.case_column
-            # del st.session_state.selected_columns
+            del st.session_state.selected_columns
 
     def run(self, view, pos):
         self.process_algorithm_parameters()
