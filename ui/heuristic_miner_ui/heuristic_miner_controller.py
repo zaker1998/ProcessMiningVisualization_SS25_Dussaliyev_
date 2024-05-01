@@ -13,20 +13,17 @@ class HeuristicMinerController(BaseAlgorithmController):
     def get_page_title(self) -> str:
         return "Heuristic Mining"
 
-    def process_session_state(self):
-        super().process_session_state()
-        # read values from session state
+    def process_algorithm_parameters(self):
+        # set session state from instance variables if not set
         if "threshold" not in st.session_state:
             st.session_state.threshold = self.mining_model.get_threshold()
 
         if "frequency" not in st.session_state:
             st.session_state.frequency = self.mining_model.get_min_frequency()
-        # set instance variables from session state
-        if "threshold" in st.session_state:
-            self.threshold = st.session_state.threshold
 
-        if "frequency" in st.session_state:
-            self.frequency = st.session_state.frequency
+        # set instance variables from session state
+        self.threshold = st.session_state.threshold
+        self.frequency = st.session_state.frequency
 
     def perform_mining(self) -> None:
         self.mining_model.create_dependency_graph_with_graphviz(

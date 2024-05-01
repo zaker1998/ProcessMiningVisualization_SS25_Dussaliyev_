@@ -13,9 +13,8 @@ class InductiveMinerController(BaseAlgorithmController):
     def get_page_title(self) -> str:
         return "Inductive Mining"
 
-    def process_session_state(self):
-        super().process_session_state()
-        # read values from session state
+    def process_algorithm_parameters(self):
+        # set session state from instance variables if not set
         if "traces_threshold" not in st.session_state:
             st.session_state.traces_threshold = self.mining_model.get_traces_threshold()
 
@@ -25,11 +24,8 @@ class InductiveMinerController(BaseAlgorithmController):
             )
 
         # set instance variables from session state
-        if "traces_threshold" in st.session_state:
-            self.traces_threshold = st.session_state.traces_threshold
-
-        if "activity_threshold" in st.session_state:
-            self.activity_threshold = st.session_state.activity_threshold
+        self.traces_threshold = st.session_state.traces_threshold
+        self.activity_threshold = st.session_state.activity_threshold
 
     def perform_mining(self) -> None:
         self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)

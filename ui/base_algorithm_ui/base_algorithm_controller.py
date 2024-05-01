@@ -18,6 +18,12 @@ class BaseAlgorithmController(BaseController):
         raise NotImplementedError("perform_mining() method not implemented")
 
     @abstractmethod
+    def process_algorithm_parameters(self):
+        raise NotImplementedError(
+            "process_algorithm_parameters() method not implemented"
+        )
+
+    @abstractmethod
     def create_empty_model(self, *log_data):
         raise NotImplementedError("create_empty_model() method not implemented")
 
@@ -77,7 +83,7 @@ class BaseAlgorithmController(BaseController):
             # del st.session_state.selected_columns
 
     def run(self, view, pos):
-
+        self.process_algorithm_parameters()
         view.display_sidebar(self.get_sidebar_values())
         view.display_back_button()
         view.display_export_button(disabled=True)

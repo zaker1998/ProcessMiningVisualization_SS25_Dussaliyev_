@@ -14,10 +14,8 @@ class FuzzyMinerController(BaseAlgorithmController):
     def get_page_title(self) -> str:
         return "Fuzzy Mining"
 
-    def process_session_state(self):
-        super().process_session_state()
-
-        # read values from session state
+    def process_algorithm_parameters(self):
+        # set session state from instance variables if not set
         if "significance" not in st.session_state:
             st.session_state.significance = self.mining_model.get_significance()
 
@@ -31,17 +29,10 @@ class FuzzyMinerController(BaseAlgorithmController):
             st.session_state.utility_ratio = self.mining_model.get_utility_ratio()
 
         # set instance variables from session state
-        if "significance" in st.session_state:
-            self.significance = st.session_state.significance
-
-        if "correlation" in st.session_state:
-            self.correlation = st.session_state.correlation
-
-        if "edge_cutoff" in st.session_state:
-            self.edge_cutoff = st.session_state.edge_cutoff
-
-        if "utility_ratio" in st.session_state:
-            self.utility_ratio = st.session_state.utility_ratio
+        self.significance = st.session_state.significance
+        self.correlation = st.session_state.correlation
+        self.edge_cutoff = st.session_state.edge_cutoff
+        self.utility_ratio = st.session_state.utility_ratio
 
     def perform_mining(self) -> None:
         self.mining_model.create_graph_with_graphviz(
