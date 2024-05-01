@@ -3,6 +3,7 @@ from ui.base_ui.base_controller import BaseController
 from components.buttons import to_home
 from config import algorithm_mappings
 from analysis.predictions_model import PredictionModel
+from transformations.dataframe_styler import DataFrameStyler
 
 
 class ColumnSelectionController(BaseController):
@@ -11,6 +12,7 @@ class ColumnSelectionController(BaseController):
     def __init__(self, views=None):
 
         self.predictions_model = PredictionModel()
+        self.dataframe_styler = DataFrameStyler(self.max_rows_shown)
         if views is None:
             from ui.column_selection_ui.standard_column_selection_view import (
                 StandardColumnSelectionView,
@@ -42,29 +44,14 @@ class ColumnSelectionController(BaseController):
         self.selected_algorithm = st.session_state.algorithm_selection
 
         self.df = st.session_state.df
+        self.dataframe_styler.set_dataframe(self.df)
 
     def predict_columns(self, needed_columns, columns):
         return self.predictions_model.predict_columns(columns, needed_columns)
 
-    def style_df(self, df, column_styles, default_style):
-        # TODO: move this method in a model class
-        styled_df = df.style.apply(
-            axis=0,
-            func=self.style_df_columns,
-            column_styles=column_styles,
-            default_style=default_style,
-        )
-
-        return styled_df
-
-    def style_df_columns(self, column, column_styles, default_style):
-        # TODO: move this method in a model class
-        if column.name not in self.selected_columns.values():
-            return [default_style] * len(column)
-
-        for needed_column, selected_column in self.selected_columns.items():
-            if column.name == selected_column:
-                return [column_styles.get(needed_column, default_style)] * len(column)
+    def style_df(self, column_styles):
+        self.dataframe_styler.set_column_styles(column_styles)
+        return self.dataframe_styler.stlye_df(self.selected_columns)
 
     def process_needed_columns(self):
         self.selected_columns = dict()
@@ -95,9 +82,7 @@ class ColumnSelectionController(BaseController):
         selected_view.display_column_selections(self.df.columns)
 
         styled_df = self.style_df(
-            self.df.head(self.max_rows_shown),
             selected_view.get_column_styles(),
-            default_style="",
         )
 
         selected_view.display_df(styled_df)
