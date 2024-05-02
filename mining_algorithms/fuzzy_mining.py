@@ -213,14 +213,11 @@ class FuzzyMining(BaseMining):
         util_matrix = np.zeros((len(self.events), len(self.events)))
 
         # if edge cutoff is 0.0, no edge filtering will be done
-        # if edge_cutoff == 0.0:
-        #    return []
+        if edge_cutoff == 0.0:
+            return []
 
         # just node-node will be checked
         for i in range(len(self.events)):
-            # if util ratio and edge cutoff are zero dont calculate util_matrix
-            if utility_ratio == 0.0 and edge_cutoff == 0.0:
-                break
             # min_values, max_values = self.__find_min_and_max_util_value(util_matrix)
             for j in range(len(self.events)):
                 # self loop will not be considered
