@@ -12,7 +12,7 @@ class HeuristicMinerView(BaseAlgorithmView):
             min_value=sidebar_values["frequency"][0],
             max_value=sidebar_values["frequency"][1],
             key="frequency",
-            help="Minimum frequency for displaying edges. Edges with a lower frequency (weight) will be removed.",
+            help="Minimum frequency for displaying edges and nodes. Edges with a lower frequency (weight) will be removed. Node with a lower frequency will be removed.",
         )
 
         st.slider(
