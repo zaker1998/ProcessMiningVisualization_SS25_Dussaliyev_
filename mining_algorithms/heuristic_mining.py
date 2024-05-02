@@ -32,10 +32,15 @@ class HeuristicMining(BaseMining):
 
         # create graph
         self.graph = HeuristicGraph()
-        # cluster the node sizes based on frequency
 
-        # add nodes to graph
-        for node in self.events:
+        frequent_nodes = [
+            node
+            for node in self.events
+            if self.appearance_frequency[node] >= min_frequency
+        ]
+
+        # add frequent nodes to graph
+        for node in frequent_nodes:
             node_freq = self.appearance_frequency.get(node)
             w, h = self.calulate_node_size(node)
             self.graph.add_event(node, node_freq, (w, h))
@@ -63,13 +68,19 @@ class HeuristicMining(BaseMining):
         self.graph.add_start_node()
         self.graph.add_end_node()
 
-        # add starting and ending edges from the log
-        self.graph.add_starting_edges(self.start_nodes)
-        self.graph.add_ending_edges(self.end_nodes)
+        # add starting and ending edges from the log to the graph. Only if they are frequent
+        self.graph.add_starting_edges(self.start_nodes.intersection(frequent_nodes))
+        self.graph.add_ending_edges(self.end_nodes.intersection(frequent_nodes))
 
-        source_nodes = self.__get_sources_from_dependency_graph(dependency_graph)
-        sink_nodes = self.__get_sinks_from_dependency_graph(dependency_graph)
+        # get frequent sources and sinks from the dependency graph
+        source_nodes = self.__get_sources_from_dependency_graph(
+            dependency_graph
+        ).intersection(frequent_nodes)
+        sink_nodes = self.__get_sinks_from_dependency_graph(
+            dependency_graph
+        ).intersection(frequent_nodes)
 
+        # add starting and ending edges from the dependency graph to the graph
         self.graph.add_starting_edges(source_nodes - self.start_nodes)
         self.graph.add_ending_edges(sink_nodes - self.end_nodes)
 
