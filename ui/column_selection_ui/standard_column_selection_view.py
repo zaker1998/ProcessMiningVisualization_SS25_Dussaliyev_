@@ -3,14 +3,13 @@ from ui.column_selection_ui.base_column_selection_view import BaseColumnSelectio
 
 
 class StandardColumnSelectionView(BaseColumnSelectionView):
-
-    needed_columns = ["time_column", "case_column", "activity_column"]
-
-    column_styles = {
-        "time_column": "background-color: #FF705B",
-        "case_column": "background-color: #629AFF",
-        "activity_column": "background-color: #57B868",
-    }
+    def __init__(self):
+        self.needed_columns = ["time_column", "case_column", "activity_column"]
+        self.column_styles = {
+            "time_column": "background-color: #FF705B",
+            "case_column": "background-color: #629AFF",
+            "activity_column": "background-color: #57B868",
+        }
 
     def get_needed_columns(self) -> list[str]:
         return self.needed_columns
