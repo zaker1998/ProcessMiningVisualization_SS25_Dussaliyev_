@@ -5,7 +5,7 @@ import {
 } from "streamlit-component-lib"
 import React, { useEffect, useRef, useState } from "react"
 import { graphviz } from "d3-graphviz"
-import { selectAll } from "d3"
+import { selectAll, select } from "d3"
 import { v4 as uuidv4 } from "uuid"
 
 type nodeClickData = {
@@ -66,22 +66,29 @@ const InteractiveGraph: React.FC<ComponentProps> = ({ args }) => {
   useEffect(() => {
     if (width === 0 || height === 0) return
 
+    const graphviz_instance = graphviz(".graph")
+
     const render_timeout = setTimeout(() => {
       setIsRendering(true)
-      graphviz(".graph")
-        .dot(dot_source)
+      graphviz_instance
         .width(width)
         .height(height)
         .fit(true)
         .zoomScaleExtent([0.1, 100])
-        .tweenPaths(false)
-        .tweenShapes(false)
         .on("end", bindAfterRender)
-        .render()
+        .renderDot(dot_source)
     }, 100)
 
     return () => {
       clearTimeout(render_timeout)
+      // destroy old graphviz rendering instance
+      if (graphviz_instance) {
+        const any_instance = graphviz_instance as any
+        any_instance.destroy()
+        // remove old div content
+        const any_graph_div = select(".graph").node() as any
+        any_graph_div.innerHTML = ""
+      }
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
