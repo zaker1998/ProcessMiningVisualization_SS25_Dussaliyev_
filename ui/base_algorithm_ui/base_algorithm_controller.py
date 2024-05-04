@@ -8,9 +8,10 @@ from time import time
 
 
 class BaseAlgorithmController(BaseController):
-    def __init__(self, views=None, model=None):
+    def __init__(self, views=None, mining_model_class=None):
 
-        self.mining_model = model
+        self.mining_model = None
+        self.mining_model_class = mining_model_class
         super().__init__(views)
 
     @abstractmethod
@@ -24,20 +25,18 @@ class BaseAlgorithmController(BaseController):
         )
 
     @abstractmethod
-    def create_empty_model(self, *log_data):
-        raise NotImplementedError("create_empty_model() method not implemented")
-
-    @abstractmethod
     def have_parameters_changed(self) -> bool:
         raise NotImplementedError("have_parameters_changed() method not implemented")
 
     @abstractmethod
-    def is_correct_model_type(self, model) -> bool:
-        raise NotImplementedError("is_correct_model_type() method not implemented")
-
-    @abstractmethod
     def get_sidebar_values(self) -> dict[str, any]:
         raise NotImplementedError("get_sidebar_values() method not implemented")
+
+    def is_correct_model_type(self, model) -> bool:
+        return isinstance(model, self.mining_model_class)
+
+    def create_empty_model(self, *log_data):
+        return self.mining_model_class.create_mining_instance(*log_data)
 
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
         # TODO: implement this  method using a df transformation model

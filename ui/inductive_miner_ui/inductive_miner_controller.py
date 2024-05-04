@@ -5,10 +5,14 @@ import streamlit as st
 
 
 class InductiveMinerController(BaseAlgorithmController):
-    def __init__(self, views=None, model=None):
+
+    def __init__(self, views=None, mining_model_class=None):
         if views is None:
             views = [InductiveMinerView()]
-        super().__init__(views, model)
+
+        if mining_model_class is None:
+            mining_model_class = InductiveMining
+        super().__init__(views, mining_model_class)
 
     def get_page_title(self) -> str:
         return "Inductive Mining"
@@ -30,17 +34,11 @@ class InductiveMinerController(BaseAlgorithmController):
     def perform_mining(self) -> None:
         self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)
 
-    def create_empty_model(self, *log_data):
-        return InductiveMining(*log_data)
-
     def have_parameters_changed(self) -> bool:
         return (
             self.mining_model.get_activity_threshold() != self.activity_threshold
             or self.mining_model.get_traces_threshold() != self.traces_threshold
         )
-
-    def is_correct_model_type(self, model) -> bool:
-        return isinstance(model, InductiveMining)
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
         sidebar_values = {

@@ -5,10 +5,14 @@ from mining_algorithms.heuristic_mining import HeuristicMining
 
 
 class HeuristicMinerController(BaseAlgorithmController):
-    def __init__(self, views=None, model=None):
+
+    def __init__(self, views=None, mining_model_class=None):
         if views is None:
             views = [HeuristicMinerView()]
-        super().__init__(views, model)
+
+        if mining_model_class is None:
+            mining_model_class = HeuristicMining
+        super().__init__(views, mining_model_class)
 
     def get_page_title(self) -> str:
         return "Heuristic Mining"
@@ -30,17 +34,11 @@ class HeuristicMinerController(BaseAlgorithmController):
             self.threshold, self.frequency
         )
 
-    def create_empty_model(self, *log_data):
-        return HeuristicMining(*log_data)
-
     def have_parameters_changed(self) -> bool:
         return (
             self.mining_model.get_threshold() != self.threshold
             or self.mining_model.get_min_frequency() != self.frequency
         )
-
-    def is_correct_model_type(self, model) -> bool:
-        return isinstance(model, HeuristicMining)
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
         sidebar_values = {

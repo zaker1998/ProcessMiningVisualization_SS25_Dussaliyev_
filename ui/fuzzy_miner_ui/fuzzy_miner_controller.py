@@ -6,10 +6,14 @@ from ui.fuzzy_miner_ui.fuzzy_miner_view import FuzzyMinerView
 
 class FuzzyMinerController(BaseAlgorithmController):
 
-    def __init__(self, views=None, model=None):
+    def __init__(self, views=None, mining_model_class=None):
         if views is None:
             views = [FuzzyMinerView()]
-        super().__init__(views, model)
+
+        if mining_model_class is None:
+            mining_model_class = FuzzyMining
+
+        super().__init__(views, mining_model_class)
 
     def get_page_title(self) -> str:
         return "Fuzzy Mining"
@@ -39,9 +43,6 @@ class FuzzyMinerController(BaseAlgorithmController):
             self.significance, self.correlation, self.edge_cutoff, self.utility_ratio
         )
 
-    def create_empty_model(self, *log_data):
-        return FuzzyMining(*log_data)
-
     def have_parameters_changed(self) -> bool:
         return (
             self.mining_model.get_significance() != self.significance
@@ -49,9 +50,6 @@ class FuzzyMinerController(BaseAlgorithmController):
             or self.mining_model.get_edge_cutoff() != self.edge_cutoff
             or self.mining_model.get_utility_ratio() != self.utility_ratio
         )
-
-    def is_correct_model_type(self, model) -> bool:
-        return isinstance(model, FuzzyMining)
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
         sidebar_values = {
