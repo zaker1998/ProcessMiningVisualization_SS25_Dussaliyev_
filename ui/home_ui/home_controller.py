@@ -18,15 +18,21 @@ class HomeController(BaseController):
         return ""
 
     def process_file(self, file):
+
+        file_type = self.detection_model.detect_file_type(file)
         # TODO: move io logic to a model
-        if file.name.endswith(".csv"):
+        if file_type == "csv":
             line = file.readline().decode("utf-8")
             detected_delimiter = self.detection_model.detect_delimiter(line)
             file.seek(0)
             self.selected_view.display_df_import(detected_delimiter)
-        elif file.name.endswith(".pickle"):
+        elif file_type == "pickle":
             model = pickle_load(file)
             self.selected_view.display_model_import(model)
+        else:
+            # add logging here for unsupported file format
+            st.session_state.error = "File format not supported"
+            st.rerun()
 
     def set_model_and_algorithm(self, model, algorithm):
         st.session_state.model = model

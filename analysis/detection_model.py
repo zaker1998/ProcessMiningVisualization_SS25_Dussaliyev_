@@ -1,7 +1,33 @@
 import csv
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 
 class DetectionModel:
+
+    def detect_file_type(self, file_path: str | UploadedFile) -> str:
+        """Detect the type of a file based on the file extension.
+
+        Parameters
+        ----------
+        file_path : str | UploadedFile
+            The path to the file or the uploaded file
+
+        Returns
+        -------
+        str
+            The detected file type. If the file type is not supported, an empty string is returned.
+        """
+        if isinstance(file_path, UploadedFile):
+            file_name = file_path.name
+        else:
+            file_name = file_path
+
+        if file_name.endswith(".csv"):
+            return "csv"
+        elif file_name.endswith(".pickle"):
+            return "pickle"
+        else:
+            return ""
 
     def detect_delimiter(self, row: str) -> str:
         """Detect the delimiter of a CSV row.
