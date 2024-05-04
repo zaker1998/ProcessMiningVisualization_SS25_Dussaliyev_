@@ -1,12 +1,11 @@
-from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 import numpy as np
+from mining_algorithms.mining_interface import MiningInterface
 
 
-class BaseMining:
+class BaseMining(MiningInterface):
     def __init__(self, log):
+        super().__init__()
         self.log = log
-        self.min_node_size = 1.5
-        self.graph = None
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_frequency = self.__filter_out_all_events()
         self.event_positions = {event: i for i, event in enumerate(self.events)}
@@ -19,15 +18,6 @@ class BaseMining:
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
 
-    def get_clusters(self, frequency):
-        try:
-            cluster = DensityDistributionClusterAlgorithm(frequency)
-            return list(cluster.sorted_data), list(cluster.labels_sorted_data)
-        except ZeroDivisionError as e:
-            # TODO: use logging
-            print(e)
-            return [frequency[0]], [1.0]
-
     def __filter_out_all_events(self):
         dic = {}
         for trace, frequency in self.log.items():
@@ -39,9 +29,6 @@ class BaseMining:
 
         activities = list(dic.keys())
         return activities, dic
-
-    def get_graph(self):
-        return self.graph
 
     def calulate_node_size(self, node):
         scale_factor = self.get_scale_factor(node)
