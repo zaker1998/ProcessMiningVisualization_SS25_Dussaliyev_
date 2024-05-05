@@ -1,38 +1,19 @@
-import pandas as pd
-
-
-def dataframe_to_cases_list(
-    df: pd.DataFrame,
-    timeLabel: str = "timestamp",
-    caseLabel: str = "case",
-    eventLabel: str = "event",
-) -> list[list[str, ...]]:
-    required_columns = [timeLabel, caseLabel, eventLabel]
-    if not all(col in df.columns for col in required_columns):
-        # TODO: Use exceptions instead of raising value errors
-        raise ValueError("Selected columns not found in DataFrame")
-
-    # Sort by timestamp
-    df = df.sort_values(by=[timeLabel])
-
-    result = df.groupby(caseLabel)[eventLabel].apply(list).reset_index(name="events")
-    return result["events"].tolist()
-
-
+# This function is not implemented directly in the model, to make it reusable in other contexts. Right now it is used in the dfg.
 def cases_list_to_dict(cases_list: list[list[str, ...]]) -> dict[tuple[str, ...], int]:
+    """transforms a list of cases into a dictionary where the key is a tuple of events and the value is the number of occurrences of that case
+
+    Parameters
+    ----------
+    cases_list : list[list[str, ...]]
+        A list of cases, where each case is a list of events.
+
+    Returns
+    -------
+    dict[tuple[str, ...], int]
+        A dictionary of cases, where each case is a tuple of events and the value is the number of occurrences.
+    """
     cases = {}
     for trace in cases_list:
         trace_tuple = tuple(trace)
         cases[trace_tuple] = cases.get(trace_tuple, 0) + 1
     return cases
-
-
-def dataframe_to_cases_dict(
-    df: pd.DataFrame,
-    timeLabel: str = "timestamp",
-    caseLabel: str = "case",
-    eventLabel: str = "event",
-    **additional_columns
-) -> dict[tuple[str, ...], int]:
-    cases_list = dataframe_to_cases_list(df, timeLabel, caseLabel, eventLabel)
-    return cases_list_to_dict(cases_list)
