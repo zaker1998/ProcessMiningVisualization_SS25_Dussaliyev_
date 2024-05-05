@@ -2,7 +2,7 @@ import unittest
 from graphs.dfg import DFG
 from graphs.cuts import sequence_cut
 from utils.io import read_csv
-from utils.transformations import dataframe_to_cases_dict
+from transformations.dataframe_transformations import DataframeTransformations
 
 
 class TestSequenceCut(unittest.TestCase):
@@ -52,8 +52,12 @@ class TestSequenceCut(unittest.TestCase):
         self.assertIsNone(cuts)
 
     def test_with_test_csv_dataset(self):
-        log = dataframe_to_cases_dict(
-            read_csv("tests/testcsv/test_csv.csv"), "timestamp", "case", "event"
+        dataframe_transformations = DataframeTransformations()
+        df = read_csv("tests/testcsv/test_csv.csv")
+        dataframe_transformations.set_dataframe(df)
+
+        log = dataframe_transformations.dataframe_to_cases_dict(
+            "timestamp", "case", "event"
         )
         dfg = DFG(log)
 

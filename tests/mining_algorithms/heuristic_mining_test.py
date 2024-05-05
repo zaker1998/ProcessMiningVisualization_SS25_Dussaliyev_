@@ -9,12 +9,16 @@ from mining_algorithms.heuristic_mining import HeuristicMining
 from collections import deque
 
 from utils.io import read_file
-from utils.transformations import dataframe_to_cases_dict, cases_list_to_dict
+from transformations.utils import cases_list_to_dict
+from transformations.dataframe_transformations import DataframeTransformations
 
 
 def read(filename, timeLabel="timestamp", caseLabel="case", eventLabel="event"):
-    df = read_file(filename)
-    return dataframe_to_cases_dict(df, timeLabel, caseLabel, eventLabel)
+    dataframe_transformations = DataframeTransformations()
+    dataframe_transformations.set_dataframe(read_file(filename))
+    return dataframe_transformations.dataframe_to_cases_dict(
+        timeLabel, caseLabel, eventLabel
+    )
 
 
 class TestHeuristic(unittest.TestCase):

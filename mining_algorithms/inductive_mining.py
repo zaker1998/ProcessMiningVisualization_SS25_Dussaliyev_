@@ -1,5 +1,4 @@
 from mining_algorithms.base_mining import BaseMining
-from utils.transformations import cases_list_to_dict
 from logs.splits import (
     exclusive_split,
     parallel_split,
