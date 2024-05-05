@@ -4,6 +4,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 class DetectionModel:
 
+    # TODO: store supported file types and the suffixes in a config file, for a more flexible solution
     def detect_file_type(self, file_path: str | UploadedFile) -> str:
         """Detect the type of a file based on the file extension.
 
@@ -27,6 +28,8 @@ class DetectionModel:
         elif file_name.endswith(".pickle"):
             return "pickle"
         else:
+            # maybe throw an exception instead of returning an empty string, to handle unsupported file types
+            # as selecting a file with an unsupported file type should not be possible
             return ""
 
     def detect_delimiter(self, row: str) -> str:
