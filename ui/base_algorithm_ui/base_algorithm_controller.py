@@ -1,9 +1,10 @@
 import streamlit as st
 from abc import abstractmethod
 from ui.base_ui.base_controller import BaseController
-from utils.transformations import dataframe_to_cases_dict
+from transformations.dataframe_transformations import DataframeTransformations
 from components.buttons import to_home
 from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
+
 from time import time
 
 
@@ -11,6 +12,7 @@ class BaseAlgorithmController(BaseController):
     def __init__(self, views=None, mining_model_class=None):
 
         self.mining_model = None
+        self.dataframe_transformations = DataframeTransformations()
         self.mining_model_class = mining_model_class
         super().__init__(views)
 
@@ -39,14 +41,10 @@ class BaseAlgorithmController(BaseController):
         return self.mining_model_class.create_mining_instance(*log_data)
 
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
-        # TODO: implement this  method using a df transformation model
-        cases_dict = dataframe_to_cases_dict(
-            df,
-            timeLabel=selected_columns["time_column"],
-            caseLabel=selected_columns["case_column"],
-            eventLabel=selected_columns["activity_column"],
+        self.dataframe_transformations.set_dataframe(df)
+        return (
+            self.dataframe_transformations.dataframe_to_cases_dict(**selected_columns),
         )
-        return (cases_dict,)
 
     def process_session_state(self):
         super().process_session_state()

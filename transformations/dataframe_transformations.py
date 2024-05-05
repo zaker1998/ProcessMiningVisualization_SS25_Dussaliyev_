@@ -59,6 +59,7 @@ class DataframeTransformations:
         return result["events"].tolist()
 
     def dataframe_to_cases_dict(
+        self,
         timeLabel: str = "timestamp",
         caseLabel: str = "case",
         eventLabel: str = "event",
@@ -82,5 +83,5 @@ class DataframeTransformations:
         dict[tuple[str, ...], int]
             A dictionary of cases, where each case is a tuple of events, mapped to the number of occurrences.
         """
-        cases_list = dataframe_to_cases_list(self.df, timeLabel, caseLabel, eventLabel)
+        cases_list = self.dataframe_to_cases_list(timeLabel, caseLabel, eventLabel)
         return cases_list_to_dict(cases_list)
