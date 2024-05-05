@@ -1,5 +1,5 @@
 from collections import deque
-from utils.transformations import cases_list_to_dict
+from transformations.utils import cases_list_to_dict
 
 
 class DFG:
