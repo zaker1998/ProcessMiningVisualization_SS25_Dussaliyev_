@@ -9,13 +9,6 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 # TODO: Use docstrings to document the functions not comments
 
 
-# Saves the class object as a pickle file. filename is the full path
-def pickle_save(class_object: object, filename: str) -> None:
-    filePath = filename + ".pickle"
-    with open(filePath, "wb") as file:
-        pickle.dump(class_object, file)
-
-
 # Loads the class object that was saved as a pickle file. path should include filename
 def pickle_load(path: str | UploadedFile) -> object:
     if isinstance(path, UploadedFile):
@@ -29,10 +22,6 @@ def pickle_load(path: str | UploadedFile) -> object:
 def read_csv(filePath: str | UploadedFile, delimiter: str = ",") -> pd.DataFrame:
     df = pd.read_csv(filePath, delimiter=delimiter)
     return df
-
-
-def read_excel(filePath: str) -> pd.DataFrame:
-    return pd.read_excel(filePath)
 
 
 def read_file(

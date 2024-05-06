@@ -3,7 +3,7 @@ from ui.export_ui.export_view import ExportView
 import streamlit as st
 from components.buttons import to_home, navigate_to
 from utils.io import read_img
-import pickle
+from io_operations.export_operations import ExportModel
 
 
 class ExportController(BaseController):
@@ -14,6 +14,8 @@ class ExportController(BaseController):
             from ui.export_ui.export_view import ExportView
 
             views = [ExportView()]
+
+        self.export_model = ExportModel()
         super().__init__(views)
 
     def get_page_title(self) -> str:
@@ -38,23 +40,20 @@ class ExportController(BaseController):
         if "export_format" not in st.session_state:
             st.session_state.export_format = "SVG"
 
-        self.graph = self.mining_model.graph
+        self.graph = self.mining_model.get_graph()
         self.dpi = st.session_state.dpi
         self.export_format = st.session_state.export_format
 
     def export_graph(self, format):
-        # TODO: move io logic to a model
-        file_path = "temp/graph"
-        self.graph.export_graph(file_path, format.lower(), dpi=self.dpi)
-        return file_path + "." + format.lower()
+        self.export_model.export_graph(self.graph, "temp/graph", format, dpi=self.dpi)
+        return "temp/graph" + "." + format.lower()
 
     def read_png(self, file_path):
         # TODO: move io logic to a model
         return read_img(file_path)
 
     def pickle_model(self):
-        # TODO: move io logic to a model
-        return pickle.dumps(self.mining_model)
+        return self.export_model.export_model_to_bytes(self.mining_model)
 
     def read_file(self, file_path):
         # TODO: move io logic to a model
