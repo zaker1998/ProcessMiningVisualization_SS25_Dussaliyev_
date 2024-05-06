@@ -213,12 +213,8 @@ class BaseGraph:
     def get_graphviz_string(self) -> str:
         return self.graph.source
 
-    def export_graph(self, filename: str, format: str = "png", dpi=96) -> None:
-        if format == "png":
-            self.graph.attr(dpi=str(dpi))
-        self.graph.render(filename, format=format, cleanup=True)
-        if format == "png":
-            self.graph.attr(dpi="0")
+    def get_graphviz_graph(self) -> graphviz.Digraph:
+        return self.graph
 
     def node_to_string(self, id: str) -> tuple[str, str]:
         node = self.get_node(id)
