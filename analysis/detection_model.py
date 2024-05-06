@@ -28,6 +28,7 @@ class DetectionModel:
         elif file_name.endswith(".pickle"):
             return "pickle"
         else:
+            # TODO: check use case
             # maybe throw an exception instead of returning an empty string, to handle unsupported file types
             # as selecting a file with an unsupported file type should not be possible
             return ""
