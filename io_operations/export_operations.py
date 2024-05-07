@@ -2,7 +2,7 @@ from graphs.visualization.base_graph import BaseGraph
 import pickle
 
 
-class ExportModel:
+class ExportOperations:
     # TODO: store supported export formats in a config file, for a more flexible solution
     supported_graph_export_formats = ["png", "svg", "dot"]
 

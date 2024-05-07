@@ -3,7 +3,7 @@ from ui.export_ui.export_view import ExportView
 import streamlit as st
 from components.buttons import to_home, navigate_to
 from utils.io import read_img
-from io_operations.export_operations import ExportModel
+from io_operations.export_operations import ExportOperations
 
 
 class ExportController(BaseController):
@@ -15,7 +15,7 @@ class ExportController(BaseController):
 
             views = [ExportView()]
 
-        self.export_model = ExportModel()
+        self.export_model = ExportOperations()
         super().__init__(views)
 
     def get_page_title(self) -> str:

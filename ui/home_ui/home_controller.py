@@ -21,6 +21,7 @@ class HomeController(BaseController):
 
         file_type = self.detection_model.detect_file_type(file)
         # TODO: move io logic to a model
+        # TODO: catch exceptions if file is not supported
         if file_type == "csv":
             line = file.readline().decode("utf-8")
             detected_delimiter = self.detection_model.detect_delimiter(line)
