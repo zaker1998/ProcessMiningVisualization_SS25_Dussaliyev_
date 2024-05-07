@@ -8,14 +8,14 @@ from graphs.visualization.base_graph import BaseGraph
 from mining_algorithms.heuristic_mining import HeuristicMining
 from collections import deque
 
-from utils.io import read_file
+import pandas as pd
 from transformations.utils import cases_list_to_dict
 from transformations.dataframe_transformations import DataframeTransformations
 
 
 def read(filename, timeLabel="timestamp", caseLabel="case", eventLabel="event"):
     dataframe_transformations = DataframeTransformations()
-    dataframe_transformations.set_dataframe(read_file(filename))
+    dataframe_transformations.set_dataframe(pd.read_csv(filename))
     return dataframe_transformations.dataframe_to_cases_dict(
         timeLabel, caseLabel, eventLabel
     )

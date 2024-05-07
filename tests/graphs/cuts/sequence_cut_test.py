@@ -1,8 +1,8 @@
 import unittest
 from graphs.dfg import DFG
 from graphs.cuts import sequence_cut
-from utils.io import read_csv
 from transformations.dataframe_transformations import DataframeTransformations
+import pandas as pd
 
 
 class TestSequenceCut(unittest.TestCase):
@@ -53,7 +53,7 @@ class TestSequenceCut(unittest.TestCase):
 
     def test_with_test_csv_dataset(self):
         dataframe_transformations = DataframeTransformations()
-        df = read_csv("tests/testcsv/test_csv.csv")
+        df = pd.read_csv("tests/testcsv/test_csv.csv")
         dataframe_transformations.set_dataframe(df)
 
         log = dataframe_transformations.dataframe_to_cases_dict(
