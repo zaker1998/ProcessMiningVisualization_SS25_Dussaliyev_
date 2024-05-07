@@ -55,3 +55,27 @@ class DetectionModel:
             print(e)
 
         return detected_delimiter
+
+    # TODO: store supported mime types and the suffixes in a config file, for a more flexible solution
+    def detect_mime_type(self, file_path: str) -> str:
+        """Detect the mime type of a file.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the file
+
+        Returns
+        -------
+        str
+            The detected mime type. If the file type is not supported, "text/plain" is returned.
+        """
+
+        if file_path.endswith(".png"):
+            return "image/png"
+        elif file_path.endswith(".svg"):
+            return "image/svg"
+        elif file_path.endswith(".dot"):
+            return "text/plain"
+        else:
+            return "text/plain"
