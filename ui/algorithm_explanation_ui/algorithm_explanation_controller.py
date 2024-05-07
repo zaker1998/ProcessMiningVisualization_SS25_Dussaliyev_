@@ -1,6 +1,7 @@
 import streamlit as st
 from ui.base_ui.base_controller import BaseController
 from components.buttons import navigate_to, to_home
+from io_operations.import_operations import ImportOperations
 from config import docs_path_mappings
 
 
@@ -13,6 +14,8 @@ class AlgorithmExplanationController(BaseController):
             )
 
             views = [AlgorithmExplanationView()]
+
+        self.import_model = ImportOperations()
         super().__init__(views)
 
     def get_page_title(self) -> str:
@@ -30,10 +33,7 @@ class AlgorithmExplanationController(BaseController):
         self.file_path = docs_path_mappings[st.session_state.algorithm]
 
     def read_algorithm_file(self) -> str:
-        # TODO: move io logic to a model
-        with open(self.file_path, "r") as file:
-            file_content = file.read()
-
+        file_content = self.import_model.read_file(self.file_path)
         return file_content
 
     def run(self, selected_view, index):

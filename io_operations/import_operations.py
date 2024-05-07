@@ -88,6 +88,22 @@ class ImportOperations:
         with open(file_path, "r") as file:
             return file.read()
 
+    def read_file_binary(self, file_path: str) -> bytes:
+        """Reads a file and returns the content as bytes. This is used to download the file
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the file
+
+        Returns
+        -------
+        bytes
+            The content of the file as bytes
+        """
+        with open(file_path, "rb") as file:
+            return file.read()
+
     def read_line(self, file_path: str | UploadedFile) -> str:
         """Reads the first line of a file and returns it as a string. This is used to detect the delimiter of a csv file
 

@@ -1,13 +1,14 @@
 import streamlit as st
 from ui.base_ui.base_controller import BaseController
-from utils.io import read_file, pickle_load
 from analysis.detection_model import DetectionModel
+from io_operations.import_operations import ImportOperations
 
 
 class HomeController(BaseController):
 
     def __init__(self, views=None):
         self.detection_model = DetectionModel()
+        self.import_model = ImportOperations()
         if views is None:
             from ui.home_ui.home_view import HomeView
 
@@ -20,15 +21,14 @@ class HomeController(BaseController):
     def process_file(self, file):
 
         file_type = self.detection_model.detect_file_type(file)
-        # TODO: move io logic to a model
-        # TODO: catch exceptions if file is not supported
+        # TODO: catch exceptions if file is not supported, if exception is used in the detection_model
         if file_type == "csv":
-            line = file.readline().decode("utf-8")
+            line = self.import_model.read_line(file)
             detected_delimiter = self.detection_model.detect_delimiter(line)
             file.seek(0)
             self.selected_view.display_df_import(detected_delimiter)
         elif file_type == "pickle":
-            model = pickle_load(file)
+            model = self.import_model.read_model(file)
             self.selected_view.display_model_import(model)
         else:
             # add logging here for unsupported file format
@@ -45,8 +45,7 @@ class HomeController(BaseController):
             # change routing to home
             st.session_state.page = "Home"
             return
-        # TODO: move io logic to a model
-        st.session_state.df = read_file(file, delimiter=delimiter)
+        st.session_state.df = self.import_model.read_csv(file, delimiter)
 
     def run(self, selected_view, index):
         self.selected_view = selected_view

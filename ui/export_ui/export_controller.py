@@ -4,6 +4,8 @@ import streamlit as st
 from components.buttons import to_home, navigate_to
 from utils.io import read_img
 from io_operations.export_operations import ExportOperations
+from io_operations.import_operations import ImportOperations
+from analysis.detection_model import DetectionModel
 
 
 class ExportController(BaseController):
@@ -16,6 +18,8 @@ class ExportController(BaseController):
             views = [ExportView()]
 
         self.export_model = ExportOperations()
+        self.import_model = ImportOperations()
+        self.detection_model = DetectionModel()
         super().__init__(views)
 
     def get_page_title(self) -> str:
@@ -49,21 +53,17 @@ class ExportController(BaseController):
         return "temp/graph" + "." + format.lower()
 
     def read_png(self, file_path):
-        # TODO: move io logic to a model
-        return read_img(file_path)
+        image = self.import_model.read_img(file_path)
+        return image
 
     def pickle_model(self):
         return self.export_model.export_model_to_bytes(self.mining_model)
 
     def read_file(self, file_path):
-        # TODO: move io logic to a model
-        mime = (
-            "image/" + self.export_format.lower()
-            if self.export_format != "DOT"
-            else "text/plain"
-        )
-        with open(file_path, "rb") as file:
-            return file.read(), mime
+        mime = self.detection_model.detect_mime_type(file_path)
+        file_content = self.import_model.read_file_binary(file_path)
+
+        return file_content, mime
 
     def run(self, selected_view, index):
         selected_view.display_back_button()
