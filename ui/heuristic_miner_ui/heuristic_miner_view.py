@@ -3,10 +3,19 @@ import streamlit as st
 
 
 class HeuristicMinerView(BaseAlgorithmView):
+    """View for the Heuristic Miner algorithm."""
 
     def render_sidebar(
         self, sidebar_values: dict[str, tuple[int | float, int | float]]
     ) -> None:
+        """Renders the sidebar for the Heuristic Miner algorithm.
+
+        Parameters
+        ----------
+        sidebar_values : dict[str, tuple[int  |  float, int  |  float]]
+            A dictionary containing the minimum and maximum values for the sidebar sliders.
+            The keys of the dictionary are equal to the keys of the sliders.
+        """
         st.slider(
             label="Minimum Frequency",
             min_value=sidebar_values["frequency"][0],

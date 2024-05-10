@@ -5,12 +5,15 @@ from components.buttons import navigation_button
 
 
 class HomeView(BaseView):
+    """View for the Home page."""
 
     def create_layout(self):
+        """Creates the layout for the Home page."""
         super().create_layout()
         _, self.content_column, _ = st.columns([1, 3, 1])
 
     def display_intro(self):
+        """Displays the introduction text for the Home page."""
         with self.content_column:
             st.title("Welcome to the Process Mining Tool")
             st.write(
@@ -19,6 +22,7 @@ class HomeView(BaseView):
             st.write("To get started, upload a CSV file containing your process logs.")
 
     def display_file_upload(self):
+        """Displays the file upload component."""
         with self.content_column:
             st.file_uploader(
                 "Upload a file",
@@ -28,6 +32,13 @@ class HomeView(BaseView):
             )
 
     def display_model_import(self, model):
+        """Displays the model import component. A dropdown is displayed to select the mining algorithm.
+
+        Parameters
+        ----------
+        model : MiningInterface
+            The mining model to be imported.
+        """
         with self.content_column:
             algorithm_col, _, button_column = st.columns([2, 2, 1])
             with algorithm_col:
@@ -46,6 +57,13 @@ class HomeView(BaseView):
                 )
 
     def display_df_import(self, detected_delimiter):
+        """Displays the dataframe import component. A text input is displayed to enter the delimiter.
+
+        Parameters
+        ----------
+        detected_delimiter : str
+            The detected delimiter of the CSV file.
+        """
         with self.content_column:
             delimiter_col, _, button_column = st.columns([1, 3, 1])
 

@@ -5,9 +5,16 @@ from components.PNGViewer import PNGViewer
 
 
 class ExportView(BaseView):
+    """View for the Export page."""
+
     png_height = 600
 
     def create_layout(self):
+        """Creates the layout for the Export page.
+        The layout consists of a container for the PNG image, a container for the back button,
+        a container for the export format, a container for the DPI input, a container for the export button,
+        and a container for the model export button.
+        """
         super().create_layout()
         self.png_container = st.container(
             border=True, height=self.png_height + 40
@@ -20,26 +27,57 @@ class ExportView(BaseView):
             self.export_button_col, self.model_export_button_col = st.columns([1, 1])
 
     def display_png(self, png):
+        """Displays the PNG image."""
         with self.png_container:
             PNGViewer(png, height=self.png_height)
 
     def display_back_button(self):
+        """Displays the back button."""
         with self.back_button_container:
             navigation_button("Back", "Algorithm", type="secondary")
 
-    def display_export_format(self, formats):
+    def display_export_format(self, formats: list[str]):
+        """Displays the export format selection dropdown.
+
+        Parameters
+        ----------
+        formats : List[str]
+            The list of export formats.
+        """
         with self.export_format_container:
             self.export_format = st.selectbox(
                 "Export as:", formats, key="export_format"
             )
 
-    def display_dpi_input(self, min_value, value, step):
+    def display_dpi_input(self, min_value: int, value: int, step: int):
+        """Displays the DPI input.
+
+        Parameters
+        ----------
+        min_value : int
+            The minimum value for the DPI input.
+        value : int
+            The value for the DPI input.
+        step : int
+            The step for the DPI input.
+        """
         with self.dpi_container:
             self.dpi = st.number_input(
                 "DPI", min_value=min_value, value=value, step=step, key="dpi"
             )
 
-    def display_export_button(self, file_name, file, mime):
+    def display_export_button(self, file_name: str, file: bytes, mime: str):
+        """Displays the export button.
+
+        Parameters
+        ----------
+        file_name : str
+            The name of the file to be exported.
+        file : bytes
+            The file to be exported as bytes.
+        mime : str
+            The MIME type of the file.
+        """
         with self.export_button_col:
             st.download_button(
                 label="Export",
@@ -49,7 +87,16 @@ class ExportView(BaseView):
                 type="primary",
             )
 
-    def display_model_export_button(self, file_name, file):
+    def display_model_export_button(self, file_name: str, file: bytes):
+        """Displays the model export button.
+
+        Parameters
+        ----------
+        file_name : str
+            The name of the file to be exported.
+        file : bytes
+            The file/model to be exported as bytes.
+        """
         with self.model_export_button_col:
             st.download_button(
                 label="Export Model",

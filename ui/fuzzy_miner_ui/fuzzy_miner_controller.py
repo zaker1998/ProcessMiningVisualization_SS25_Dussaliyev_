@@ -5,8 +5,18 @@ from ui.fuzzy_miner_ui.fuzzy_miner_view import FuzzyMinerView
 
 
 class FuzzyMinerController(BaseAlgorithmController):
+    """Controller for the Fuzzy Miner algorithm."""
 
     def __init__(self, views=None, mining_model_class=None):
+        """Initializes the controller for the Fuzzy Miner algorithm.
+
+        Parameters
+        ----------
+        views : List[BaseAlgorithmView] | BaseAlgorithmView, optional
+            The views for the Fuzzy Miner algorithm. If None is passed, the default view is used, by default None
+        mining_model_class : MiningInterface Class, optional
+            The mining model class for the Fuzzy Miner algorithm. If None is passed, the default model class is used, by default None
+        """
         if views is None:
             views = [FuzzyMinerView()]
 
@@ -16,9 +26,19 @@ class FuzzyMinerController(BaseAlgorithmController):
         super().__init__(views, mining_model_class)
 
     def get_page_title(self) -> str:
+        """Returns the page title.
+
+        Returns
+        -------
+        str
+            The page title.
+        """
         return "Fuzzy Mining"
 
     def process_algorithm_parameters(self):
+        """Processes the algorithm parameters from the session state. The parameters are set to the instance variables.
+        If the parameters are not set in the session state, the default values are used.
+        """
         # set session state from instance variables if not set
         if "significance" not in st.session_state:
             st.session_state.significance = self.mining_model.get_significance()
@@ -39,11 +59,19 @@ class FuzzyMinerController(BaseAlgorithmController):
         self.utility_ratio = st.session_state.utility_ratio
 
     def perform_mining(self) -> None:
+        """Performs the mining of the Fuzzy Miner algorithm."""
         self.mining_model.create_graph_with_graphviz(
             self.significance, self.correlation, self.edge_cutoff, self.utility_ratio
         )
 
     def have_parameters_changed(self) -> bool:
+        """Checks if the algorithm parameters have changed.
+
+        Returns
+        -------
+        bool
+            True if the algorithm parameters have changed, False otherwise.
+        """
         return (
             self.mining_model.get_significance() != self.significance
             or self.mining_model.get_correlation() != self.correlation
@@ -52,6 +80,15 @@ class FuzzyMinerController(BaseAlgorithmController):
         )
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
+        """Returns the sidebar values for the Fuzzy Miner algorithm.
+
+        Returns
+        -------
+        dict[str, tuple[int | float, int | float]]
+            A dictionary containing the minimum and maximum values for the sidebar sliders.
+            The keys of the dictionary are equal to the keys of the sliders.
+        """
+
         sidebar_values = {
             "significance": (0.0, 1.0),
             "correlation": (0.0, 1.0),

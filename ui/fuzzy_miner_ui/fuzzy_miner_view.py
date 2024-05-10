@@ -3,10 +3,19 @@ import streamlit as st
 
 
 class FuzzyMinerView(BaseAlgorithmView):
+    """View for the Fuzzy Miner algorithm."""
 
     def render_sidebar(
         self, sidebar_values: dict[str, tuple[int | float, int | float]]
     ) -> None:
+        """Renders the sidebar for the Fuzzy Miner algorithm.
+
+        Parameters
+        ----------
+        sidebar_values : dict[str, tuple[int  |  float, int  |  float]]
+            A dictionary containing the minimum and maximum values for the sidebar sliders.
+            The keys of the dictionary are equal to the keys of the sliders.
+        """
         st.write("Significance Cutoff")
         st.slider(
             label="Significance",
