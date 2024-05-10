@@ -2,7 +2,6 @@ from ui.base_ui.base_controller import BaseController
 from ui.export_ui.export_view import ExportView
 import streamlit as st
 from components.buttons import to_home, navigate_to
-from utils.io import read_img
 from io_operations.export_operations import ExportOperations
 from io_operations.import_operations import ImportOperations
 from analysis.detection_model import DetectionModel
