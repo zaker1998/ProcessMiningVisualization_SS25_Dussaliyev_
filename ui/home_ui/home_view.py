@@ -20,14 +20,12 @@ class HomeView(BaseView):
 
     def display_file_upload(self):
         with self.content_column:
-            self.file = st.file_uploader(
+            st.file_uploader(
                 "Upload a file",
                 type=["csv", "pickle"],
                 accept_multiple_files=False,
+                key="uploaded_file",
             )
-
-        if self.file:
-            self.controller.process_file(self.file)
 
     def display_model_import(self, model):
         with self.content_column:
@@ -63,5 +61,5 @@ class HomeView(BaseView):
                     route="ColumnSelection",
                     use_container_width=True,
                     beforeNavigate=self.controller.set_df,
-                    args=(self.file, delimiter),
+                    args=(delimiter,),
                 )
