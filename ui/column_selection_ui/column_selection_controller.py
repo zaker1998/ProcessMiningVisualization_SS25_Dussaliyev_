@@ -4,12 +4,22 @@ from components.buttons import to_home
 from config import algorithm_mappings
 from analysis.predictions_model import PredictionModel
 from transformations.dataframe_styler import DataFrameStyler
+import pandas as pd
 
 
 class ColumnSelectionController(BaseController):
+    """Controller for the column selection page. It processes the needed columns, predicts the columns if necessary and styles the dataframe."""
+
     max_rows_shown = 200
 
     def __init__(self, views=None):
+        """Initializes the controller for the column selection page.
+
+        Parameters
+        ----------
+        views : List[BaseView] | BaseView, optional
+            The views for the column selection page. If None is passed, the default view is used, by default None
+        """
 
         self.predictions_model = PredictionModel()
         self.dataframe_styler = DataFrameStyler(self.max_rows_shown)
@@ -22,9 +32,23 @@ class ColumnSelectionController(BaseController):
         super().__init__(views)
 
     def get_page_title(self) -> str:
+        """Returns the page title.
+
+        Returns
+        -------
+        str
+            The page title.
+        """
         return "Column Selection"
 
     def select_view(self):
+        """Selects the view to display. The view is selected based on the selected algorithm.
+
+        Returns
+        -------
+        tuple[BaseView, int]
+            The selected view and the index of the view in the views list.
+        """
         if self.selected_algorithm == "":
             # choose other view depending on chosen algorithm
             pass
@@ -32,6 +56,10 @@ class ColumnSelectionController(BaseController):
             return self.views[0], 0
 
     def process_session_state(self):
+        """Processes the session state. Checks if a file has been uploaded and if an algorithm has been selected.
+        If not, an error message is displayed and the user is navigated back to the home page.
+        The dataframe is set and the selected algorithm is stored in the session state.
+        """
         super().process_session_state()
         if "df" not in st.session_state:
             self.error_message = "Please upload a file first"
@@ -46,14 +74,46 @@ class ColumnSelectionController(BaseController):
         self.df = st.session_state.df
         self.dataframe_styler.set_dataframe(self.df)
 
-    def predict_columns(self, needed_columns, columns):
+    def predict_columns(
+        self, needed_columns: list[str], columns: list[str]
+    ) -> list[str | None]:
+        """Predicts the columns needed for the algorithm. If the columns are not selected by the user, they are predicted. The prediction is based on the column names.
+        If a column cannot be predicted, it will be set to None.
+
+        Parameters
+        ----------
+        needed_columns : list[str]
+            list of needed columns e.g. ["time_column", "case_column", "activity_column"]
+        columns : list[str]
+            list of columns from the dataframe
+
+        Returns
+        -------
+        list[str | None]
+            list of predicted columns. If one of the needed columns cannot be predicted, it will be None.
+        """
         return self.predictions_model.predict_columns(columns, needed_columns)
 
-    def style_df(self, column_styles):
+    def style_df(self, column_styles: dict[str, str]) -> pd.DataFrame:
+        """Styles the dataframe based on the column styles.
+
+        Parameters
+        ----------
+        column_styles : dict[str, str]
+            The styles for the columns. The keys are the column names and the values are the styles for the selected columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            The styled dataframe.
+        """
         self.dataframe_styler.set_column_styles(column_styles)
         return self.dataframe_styler.stlye_df(self.selected_columns)
 
     def process_needed_columns(self):
+        """Processes the needed columns for the algorithm. If the columns are not selected by the user, they are predicted. The prediction is based on the column names.
+        If a column cannot be predicted, it will be set to None. The selected columns are stored in the session state, to be displayed in the view.
+        """
         self.selected_columns = dict()
 
         # if all columns are None, try to predict them
@@ -73,9 +133,25 @@ class ColumnSelectionController(BaseController):
             self.selected_columns[column] = st.session_state.get(column, None)
 
     def get_needed_columns(self, view):
+        """Gets the needed columns for the algorithm.
+
+        Parameters
+        ----------
+        view : BaseView
+            The view for the column selection page.
+        """
         self.needed_columns = view.get_needed_columns()
 
     def run(self, selected_view, index):
+        """Runs the controller. It displays the back button, the column selection options, the dataframe and the algorithm selection options.
+
+        Parameters
+        ----------
+        selected_view : BaseColumnSelectionView
+            The selected view for the column selection page.
+        index : int
+            The index of the selected view in the views list.
+        """
         selected_view.display_back_button()
         self.get_needed_columns(selected_view)
         self.process_needed_columns()
@@ -90,6 +166,10 @@ class ColumnSelectionController(BaseController):
         selected_view.display_mine_button()
 
     def on_mine_click(self):
+        """Processes the selected columns and the selected algorithm. The selected columns are stored in the session state and the algorithm is set in the session state.
+        If the columns are not selected, an error message is displayed and the user is navigated back to the column selection page.
+        If a column is selected multiple times, an error message is displayed and the user is navigated back to the column selection page.
+        """
         if not all(self.selected_columns.values()):
             st.session_state.error = "Please select a column for all columns"
             st.session_state.page = "ColumnSelection"
