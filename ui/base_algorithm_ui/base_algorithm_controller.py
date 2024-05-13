@@ -9,8 +9,18 @@ from time import time
 
 
 class BaseAlgorithmController(BaseController):
-    def __init__(self, views=None, mining_model_class=None):
+    """Base class for the algorithm controllers. It provides the basic methods for the algorithm controllers."""
 
+    def __init__(self, views=None, mining_model_class=None):
+        """Initializes the controller for the algorithm views.
+
+        Parameters
+        ----------
+        views : List[BaseView] | BaseView, optional
+            The views for the algorithm page. If None is passed, the default view is used, by default None
+        mining_model_class : MiningInterface class, optional
+            The class of the mining model, by default None
+        """
         self.mining_model = None
         self.dataframe_transformations = DataframeTransformations()
         self.mining_model_class = mining_model_class
@@ -18,35 +28,112 @@ class BaseAlgorithmController(BaseController):
 
     @abstractmethod
     def perform_mining(self) -> None:
+        """Performs the mining of the algorithm. This method must be implemented by the subclass.
+
+        Raises
+        ------
+        NotImplementedError
+            If the method is not implemented by the subclass.
+        """
         raise NotImplementedError("perform_mining() method not implemented")
 
     @abstractmethod
     def process_algorithm_parameters(self):
+        """Processes the algorithm parameters from the streamlit session state. Either reads the parameters from the session state or sets default values that are used for the mining.
+        This method must be implemented by the subclass.
+
+        Raises
+        ------
+        NotImplementedError
+            If the method is not implemented by the subclass.
+        """
         raise NotImplementedError(
             "process_algorithm_parameters() method not implemented"
         )
 
     @abstractmethod
     def have_parameters_changed(self) -> bool:
+        """Checks if the algorithm parameters have changed. This method must be implemented by the subclass.
+
+        Returns
+        -------
+        bool
+            True if the algorithm parameters have changed, False otherwise.
+
+        Raises
+        ------
+        NotImplementedError
+            If the method is not implemented by the subclass.
+        """
         raise NotImplementedError("have_parameters_changed() method not implemented")
 
     @abstractmethod
     def get_sidebar_values(self) -> dict[str, any]:
+        """Returns the values for the sidebar elements. Can be used to set minimum and maximum values for the sidebar sliders, that could depend on the model.
+        This method must be implemented by the subclass.
+
+        Returns
+        -------
+        dict[str, any]
+            A dictionary containing the values for the sidebar elements. The keys of the dictionary are equal to the keys of the sliders.
+
+        Raises
+        ------
+        NotImplementedError
+            If the method is not implemented by the subclass.
+        """
         raise NotImplementedError("get_sidebar_values() method not implemented")
 
     def is_correct_model_type(self, model) -> bool:
+        """Checks if the model is of the correct type.
+
+        Parameters
+        ----------
+        model : any
+            The model to be checked.
+
+        Returns
+        -------
+        bool
+            True if the model is of the correct type, False otherwise.
+        """
         return isinstance(model, self.mining_model_class)
 
     def create_empty_model(self, *log_data):
+        """Creates an empty model instance. The method is used to create a model instance with the provided log data.
+        The order of the log data must be the same as the order of the parameters of the create_mining_instance method of the mining model class.
+
+        Returns
+        -------
+        MiningInterface
+            An instance of the mining model class.
+        """
         return self.mining_model_class.create_mining_instance(*log_data)
 
     def transform_df_to_log(self, df, **selected_columns) -> tuple:
+        """Transforms the DataFrame to a log. The method uses the dataframe_transformations class to transform the DataFrame to a log.
+        The selected columns are passed as keyword arguments to the 'DataframeTransformation' class. The method returns the log data that is used to create the mining model.
+        Can be overridden by the subclass if additional transformations are needed.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame to be transformed.
+
+        Returns
+        -------
+        tuple
+            The log data that is used to create the mining model.
+        """
         self.dataframe_transformations.set_dataframe(df)
         return (
             self.dataframe_transformations.dataframe_to_cases_dict(**selected_columns),
         )
 
     def process_session_state(self):
+        """Processes the session state. If a model is already in the session state, it is checked if it is of the correct type. If not, an error message is displayed and the user is redirected to the home page.
+        If no model is in the session state, a model is created from the provided DataFrame and selected columns. The model is stored in the session state.
+        """
         super().process_session_state()
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
@@ -75,6 +162,15 @@ class BaseAlgorithmController(BaseController):
             del st.session_state.selected_columns
 
     def run(self, view, pos):
+        """Runs the algorithm controller.
+
+        Parameters
+        ----------
+        view : BaseAlgorithmView
+            The view for the algorithm.
+        pos : int
+            The position of the algorithm in the sidebar.
+        """
         self.process_algorithm_parameters()
         view.display_sidebar(self.get_sidebar_values())
         view.display_back_button()
