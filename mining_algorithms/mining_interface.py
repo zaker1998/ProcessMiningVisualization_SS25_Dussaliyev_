@@ -4,6 +4,7 @@ from graphs.visualization.base_graph import BaseGraph
 
 
 class MiningInterface(ABC):
+    """MiningInterface is an abstract class that defines the base interface for the mining algorithms."""
 
     def __init__(self):
         self.graph = None

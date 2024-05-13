@@ -3,6 +3,10 @@ from mining_algorithms.mining_interface import MiningInterface
 
 
 class BaseMining(MiningInterface):
+    """BaseMining is a class that provides the base functionality for the mining algorithms.
+    It contains the basic methods for all the mining algorithms, such as creating a succession matrix, calculating node sizes, and filtering out events.
+    """
+
     def __init__(self, log: dict[tuple[str, ...], int]):
         """Constructor for BaseMining.
 
