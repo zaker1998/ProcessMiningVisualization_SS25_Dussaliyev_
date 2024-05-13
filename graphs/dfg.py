@@ -5,7 +5,17 @@ from transformations.utils import cases_list_to_dict
 class DFG:
     """Implementation of a Directly Follows Graph (DFG)"""
 
-    def __init__(self, log: list[list[str]] = None) -> None:
+    def __init__(
+        self, log: list[list[str]] | dict[tuple[str, ...], int] = None
+    ) -> None:
+        """Initialize the DFG.
+
+        Parameters
+        ----------
+        log : list[list[str]] | dict[tuple[str,...],int], optional
+            A list of traces or a dictionary containing the traces and their frequencies in the log
+            If the log is a list of traces, it will be converted to a dictionary with the frequencies set to 1, by default None
+        """
         self.start_nodes: set[str | int] = set()
         self.end_nodes: set[str | int] = set()
         self.successor_list: dict[str | int, set[str | int]] = dict()
@@ -18,6 +28,13 @@ class DFG:
     def __build_graph_from_log(
         self, log: list[list[str]] | dict[tuple[str, ...], int]
     ) -> None:
+        """Build the DFG from a log. A edge is added between two events if they are directly followed in a trace.
+
+        Parameters
+        ----------
+        log : list[list[str]] | dict[tuple[str, ...], int]
+            A list of traces or a dictionary containing the traces and their frequencies in the log
+        """
         _log = log
         if isinstance(log, list):
             _log = cases_list_to_dict(log)
@@ -36,6 +53,15 @@ class DFG:
                 self.add_edge(trace[i], trace[i + 1])
 
     def add_edge(self, source: str | int, destination: str | int) -> None:
+        """Add an edge between two nodes.
+
+        Parameters
+        ----------
+        source : str | int
+            source node of the edge
+        destination : str | int
+            destination node of the edge
+        """
 
         if not self.contains_node(source):
             self.add_node(source)
@@ -53,6 +79,13 @@ class DFG:
         self.predecessor_list[destination].add(source)
 
     def add_node(self, node: str | int) -> None:
+        """Add a node to the DFG.
+
+        Parameters
+        ----------
+        node : str | int
+            The node to add to the DFG
+        """
         if node not in self.successor_list:
             self.successor_list[node] = set()
 
@@ -60,6 +93,14 @@ class DFG:
             self.predecessor_list[node] = set()
 
     def get_connected_components(self) -> list[set[str | int]]:
+        """Get the connected components of the DFG. A connected component is a set of nodes where each node is reachable from every other node in the set.
+        The connected components are found using a breadth-first search. The search is done on the undirected graph.
+
+        Returns
+        -------
+        list[set[str | int]]
+            A list of connected components
+        """
         connected_components = []
         visited = set()
 
@@ -72,6 +113,20 @@ class DFG:
         return connected_components
 
     def __bfs(self, starting_node: str | int, directed=True) -> set[str | int]:
+        """Perform a breadth-first search on the graph starting from the starting node.
+
+        Parameters
+        ----------
+        starting_node : str | int
+            The node to start the search from
+        directed : bool, optional
+            If True, the search is done on the directed graph, otherwise on the undirected graph, by default True
+
+        Returns
+        -------
+        set[str | int]
+            A set of visited nodes
+        """
         queue = deque([starting_node])
         visited = set([starting_node])
 
@@ -90,15 +145,54 @@ class DFG:
         return visited
 
     def get_successors(self, node: str | int) -> set[str | int]:
+        """Get the successors of a node.
+
+        Parameters
+        ----------
+        node : str | int
+            The node for which the successors should be returned
+
+        Returns
+        -------
+        set[str | int]
+            A set of successors of the node
+        """
         return self.successor_list.get(node, set())
 
     def get_predecessors(self, node: str | int) -> set[str | int]:
+        """Get the predecessors of a node.
+
+        Parameters
+        ----------
+        node : str | int
+            The node for which the predecessors should be returned
+
+        Returns
+        -------
+        set[str | int]
+            A set of predecessors of the node
+        """
         return self.predecessor_list.get(node, set())
 
     def get_nodes(self) -> set[str | int]:
+        """Get all nodes in the DFG.
+
+        Returns
+        -------
+        set[str | int]
+            A set of all nodes in the DFG
+        """
         return set(self.successor_list.keys())
 
-    def get_edges(self) -> dict[tuple[str | int, str | int], int]:
+    def get_edges(self) -> set[tuple[str | int, str | int]]:
+        """Get all edges in the DFG.
+
+        Returns
+        -------
+        set[tuple[str | int, str | int]]
+            A set of all edges in the DFG
+
+        """
         edges = set()
         for source, destinations in self.successor_list.items():
             for destination in destinations:
@@ -106,29 +200,112 @@ class DFG:
         return edges
 
     def get_start_nodes(self) -> set[str | int]:
+        """Get all start nodes in the DFG.
+
+        Returns
+        -------
+        set[str | int]
+            A set of all start nodes in the DFG
+        """
         return self.start_nodes
 
     def get_end_nodes(self) -> set[str | int]:
+        """Get all end nodes in the DFG.
+
+        Returns
+        -------
+        set[str | int]
+            A set of all end nodes in the DFG
+        """
         return self.end_nodes
 
     def is_in_start_nodes(self, node: str | int) -> bool:
+        """Check if a node is in the start nodes of the DFG.
+
+        Parameters
+        ----------
+        node : str | int
+            The node to check
+
+        Returns
+        -------
+        bool
+            True if the node is in the start nodes, False otherwise
+        """
         return node in self.start_nodes
 
     def is_in_end_nodes(self, node: str | int) -> bool:
+        """Check if a node is in the end nodes of the DFG.
+
+        Parameters
+        ----------
+        node : str | int
+            The node to check
+
+        Returns
+        -------
+        bool
+            True if the node is in the end nodes, False otherwise
+        """
         return node in self.end_nodes
 
     def contains_node(self, node: str | int) -> bool:
+        """Check if a node is in the DFG.
+
+        Parameters
+        ----------
+        node : str | int
+            The node to check
+
+        Returns
+        -------
+        bool
+            True if the node is in the DFG, False otherwise
+        """
         return node in self.successor_list.keys()
 
     def contains_edge(self, source: str | int, destination: str | int) -> bool:
+        """Check if an edge exists between two nodes.
+
+        Parameters
+        ----------
+        source : str | int
+            source node of the edge
+        destination : str | int
+            destination node of the edge
+
+        Returns
+        -------
+        bool
+            True if the edge exists, False otherwise
+        """
         return destination in self.successor_list.get(source, set())
 
     def get_reachable_nodes(self, node: str | int) -> set[str | int]:
+        """Get all nodes that are reachable from a node.
+
+        Parameters
+        ----------
+        node : str | int
+            The node for which the reachable nodes should be returned
+
+        Returns
+        -------
+        set[str | int]
+            A set of reachable nodes
+        """
         visited = self.__bfs(node)
 
         return visited
 
-    def invert(self) -> "DFG":
+    def invert(self):
+        """Invert the DFG. All double edges are removed and if no edge exists between two nodes or only one edge exists, a double edge is added.
+
+        Returns
+        -------
+        DFG
+            The inverted DFG
+        """
         inverted_dfg = DFG()
         nodes = list(self.get_nodes())
 
@@ -148,7 +325,19 @@ class DFG:
 
         return inverted_dfg
 
-    def create_dfg_without_nodes(self, nodes: set[str | int]) -> "DFG":
+    def create_dfg_without_nodes(self, nodes: set[str | int]):
+        """Create a new DFG without the specified nodes.
+
+        Parameters
+        ----------
+        nodes : set[str  |  int]
+            The nodes to remove from the DFG
+
+        Returns
+        -------
+        DFG
+            A new DFG without the specified nodes
+        """
         dfg_without_nodes = DFG()
 
         for node in self.get_nodes():
