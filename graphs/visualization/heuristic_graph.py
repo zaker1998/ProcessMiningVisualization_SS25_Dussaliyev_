@@ -2,9 +2,12 @@ from graphs.visualization.base_graph import BaseGraph
 
 
 class HeuristicGraph(BaseGraph):
+    """A class to represent a HeuristicGraph."""
+
     def __init__(
         self,
     ) -> None:
+        """Initialize the HeuristicGraph object."""
         super().__init__(rankdir="TB")
 
     def add_event(
@@ -14,6 +17,19 @@ class HeuristicGraph(BaseGraph):
         size: tuple[int, int],
         **event_data,
     ) -> None:
+        """Add an event to the graph.
+
+        Parameters
+        ----------
+        title : str
+            name of the event
+        frequency : int
+            frequency of the event
+        size : tuple[int, int]
+            size of the node, width and height
+        **event_data
+            additional data for the event
+        """
         event_data["frequency"] = frequency
         width, height = size
         label = f"{title}\n{frequency}"
@@ -28,7 +44,6 @@ class HeuristicGraph(BaseGraph):
             fillcolor="#FFFFFF",
         )
 
-    # Rename
     def create_edge(
         self,
         source: str,
@@ -36,9 +51,34 @@ class HeuristicGraph(BaseGraph):
         size: float,
         weight: int = None,
     ) -> None:
+        """Create an edge between two nodes.
+
+        Parameters
+        ----------
+        source : str
+            source node id
+        destination : str
+            destination node id
+        size : float
+            edge size/ penwidth
+        weight : int, optional
+            weight of the edge
+        """
         super().add_edge(source, destination, weight, penwidth=str(size))
 
     def node_to_string(self, id: str) -> tuple[str, str]:
+        """Return the node name/id and description for the given node id.
+
+        Parameters
+        ----------
+        id : str
+            id of the node
+
+        Returns
+        -------
+        tuple[str, str]
+            node name/id and description.
+        """
         node = self.get_node(id)
         description = f"**Event:** {node.get_id()}"
         if frequency := node.get_data_from_key("frequency"):
