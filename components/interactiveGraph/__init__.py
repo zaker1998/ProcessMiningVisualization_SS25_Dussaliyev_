@@ -26,8 +26,14 @@ def interactiveGraph(
 
     Parameters
     ----------
+    graph : BaseGraph
+        graph object to be displayed
+    onNodeClick : function
+        function to be called when a node is clicked
     key : int | str, optional
         key value for the component. needed if multiple components are displayed on the same page , by default None
+    height : int, optional
+        height of the component, by default 600
     """
 
     state_name = f"previous_clickId-{key}"
