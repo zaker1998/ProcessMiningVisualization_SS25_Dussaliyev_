@@ -127,9 +127,6 @@ class BaseGraph:
     This class is used as a base class for the other graph classes.
     """
 
-    # TODO: move in config file
-    colon_substitute: str = "___"
-
     def __init__(
         self,
         **graph_attributes,
@@ -147,6 +144,10 @@ class BaseGraph:
         self.graph = graphviz.Digraph()
 
         self.graph.attr("graph", **graph_attributes)
+
+        from config import colon_substitute
+
+        self.colon_substitute: str = colon_substitute
 
     def add_node(
         self,

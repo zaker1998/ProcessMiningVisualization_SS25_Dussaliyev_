@@ -3,6 +3,13 @@ from ui.fuzzy_miner_ui.fuzzy_miner_controller import FuzzyMinerController
 from ui.inductive_miner_ui.inductive_miner_controller import InductiveMinerController
 
 
+# colon_substitute is used to replace the colon in event names to make them compatible with graphviz.
+colon_substitute = "___"
+
+# cluster seperator is used in the Fuzzy Mining algorithm to sepearte the events in the clusters.
+cluster_seperator = "---"
+
+
 # ALGORITHM CONFIGURATIONS
 # ------------------------
 
