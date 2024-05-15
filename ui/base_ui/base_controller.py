@@ -45,7 +45,7 @@ class BaseController(ABC):
         self.success_message = None
         self.warning_message = None
 
-    def select_view(self) -> tuple[BaseView, int]:
+    def select_view(self) -> tuple:
         """Selects the view to be displayed. The first view in the list is selected as the default view.
         The method can be overridden in the child class to implement a different view selection logic, if needed.
 

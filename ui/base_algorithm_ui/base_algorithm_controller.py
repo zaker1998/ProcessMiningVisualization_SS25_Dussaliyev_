@@ -127,7 +127,11 @@ class BaseAlgorithmController(BaseController):
         """
         self.dataframe_transformations.set_dataframe(df)
         return (
-            self.dataframe_transformations.dataframe_to_cases_dict(**selected_columns),
+            self.dataframe_transformations.dataframe_to_cases_dict(
+                timeLabel=selected_columns["time_column"],
+                caseLabel=selected_columns["case_column"],
+                eventLabel=selected_columns["activity_column"],
+            ),
         )
 
     def process_session_state(self):
