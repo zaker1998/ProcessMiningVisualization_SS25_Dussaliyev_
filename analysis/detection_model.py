@@ -4,7 +4,21 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 class DetectionModel:
 
-    # TODO: store supported file types and the suffixes in a config file, for a more flexible solution
+    def __init__(self, file_type_mappings: dict[str, list[str]] = None):
+        """Initializes the DetectionModel.
+
+        Parameters
+        ----------
+        file_type_mappings : dict[str, list[str]], optional
+            A dictionary that maps file types to their suffixes, by default None
+        """
+        if file_type_mappings is None:
+            from config import import_file_types_mapping
+
+            file_type_mappings = import_file_types_mapping
+
+        self.file_type_mappings = file_type_mappings
+
     def detect_file_type(self, file_path: str | UploadedFile) -> str:
         """Detect the type of a file based on the file extension.
 
@@ -16,22 +30,24 @@ class DetectionModel:
         Returns
         -------
         str
-            The detected file type. If the file type is not supported, an empty string is returned.
+            The detected file type.
+
+        Raises
+        ------
+        ValueError
+            If the file type is not supported
         """
         if isinstance(file_path, UploadedFile):
             file_name = file_path.name
         else:
             file_name = file_path
 
-        if file_name.endswith(".csv"):
-            return "csv"
-        elif file_name.endswith(".pickle"):
-            return "pickle"
-        else:
-            # TODO: check use case
-            # maybe throw an exception instead of returning an empty string, to handle unsupported file types
-            # as selecting a file with an unsupported file type should not be possible
-            return ""
+        for file_type, suffixes in self.file_type_mappings.items():
+            for suffix in suffixes:
+                if file_name.endswith(suffix):
+                    return file_type
+
+        raise ValueError(f"File type not supported for {file_name}")
 
     def detect_delimiter(self, row: str) -> str:
         """Detect the delimiter of a CSV row.

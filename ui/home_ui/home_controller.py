@@ -7,13 +7,25 @@ from io_operations.import_operations import ImportOperations
 class HomeController(BaseController):
     """Controller for the Home page."""
 
-    def __init__(self, views=None):
+    def __init__(
+        self,
+        views=None,
+        detection_model: DetectionModel = None,
+        import_model: ImportOperations = None,
+        supported_file_types: list[str] = None,
+    ):
         """Initializes the controller for the Home page.
 
         Parameters
         ----------
         views :  List[BaseView] | BaseView, optional
             The views for the Home page. If None is passed, the default view is used, by default None
+        detection_model : DetectionModel, optional
+            The detection model, by default None
+        import_model : ImportOperations, optional
+            The import operations model, by default None
+        supported_file_types : list[str], optional
+            The supported file types, by default None
         """
         self.detection_model = DetectionModel()
         self.import_model = ImportOperations()
@@ -22,6 +34,13 @@ class HomeController(BaseController):
 
             views = [HomeView()]
         super().__init__(views)
+
+        if supported_file_types is None:
+            from config import import_file_suffixes
+
+            supported_file_types = import_file_suffixes
+
+        self.supported_file_types = supported_file_types
 
     def get_page_title(self) -> str:
         """Returns the page title."""
@@ -44,20 +63,20 @@ class HomeController(BaseController):
         if self.uploaded_file is None:
             return
 
-        # TODO: catch exceptions if file is not supported, if exception is used in the detection_model
-        file_type = self.detection_model.detect_file_type(self.uploaded_file)
+        try:
+            file_type = self.detection_model.detect_file_type(self.uploaded_file)
 
-        if file_type == "csv":
-            line = self.import_model.read_line(self.uploaded_file)
-            detected_delimiter = self.detection_model.detect_delimiter(line)
-            self.uploaded_file.seek(0)
-            selected_view.display_df_import(detected_delimiter)
-        elif file_type == "pickle":
-            model = self.import_model.read_model(self.uploaded_file)
-            selected_view.display_model_import(model)
-        else:
-            # add logging here for unsupported file format, and display error message
-            # will most likely be moved to a except block
+            if file_type == "csv":
+                line = self.import_model.read_line(self.uploaded_file)
+                detected_delimiter = self.detection_model.detect_delimiter(line)
+                self.uploaded_file.seek(0)
+                selected_view.display_df_import(detected_delimiter)
+            elif file_type == "pickle":
+                model = self.import_model.read_model(self.uploaded_file)
+                selected_view.display_model_import(model)
+        except ValueError as e:
+            # TODO: add logging
+            print(e)
             st.session_state.error = "File format not supported"
             st.rerun()
 
@@ -102,6 +121,6 @@ class HomeController(BaseController):
         """
         self.selected_view = selected_view
         selected_view.display_intro()
-        selected_view.display_file_upload()
+        selected_view.display_file_upload(self.supported_file_types)
         if self.uploaded_file is not None:
             self.process_file(selected_view)

@@ -21,12 +21,18 @@ class HomeView(BaseView):
             )
             st.write("To get started, upload a CSV file containing your process logs.")
 
-    def display_file_upload(self):
-        """Displays the file upload component."""
+    def display_file_upload(self, file_types: list[str]):
+        """Displays the file upload component.
+
+        Parameters
+        ----------
+        file_types : list[str]
+            The allowed file types.
+        """
         with self.content_column:
             st.file_uploader(
                 "Upload a file",
-                type=["csv", "pickle"],
+                type=file_types,
                 accept_multiple_files=False,
                 key="uploaded_file",
             )

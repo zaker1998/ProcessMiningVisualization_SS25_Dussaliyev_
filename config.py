@@ -9,6 +9,18 @@ colon_substitute = "___"
 # cluster seperator is used in the Fuzzy Mining algorithm to sepearte the events in the clusters.
 cluster_seperator = "---"
 
+# IMPORT FILE CONFIGURATIONS
+# --------------------------
+
+# The allowed file extensions for importing data.
+import_file_types_mapping = {
+    "csv": [".csv"],
+    "pickle": [".pickle", ".pkl"],
+}
+# List of all allowed file extensions.
+import_file_suffixes = [
+    suffix for suffixes in import_file_types_mapping.values() for suffix in suffixes
+]
 
 # ALGORITHM CONFIGURATIONS
 # ------------------------
