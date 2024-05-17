@@ -22,6 +22,17 @@ import_file_suffixes = [
     suffix for suffixes in import_file_types_mapping.values() for suffix in suffixes
 ]
 
+# GRAPH EXPORT CONFIGURATIONS
+# ---------------------------
+
+graph_export_mime_types = {
+    "svg": "image/svg",
+    "png": "image/png",
+    "dot": "text/plain",
+}
+
+graph_export_formats = list(map(lambda x: x.upper(), graph_export_mime_types.keys()))
+
 # ALGORITHM CONFIGURATIONS
 # ------------------------
 

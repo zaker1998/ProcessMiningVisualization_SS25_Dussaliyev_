@@ -4,20 +4,33 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 class DetectionModel:
 
-    def __init__(self, file_type_mappings: dict[str, list[str]] = None):
+    def __init__(
+        self,
+        file_type_mappings: dict[str, list[str]] = None,
+        mime_type_mappings: dict[str, str] = None,
+    ):
         """Initializes the DetectionModel.
 
         Parameters
         ----------
         file_type_mappings : dict[str, list[str]], optional
             A dictionary that maps file types to their suffixes, by default None
+
+        mime_type_mappings : dict[str, str], optional
+            A dictionary that maps file types to their mime types, by default None
         """
         if file_type_mappings is None:
             from config import import_file_types_mapping
 
             file_type_mappings = import_file_types_mapping
 
+        if mime_type_mappings is None:
+            from config import graph_export_mime_types
+
+            mime_type_mappings = graph_export_mime_types
+
         self.file_type_mappings = file_type_mappings
+        self.mime_type_mappings = mime_type_mappings
 
     def detect_file_type(self, file_path: str | UploadedFile) -> str:
         """Detect the type of a file based on the file extension.
@@ -72,26 +85,27 @@ class DetectionModel:
 
         return detected_delimiter
 
-    # TODO: store supported mime types and the suffixes in a config file, for a more flexible solution
-    def detect_mime_type(self, file_path: str) -> str:
+    def detect_mime_type(self, export_format: str) -> str:
         """Detect the mime type of a file.
 
         Parameters
         ----------
-        file_path : str
-            The path to the file
+        export_format : str
+            The format of the file
 
         Returns
         -------
         str
-            The detected mime type. If the file type is not supported, "text/plain" is returned.
+            The detected mime type.
+
+        Raises
+        ------
+        ValueError
+            If the export format is not supported
         """
 
-        if file_path.endswith(".png"):
-            return "image/png"
-        elif file_path.endswith(".svg"):
-            return "image/svg"
-        elif file_path.endswith(".dot"):
-            return "text/plain"
-        else:
-            return "text/plain"
+        try:
+            return self.mime_type_mappings[export_format.lower()]
+        except KeyError:
+            # TODO: use custom exception
+            raise ValueError(f"Export format {export_format} not supported.")

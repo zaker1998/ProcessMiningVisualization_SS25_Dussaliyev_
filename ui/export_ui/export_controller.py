@@ -10,21 +10,28 @@ from analysis.detection_model import DetectionModel
 class ExportController(BaseController):
     """Controller for the Export page."""
 
-    # TODO: extract in own file for reuse and for better maintainability
-    formats = ["SVG", "PNG", "DOT"]
-
-    def __init__(self, views=None):
+    def __init__(self, views=None, export_formats=None):
         """Initializes the controller for the Export page.
 
         Parameters
         ----------
         views : List[BaseView] | BaseView, optional
             The views for the Export page. If None is passed, the default view is used, by default None
+
+        export_formats : List[str], optional
+            The export formats to display. If None is passed, the default formats from the config are used, by default None
         """
         if views is None:
             from ui.export_ui.export_view import ExportView
 
             views = [ExportView()]
+
+        if export_formats is None:
+            from config import graph_export_formats
+
+            export_formats = graph_export_formats
+
+        self.formats = export_formats
 
         self.export_model = ExportOperations()
         self.import_model = ImportOperations()
@@ -123,7 +130,7 @@ class ExportController(BaseController):
         tuple[bytes, str]
             The content of the file as bytes and the MIME type of the file.
         """
-        mime = self.detection_model.detect_mime_type(file_path)
+        mime = self.detection_model.detect_mime_type(self.export_format)
         file_content = self.import_model.read_file_binary(file_path)
 
         return file_content, mime
