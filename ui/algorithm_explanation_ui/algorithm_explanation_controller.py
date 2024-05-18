@@ -8,13 +8,15 @@ from config import docs_path_mappings
 class AlgorithmExplanationController(BaseController):
     """Controller for the algorithm explanation page."""
 
-    def __init__(self, views=None):
+    def __init__(self, views=None, import_model=None):
         """Initializes the controller for the algorithm explanation page.
 
         Parameters
         ----------
         views : List[BaseView] | BaseView, optional
             The views for the algorithm explanation page. If None is passed, the default view is used, by default None
+        import_model : ImportOperations, optional
+            The import operations model for reading files. If None is passed, a new instance is created, by default None
         """
         if views is None:
             from ui.algorithm_explanation_ui.algorithm_explanation_view import (
@@ -23,7 +25,10 @@ class AlgorithmExplanationController(BaseController):
 
             views = [AlgorithmExplanationView()]
 
-        self.import_model = ImportOperations()
+        if import_model is None:
+            import_model = ImportOperations()
+
+        self.import_model = import_model
         super().__init__(views)
 
     def get_page_title(self) -> str:

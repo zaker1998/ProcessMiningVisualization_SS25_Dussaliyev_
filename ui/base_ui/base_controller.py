@@ -32,12 +32,12 @@ class BaseController(ABC):
             for view in views:
                 if not isinstance(view, BaseView):
                     # TODO: change to a more specific exception, add logging
-                    raise ValueError("All views must be subclasses of BaseView")
+                    raise TypeError("All views must be subclasses of BaseView")
             self.views = list(views)
         else:
             if not issubclass(views, BaseView):
                 # TODO: change to a more specific exception, add logging
-                raise ValueError("All views must be subclasses of BaseView")
+                raise TypeError("All views must be subclasses of BaseView")
             self.views = [views]
 
         self.error_message = None

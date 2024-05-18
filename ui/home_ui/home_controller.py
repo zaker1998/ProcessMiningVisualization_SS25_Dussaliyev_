@@ -19,13 +19,13 @@ class HomeController(BaseController):
         Parameters
         ----------
         views :  List[BaseView] | BaseView, optional
-            The views for the Home page. If None is passed, the default view is used, by default None
+            The views for the Home page. If None is passed, the HomeView is used, by default None
         detection_model : DetectionModel, optional
-            The detection model, by default None
+            The detection model for detecting file types and delimiters. If None is passed, a new instance is created, by default None
         import_model : ImportOperations, optional
-            The import operations model, by default None
+            The import operations model for reading files. If None is passed, a new instance is created, by default None
         supported_file_types : list[str], optional
-            The supported file types, by default None
+            The supported file types. If None is passed, the file suffixes from the config file are used, by default None
         """
         self.detection_model = DetectionModel()
         self.import_model = ImportOperations()

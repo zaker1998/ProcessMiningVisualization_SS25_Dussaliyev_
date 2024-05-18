@@ -12,7 +12,7 @@ class ExportOperations:
         supported_graph_export_formats : List[str], optional
             The supported graph export formats, by default None
         """
-        if graph_export_formats is None:
+        if supported_graph_export_formats is None:
             from config import graph_export_formats
 
             supported_graph_export_formats = graph_export_formats
@@ -46,7 +46,6 @@ class ExportOperations:
         """
 
         if not isinstance(graph, BaseGraph):
-            # TODO: Add custom graph exception
             raise TypeError("graph must be an instance of BaseGraph")
 
         if format not in self.graph_export_formats:

@@ -12,23 +12,34 @@ class ColumnSelectionController(BaseController):
 
     max_rows_shown = 200
 
-    def __init__(self, views=None):
+    def __init__(self, views=None, prediction_model=None, dataframe_styler=None):
         """Initializes the controller for the column selection page.
 
         Parameters
         ----------
         views : List[BaseView] | BaseView, optional
             The views for the column selection page. If None is passed, the default view is used, by default None
+        prediction_model : PredictionModel, optional
+            The prediction model for predicting columns. If None is passed, a new instance is created, by default None
+        dataframe_styler : DataFrameStyler, optional
+            The dataframe styler for styling the dataframe. If None is passed, a new instance is created, by default None
         """
 
-        self.predictions_model = PredictionModel()
-        self.dataframe_styler = DataFrameStyler(self.max_rows_shown)
         if views is None:
             from ui.column_selection_ui.standard_column_selection_view import (
                 StandardColumnSelectionView,
             )
 
             views = [StandardColumnSelectionView()]
+
+        if prediction_model is None:
+            prediction_model = PredictionModel()
+
+        if dataframe_styler is None:
+            dataframe_styler = DataFrameStyler(self.max_rows_shown)
+
+        self.predictions_model = prediction_model
+        self.dataframe_styler = dataframe_styler
         super().__init__(views)
 
     def get_page_title(self) -> str:

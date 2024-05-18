@@ -7,7 +7,9 @@ import streamlit as st
 class InductiveMinerController(BaseAlgorithmController):
     """Controller for the Inductive Miner algorithm."""
 
-    def __init__(self, views=None, mining_model_class=None):
+    def __init__(
+        self, views=None, mining_model_class=None, dataframe_transformations=None
+    ):
         """Initializes the controller for the Inductive Miner algorithm.
 
         Parameters
@@ -16,13 +18,15 @@ class InductiveMinerController(BaseAlgorithmController):
             The views for the Inductive Miner algorithm. If None is passed, the default view is used, by default None
         mining_model_class : MiningInterface Class, optional
             The mining model class for the Inductive Miner algorithm. If None is passed, the default model class is used, by default None
+        dataframe_transformations : DataframeTransformations, optional
+            The class for the dataframe transformations. If None is passed, a new instance is created, by default None
         """
         if views is None:
             views = [InductiveMinerView()]
 
         if mining_model_class is None:
             mining_model_class = InductiveMining
-        super().__init__(views, mining_model_class)
+        super().__init__(views, mining_model_class, dataframe_transformations)
 
     def get_page_title(self) -> str:
         """Returns the page title.

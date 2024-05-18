@@ -11,7 +11,9 @@ from time import time
 class BaseAlgorithmController(BaseController):
     """Base class for the algorithm controllers. It provides the basic methods for the algorithm controllers."""
 
-    def __init__(self, views=None, mining_model_class=None):
+    def __init__(
+        self, views=None, mining_model_class=None, dataframe_transformations=None
+    ):
         """Initializes the controller for the algorithm views.
 
         Parameters
@@ -20,9 +22,21 @@ class BaseAlgorithmController(BaseController):
             The views for the algorithm page. If None is passed, the default view is used, by default None
         mining_model_class : MiningInterface class, optional
             The class of the mining model, by default None
+        dataframe_transformations : DataframeTransformations, optional
+            The class for the dataframe transformations. If None is passed, a new instance is created, by default None
         """
         self.mining_model = None
-        self.dataframe_transformations = DataframeTransformations()
+
+        if dataframe_transformations is None:
+            dataframe_transformations = DataframeTransformations()
+
+        self.dataframe_transformations = dataframe_transformations
+
+        if mining_model_class is None:
+            # TODO: add logging
+            # TODO: add custom error
+            raise ValueError("Mining model class must be provided.")
+
         self.mining_model_class = mining_model_class
         super().__init__(views)
 

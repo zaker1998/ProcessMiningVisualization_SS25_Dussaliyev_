@@ -10,14 +10,26 @@ from analysis.detection_model import DetectionModel
 class ExportController(BaseController):
     """Controller for the Export page."""
 
-    def __init__(self, views=None, export_formats=None):
+    def __init__(
+        self,
+        views=None,
+        export_model=None,
+        import_model=None,
+        detection_model=None,
+        export_formats=None,
+    ):
         """Initializes the controller for the Export page.
 
         Parameters
         ----------
         views : List[BaseView] | BaseView, optional
             The views for the Export page. If None is passed, the default view is used, by default None
-
+        export_model : ExportOperations, optional
+            The export operations model for exporting graphs and models. If None is passed, a new instance is created, by default None
+        import_model : ImportOperations, optional
+            The import operations model for reading files. If None is passed, a new instance is created, by default None
+        detection_model : DetectionModel, optional
+            The detection model for detecting mime types. If None is passed, a new instance is created, by default None
         export_formats : List[str], optional
             The export formats to display. If None is passed, the default formats from the config are used, by default None
         """
@@ -31,11 +43,20 @@ class ExportController(BaseController):
 
             export_formats = graph_export_formats
 
+        if export_model is None:
+            export_model = ExportOperations()
+
+        if import_model is None:
+            import_model = ImportOperations()
+
+        if detection_model is None:
+            detection_model = DetectionModel()
+
         self.formats = export_formats
 
-        self.export_model = ExportOperations()
-        self.import_model = ImportOperations()
-        self.detection_model = DetectionModel()
+        self.export_model = export_model
+        self.import_model = import_model
+        self.detection_model = detection_model
         super().__init__(views)
 
     def get_page_title(self) -> str:
