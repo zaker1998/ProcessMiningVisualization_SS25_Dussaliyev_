@@ -76,7 +76,7 @@ class ExportController(BaseController):
         self.export_format = st.session_state.export_format
 
     def export_graph(self, format: str) -> str:
-        """Exports the graph in the specified format to a temporary file ont the disk and returns the file path.
+        """Exports the graph in the specified format to a temporary file on the disk and returns the file path.
 
         Parameters
         ----------

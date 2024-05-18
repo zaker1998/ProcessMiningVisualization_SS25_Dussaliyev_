@@ -3,8 +3,21 @@ import pickle
 
 
 class ExportOperations:
-    # TODO: store supported export formats in a config file, for a more flexible solution
-    supported_graph_export_formats = ["png", "svg", "dot"]
+
+    def __init__(self, supported_graph_export_formats=None):
+        """Initializes the ExportOperations class.
+
+        Parameters
+        ----------
+        supported_graph_export_formats : List[str], optional
+            The supported graph export formats, by default None
+        """
+        if graph_export_formats is None:
+            from config import graph_export_formats
+
+            supported_graph_export_formats = graph_export_formats
+
+        self.graph_export_formats = supported_graph_export_formats
 
     def export_graph(
         self, graph: BaseGraph, filename: str, format: str = "png", dpi=96
@@ -34,7 +47,7 @@ class ExportOperations:
             # TODO: Add custom graph exception
             raise TypeError("graph must be an instance of BaseGraph")
 
-        if format.lower() not in self.supported_graph_export_formats:
+        if format not in self.graph_export_formats:
             # TODO: Add custom io exception for unsupported export format
             raise ValueError(
                 f"Unsupported export format: {format}. Supported formats: {self.supported_graph_export_formats}"
@@ -45,9 +58,14 @@ class ExportOperations:
 
         if export_format == "png":
             graphviz_graph.attr(dpi=str(dpi))
-        graphviz_graph.render(filename, format=export_format, cleanup=True)
-        if export_format == "png":
+            graphviz_graph.render(filename, format=export_format, cleanup=True)
             graphviz_graph.attr(dpi="0")
+        elif export_format in ["svg", "dot"]:
+            graphviz_graph.render(filename, format=export_format, cleanup=True)
+        else:
+            raise NotImplementedError(
+                f"Export for format '{export_format}' is not implemented"
+            )
 
     def export_model_to_file(self, model, filename: str) -> None:
         """Export a model to a file.
