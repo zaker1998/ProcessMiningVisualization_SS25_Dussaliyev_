@@ -74,10 +74,20 @@ class HomeController(BaseController):
             elif file_type == "pickle":
                 model = self.import_model.read_model(self.uploaded_file)
                 selected_view.display_model_import(model)
+            else:
+                # TODO: use custom exceptions
+                raise NotImplementedError(
+                    f"File type '{file_type}' has not been implemented yet."
+                )
         except ValueError as e:
             # TODO: add logging
             print(e)
             st.session_state.error = "File format not supported"
+            st.rerun()
+        except NotImplementedError as e:
+            # TODO: add logging
+            print(e)
+            st.session_state.error = "File format not implemented yet"
             st.rerun()
 
     def set_model_and_algorithm(self, model, algorithm: str):
