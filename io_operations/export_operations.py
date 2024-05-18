@@ -41,6 +41,8 @@ class ExportOperations:
             If graph is not an instance of BaseGraph
         ValueError
             If the export format is not supported
+        NotImplementedError
+            If the export format is not implemented
         """
 
         if not isinstance(graph, BaseGraph):
