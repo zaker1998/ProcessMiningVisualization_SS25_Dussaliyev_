@@ -2,6 +2,10 @@ import streamlit as st
 from ui.base_ui.base_controller import BaseController
 from analysis.detection_model import DetectionModel
 from io_operations.import_operations import ImportOperations
+from exceptions.io_exceptions import (
+    UnsupportedFileTypeException,
+    NotImplementedFileTypeException,
+)
 
 
 class HomeController(BaseController):
@@ -76,18 +80,16 @@ class HomeController(BaseController):
                 selected_view.display_model_import(model)
             else:
                 # TODO: use custom exceptions
-                raise NotImplementedError(
-                    f"File type '{file_type}' has not been implemented yet."
-                )
-        except ValueError as e:
+                raise NotImplementedFileTypeException(file_type)
+        except UnsupportedFileTypeException as e:
             # TODO: add logging
             print(e)
-            st.session_state.error = "File format not supported"
+            st.session_state.error = e.message
             st.rerun()
-        except NotImplementedError as e:
+        except NotImplementedFileTypeException as e:
             # TODO: add logging
             print(e)
-            st.session_state.error = "File format not implemented yet"
+            st.session_state.error = e.message
             st.rerun()
 
     def set_model_and_algorithm(self, model, algorithm: str):

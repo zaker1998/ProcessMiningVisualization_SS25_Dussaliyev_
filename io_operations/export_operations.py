@@ -1,5 +1,10 @@
 from graphs.visualization.base_graph import BaseGraph
 import pickle
+from exceptions.io_exceptions import (
+    UnsupportedFileTypeException,
+    NotImplementedFileTypeException,
+)
+from exceptions.type_exceptions import InvalidTypeException
 
 
 class ExportOperations:
@@ -37,22 +42,19 @@ class ExportOperations:
 
         Raises
         ------
-        TypeError
+        InvalidTypeException
             If graph is not an instance of BaseGraph
-        ValueError
+        UnsupportedFileTypeException
             If the export format is not supported
-        NotImplementedError
+        NotImplementedFileTypeException
             If the export format is not implemented
         """
 
         if not isinstance(graph, BaseGraph):
-            raise TypeError("graph must be an instance of BaseGraph")
+            raise InvalidTypeException(BaseGraph, type(graph))
 
         if format not in self.graph_export_formats:
-            # TODO: Add custom io exception for unsupported export format
-            raise ValueError(
-                f"Unsupported export format: {format}. Supported formats: {self.supported_graph_export_formats}"
-            )
+            raise UnsupportedFileTypeException(format)
 
         graphviz_graph = graph.get_graphviz_graph()
         export_format = format.lower()
@@ -64,9 +66,7 @@ class ExportOperations:
         elif export_format in ["svg", "dot"]:
             graphviz_graph.render(filename, format=export_format, cleanup=True)
         else:
-            raise NotImplementedError(
-                f"Export for format '{export_format}' is not implemented"
-            )
+            raise NotImplementedFileTypeException(export_format)
 
     def export_model_to_file(self, model, filename: str) -> None:
         """Export a model to a file.

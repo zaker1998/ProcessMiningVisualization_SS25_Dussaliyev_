@@ -1,5 +1,6 @@
 import streamlit as st
 from abc import ABC, abstractmethod
+from exceptions.type_exceptions import TypeIsNoneException, InvalidTypeException
 
 
 class BaseController(ABC):
@@ -16,28 +17,27 @@ class BaseController(ABC):
 
         Raises
         ------
-        ValueError
+        TypeIsNoneException
             If no views are provided to the controller.
-        ValueError
+        InvalidTypeException
             If a view is not a subclass of BaseView.
         """
 
         if views is None:
-            # TODO: change to a more specific exception, add logging
-            raise ValueError("At least one view must be provided to the controller")
+            raise TypeIsNoneException("No views provided to the controller")
 
         from ui.base_ui.base_view import BaseView
 
         if isinstance(views, list) or isinstance(views, tuple):
             for view in views:
                 if not isinstance(view, BaseView):
-                    # TODO: change to a more specific exception, add logging
-                    raise TypeError("All views must be subclasses of BaseView")
+                    # TODO: add logging
+                    raise InvalidTypeException(BaseView, type(view))
             self.views = list(views)
         else:
-            if not issubclass(views, BaseView):
-                # TODO: change to a more specific exception, add logging
-                raise TypeError("All views must be subclasses of BaseView")
+            if not isinstance(views, BaseView):
+                # TODO:  add logging
+                raise InvalidTypeException(BaseView, type(views))
             self.views = [views]
 
         self.error_message = None

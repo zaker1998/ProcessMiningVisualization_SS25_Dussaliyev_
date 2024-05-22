@@ -4,8 +4,6 @@ import pickle
 import base64
 
 
-# TODO: better error handling, when files do not exist (usgae of try except)
-# TODO: use of custom exceptions, in case of errors? if needed
 class ImportOperations:
 
     def read_csv(

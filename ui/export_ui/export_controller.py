@@ -5,6 +5,7 @@ from components.buttons import to_home, navigate_to
 from io_operations.export_operations import ExportOperations
 from io_operations.import_operations import ImportOperations
 from analysis.detection_model import DetectionModel
+from exceptions.io_exceptions import UnsupportedFileTypeException
 
 
 class ExportController(BaseController):
@@ -108,6 +109,11 @@ class ExportController(BaseController):
         -------
         str
             The file path of the exported graph.
+
+        Raises
+        ------
+        UnsupportedFileTypeException
+            If the export format is not supported.
         """
         self.export_model.export_graph(self.graph, "temp/graph", format, dpi=self.dpi)
         return "temp/graph" + "." + format.lower()
@@ -124,6 +130,11 @@ class ExportController(BaseController):
         -------
         str
             The image of the PNG file encoded as base64 string.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the file is not found.
         """
         image = self.import_model.read_img(file_path)
         return image
@@ -150,6 +161,14 @@ class ExportController(BaseController):
         -------
         tuple[bytes, str]
             The content of the file as bytes and the MIME type of the file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the file is not found.
+        UnsupportedFileTypeException
+            If the export format is not supported
+
         """
         mime = self.detection_model.detect_mime_type(self.export_format)
         file_content = self.import_model.read_file_binary(file_path)
@@ -173,16 +192,26 @@ class ExportController(BaseController):
 
         selected_view.display_model_export_button("model.pickle", self.pickle_model())
 
-        file_path = self.export_graph(format=self.export_format)
-        file, mime = self.read_file(file_path)
+        try:
+            file_path = self.export_graph(format=self.export_format)
+            file, mime = self.read_file(file_path)
+            selected_view.display_export_button(
+                "graph." + self.export_format.lower(), file, mime
+            )
+            if self.export_format != "PNG":
+                png_file_path = self.export_graph(format="PNG")
+            else:
+                png_file_path = file_path
+            png_file = self.read_png(png_file_path)
 
-        selected_view.display_export_button(
-            "graph." + self.export_format.lower(), file, mime
-        )
-        if self.export_format != "PNG":
-            png_file_path = self.export_graph(format="PNG")
-        else:
-            png_file_path = file_path
-        png_file = self.read_png(png_file_path)
-
-        selected_view.display_png(png_file)
+            selected_view.display_png(png_file)
+        except UnsupportedFileTypeException as ex:
+            # TODO: add logging
+            print(ex)
+            st.session_state.error = ex.message
+            st.session_state.export_format = "SVG"
+            st.rerun()
+        except FileNotFoundError as e:
+            # TODO: add logging
+            print(e)
+            st.session_state.warning = "Error exporting graph. Please wait until the graph is generated, before changing formats or dpi."

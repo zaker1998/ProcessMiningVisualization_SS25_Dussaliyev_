@@ -1,5 +1,6 @@
 import streamlit as st
 from abc import ABC
+from exceptions.type_exceptions import InvalidTypeException
 
 
 class BaseView(ABC):
@@ -71,12 +72,12 @@ class BaseView(ABC):
 
         Raises
         ------
-        ValueError
+        InvalidTypeException
             If the controller is not a subclass of BaseController.
         """
         from ui.base_ui.base_controller import BaseController
 
         if not isinstance(controller, BaseController):
-            # TODO: add a logger and custom exception
-            raise ValueError("All controllers must be subclasses of BaseController")
+            # TODO: add a logger
+            raise InvalidTypeException(BaseController, type(controller))
         self.controller = controller

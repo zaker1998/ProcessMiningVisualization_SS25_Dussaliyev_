@@ -1,5 +1,6 @@
 import pandas as pd
 from transformations.utils import cases_list_to_dict
+from exceptions.io_exceptions import InvalidColumnNameException
 
 
 class DataframeTransformations:
@@ -41,13 +42,16 @@ class DataframeTransformations:
 
         Raises
         ------
-        ValueError
+        InvalidColumnNameException
             If a selected column is not found in the DataFrame
         """
         required_columns = [time_label, case_label, event_label]
         if not all(col in self.dataframe.columns for col in required_columns):
-            # TODO: raise a custom exception
-            raise ValueError("Selected columns not found in DataFrame")
+            not_found_columns = [
+                col for col in required_columns if col not in self.dataframe.columns
+            ]
+            raise InvalidColumnNameException(not_found_columns)
+
         # Sort by timestamp
         sorted_dataframe = self.dataframe.sort_values(by=[time_label])
 
@@ -82,6 +86,11 @@ class DataframeTransformations:
         -------
         dict[tuple[str, ...], int]
             A dictionary of cases, where each case is a tuple of events, mapped to the number of occurrences.
+
+        Raises
+        ------
+        InvalidColumnNameException
+            If a selected column is not found in the DataFrame
         """
         cases_list = self.dataframe_to_cases_list(timeLabel, caseLabel, eventLabel)
         return cases_list_to_dict(cases_list)

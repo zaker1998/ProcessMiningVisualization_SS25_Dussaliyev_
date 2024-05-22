@@ -4,8 +4,7 @@ from ui.base_ui.base_controller import BaseController
 from transformations.dataframe_transformations import DataframeTransformations
 from components.buttons import to_home
 from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
-
-from time import time
+from exceptions.type_exceptions import TypeIsNoneException
 
 
 class BaseAlgorithmController(BaseController):
@@ -34,8 +33,7 @@ class BaseAlgorithmController(BaseController):
 
         if mining_model_class is None:
             # TODO: add logging
-            # TODO: add custom error
-            raise ValueError("Mining model class must be provided.")
+            raise TypeIsNoneException("Mining model class is None")
 
         self.mining_model_class = mining_model_class
         super().__init__(views)
@@ -155,7 +153,13 @@ class BaseAlgorithmController(BaseController):
         super().process_session_state()
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
-                st.session_state.error = "Invalid model type."
+                st.session_state.error = (
+                    "Invalid model type. Expected model type: "
+                    + str(self.mining_model_class)
+                    + ". Got model type: "
+                    + str(type(st.session_state.model))
+                    + "."
+                )
                 to_home("Home")
                 st.rerun()
             self.mining_model = st.session_state.model
@@ -167,13 +171,10 @@ class BaseAlgorithmController(BaseController):
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
                 to_home()
                 st.rerun()
-            start = time()
             log_data = self.transform_df_to_log(
                 st.session_state.df, **st.session_state.selected_columns
             )
             st.session_state.model = self.create_empty_model(*log_data)
-            end = time()
-            print("Time to create model:", end - start)
             self.mining_model = st.session_state.model
 
             del st.session_state.df
@@ -194,7 +195,6 @@ class BaseAlgorithmController(BaseController):
         view.display_back_button()
         view.display_export_button(disabled=True)
         if self.have_parameters_changed() or self.mining_model.get_graph() is None:
-            start = time()
             try:
                 view.display_loading_spinner("Mining...", self.perform_mining)
             except InvalidNodeNameException as ex:
@@ -212,8 +212,5 @@ class BaseAlgorithmController(BaseController):
                 st.warning(
                     "Do not change the parameters while mining. This will cause an error. Wait until the mining is finished."
                 )
-
-            end = time()
-            print("Time to perform mining:", end - start)
         view.display_graph(self.mining_model.get_graph())
         view.display_export_button(disabled=False)

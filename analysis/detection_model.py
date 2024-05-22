@@ -1,5 +1,6 @@
 import csv
 from streamlit.runtime.uploaded_file_manager import UploadedFile
+from exceptions.io_exceptions import UnsupportedFileTypeException
 
 
 class DetectionModel:
@@ -47,7 +48,7 @@ class DetectionModel:
 
         Raises
         ------
-        ValueError
+        UnsupportedFileTypeException
             If the file type is not supported
         """
         if isinstance(file_path, UploadedFile):
@@ -60,7 +61,7 @@ class DetectionModel:
                 if file_name.endswith(suffix):
                     return file_type
 
-        raise ValueError(f"File type not supported for {file_name}")
+        raise UnsupportedFileTypeException(file_name.split(".")[-1][1:])
 
     def detect_delimiter(self, row: str) -> str:
         """Detect the delimiter of a CSV row.
@@ -100,12 +101,11 @@ class DetectionModel:
 
         Raises
         ------
-        ValueError
+        UnsupportedFileTypeException
             If the export format is not supported
         """
 
         try:
             return self.mime_type_mappings[export_format.lower()]
         except KeyError:
-            # TODO: use custom exception
-            raise ValueError(f"Export format {export_format} not supported.")
+            raise UnsupportedFileTypeException(export_format)

@@ -78,5 +78,11 @@ class AlgorithmExplanationController(BaseController):
         """
         self.selected_view = selected_view
         selected_view.display_back_button()
-        file_content = self.read_algorithm_file()
-        selected_view.display_algorithm_file(file_content)
+        try:
+            file_content = self.read_algorithm_file()
+            selected_view.display_algorithm_file(file_content)
+        except FileNotFoundError as e:
+            # TODO: add logging
+            print(e)
+            st.session_state.error = "Algorithm does not have a documentation file"
+            navigate_to("Algorithm")

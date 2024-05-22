@@ -20,8 +20,6 @@ class DFG:
         self.end_nodes: set[str | int] = set()
         self.successor_list: dict[str | int, set[str | int]] = dict()
         self.predecessor_list: dict[str | int, set[str | int]] = dict()
-        # self.nodes: set[str | int] = set()
-        # self.edges: dict[tuple[str | int, str | int], int] = dict()
         if log:
             self.__build_graph_from_log(log)
 
