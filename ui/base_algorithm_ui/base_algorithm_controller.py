@@ -153,13 +153,10 @@ class BaseAlgorithmController(BaseController):
         super().process_session_state()
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
-                st.session_state.error = (
-                    "Invalid model type. Expected model type: "
-                    + str(self.mining_model_class)
-                    + ". Got model type: "
-                    + str(type(st.session_state.model))
-                    + "."
-                )
+                st.session_state.error = f""" Invalid model type. 
+                
+                Expected model type: {str(self.mining_model_class)}, Received model type: {str(type(st.session_state.model))}
+                """
                 to_home("Home")
                 st.rerun()
             self.mining_model = st.session_state.model
