@@ -5,7 +5,10 @@ from components.buttons import to_home, navigate_to
 from io_operations.export_operations import ExportOperations
 from io_operations.import_operations import ImportOperations
 from analysis.detection_model import DetectionModel
-from exceptions.io_exceptions import UnsupportedFileTypeException
+from exceptions.io_exceptions import (
+    UnsupportedFileTypeException,
+    NotImplementedFileTypeException,
+)
 
 
 class ExportController(BaseController):
@@ -186,7 +189,7 @@ class ExportController(BaseController):
             The index of the selected view.
         """
         selected_view.display_back_button()
-        selected_view.display_export_format([*self.formats, "TEST"])
+        selected_view.display_export_format(self.formats)
         if self.export_format == "PNG":
             selected_view.display_dpi_input(50, self.dpi, 1)
 
@@ -214,9 +217,16 @@ class ExportController(BaseController):
             # TODO: add logging
             print(ex)
             st.session_state.error = ex.message
-            st.session_state.export_format = "SVG"
+            del st.session_state.export_format
             st.rerun()
         except FileNotFoundError as e:
             # TODO: add logging
             print(e)
             st.session_state.warning = "Error exporting graph. Please wait until the graph is generated, before changing formats or dpi."
+            st.rerun()
+        except NotImplementedFileTypeException as ex:
+            # TODO: add logging
+            print(ex)
+            st.session_state.error = ex.message
+            del st.session_state.export_format
+            st.rerun()
