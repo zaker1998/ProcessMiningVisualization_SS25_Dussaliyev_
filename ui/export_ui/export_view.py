@@ -16,15 +16,21 @@ class ExportView(BaseView):
         and a container for the model export button.
         """
         super().create_layout()
-        self.png_container = st.container(
+        png_container_wrapper = st.container(
             border=True, height=self.png_height + 40
         )  # # add 40 to height to account for padding
+
+        with png_container_wrapper:
+            self.png_container = st.empty()
+
         self.back_button_container = st.container()
 
         with st.sidebar:
             self.export_format_container = st.container()
             self.dpi_container = st.container()
-            self.export_button_col, self.model_export_button_col = st.columns([1, 1])
+            export_button_col_wrapper, self.model_export_button_col = st.columns([1, 1])
+            with export_button_col_wrapper:
+                self.export_button_col = st.empty()
 
     def display_png(self, png):
         """Displays the PNG image."""
@@ -87,6 +93,11 @@ class ExportView(BaseView):
                 type="primary",
             )
 
+    def display_disabled_export_button(self):
+        """Displays a disabled export button."""
+        with self.export_button_col:
+            st.button("Export", disabled=True)
+
     def display_model_export_button(self, file_name: str, file: bytes):
         """Displays the model export button.
 
@@ -105,3 +116,14 @@ class ExportView(BaseView):
                 mime="application/octet-stream",
                 type="primary",
             )
+
+    def display_loading_text(self, text):
+        """Displays a loading text.
+
+        Parameters
+        ----------
+        text : str
+            The text to display while the callback is running.
+        """
+        with self.png_container:
+            st.write(text)

@@ -191,14 +191,19 @@ class ExportController(BaseController):
             selected_view.display_dpi_input(50, self.dpi, 1)
 
         selected_view.display_model_export_button("model.pickle", self.pickle_model())
+        selected_view.display_disabled_export_button()
 
         try:
+            selected_view.display_loading_text(
+                f"Exporting graph to {self.export_format} ..."
+            )
             file_path = self.export_graph(format=self.export_format)
             file, mime = self.read_file(file_path)
             selected_view.display_export_button(
                 "graph." + self.export_format.lower(), file, mime
             )
             if self.export_format != "PNG":
+                selected_view.display_loading_text(f"Exporting graph to PNG ...")
                 png_file_path = self.export_graph(format="PNG")
             else:
                 png_file_path = file_path
