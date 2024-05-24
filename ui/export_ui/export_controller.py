@@ -186,7 +186,7 @@ class ExportController(BaseController):
             The index of the selected view.
         """
         selected_view.display_back_button()
-        selected_view.display_export_format(self.formats)
+        selected_view.display_export_format([*self.formats, "TEST"])
         if self.export_format == "PNG":
             selected_view.display_dpi_input(50, self.dpi, 1)
 
