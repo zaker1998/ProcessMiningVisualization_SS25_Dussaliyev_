@@ -5,6 +5,5 @@ ddcal
 streamlit==1.32.2
 
 # for testing
-unittest
 # mock
 # parameterized
