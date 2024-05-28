@@ -68,6 +68,13 @@ python -m unittest <Path To Tests>
 
 in the root folder.
 
+The testing requirements need to be installed. This are written in the `tests/test_requirements.txt` file.
+These can be installed using the following command:
+
+```bash
+pip install -r tests/test_requirements.txt
+```
+
 If you want to run unit tests of `heuristic_mining_test.py` in the directory `tests/mining_algorithms`, just type the command below:
 
 ```
