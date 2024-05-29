@@ -33,6 +33,13 @@ graph_export_mime_types = {
 
 graph_export_formats = list(map(lambda x: x.upper(), graph_export_mime_types.keys()))
 
+# COLUMN TYPE PREDICTION CONFIGURATIONS
+column_types_predictions_values = {
+    "time": set(["time", "date"]),
+    "event": set(["event", "activity", "action", "task", "operation"]),
+    "case": set(["case", "process", "instance", "session"]),
+}
+
 # ALGORITHM CONFIGURATIONS
 # ------------------------
 

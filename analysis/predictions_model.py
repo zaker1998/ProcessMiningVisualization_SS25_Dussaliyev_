@@ -1,10 +1,22 @@
 class PredictionModel:
     # this dictionary contains the possible values for each column type. This is used to predict the columns
-    column_types_predictions_values = {
-        "time": set(["time", "date"]),
-        "event": set(["event", "activity", "action", "task", "operation"]),
-        "case": set(["case", "process", "instance", "session"]),
-    }
+
+    def __init__(self, column_types_predictions_values=None):
+        """Constructor for the PredictionModel class.
+
+        Parameters
+        ----------
+        column_types_predictions_values : dict[str, set[str]]
+            dictionary that contains the possible values for each column type. This is used to predict the columns.
+            if the parameter is None, the default values from the config file will be used.
+        """
+        if column_types_predictions_values is None:
+            from config import (
+                column_types_predictions_values as column_types_predictions_values_config,
+            )
+
+            column_types_predictions_values = column_types_predictions_values_config
+        self.column_types_predictions_values = column_types_predictions_values
 
     def get_predicted_columns_from_type(
         self, dataframe_columns: list[str], column_type: str
