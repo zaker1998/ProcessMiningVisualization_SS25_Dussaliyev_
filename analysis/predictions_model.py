@@ -45,6 +45,7 @@ class PredictionModel:
             for value in self.column_types_predictions_values[column_type]:
                 if value in column.lower():
                     predicted_columns.append(column)
+                    break
 
         return predicted_columns
 
