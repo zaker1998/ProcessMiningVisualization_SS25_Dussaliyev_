@@ -104,3 +104,31 @@ class PredictionModel:
                             break
 
         return predicted_columns
+
+    def test_prediction_model_with_custom_column_type_predictions(self):
+        column_types_predictions_values = {
+            "time": {"time", "date"},
+            "event": {"event"},
+            "case": {"case"},
+            "person": {"person"},
+        }
+        prediction_model = PredictionModel(column_types_predictions_values)
+
+        column_headers = [
+            "timestamp",
+            "datetime",
+            "event",
+            "case",
+            "person",
+        ]
+        needed_columns = [
+            "time_column",
+            "event_column",
+            "case_column",
+            "person_column",
+        ]
+
+        self.assertEqual(
+            prediction_model.predict_columns(column_headers, needed_columns),
+            ["timestamp", "event", "case", "person"],
+        )
