@@ -44,7 +44,12 @@ class DataframeTransformations:
         ------
         InvalidColumnNameException
             If a selected column is not found in the DataFrame
+        ValueError
+            If the dataframe is not set
         """
+        if self.dataframe is None:
+            raise ValueError("Dataframe is not set")
+
         required_columns = [time_label, case_label, event_label]
         if not all(col in self.dataframe.columns for col in required_columns):
             not_found_columns = [
