@@ -7,12 +7,18 @@ class BaseColumnSelectionViewTemplate(BaseColumnSelectionView):
 
     def __init__(self):
         """Initializes the standard column selection view. It sets the needed columns and column styles."""
-        self.needed_columns = ["time_column", "case_column", "activity_column"]
-        self.column_styles = {
-            "time_column": "background-color: #FF705B",
-            "case_column": "background-color: #629AFF",
-            "activity_column": "background-color: #57B868",
-        }
+        self.needed_columns = []
+        # e.g.["time_column", "case_column", "activity_column"]
+        self.column_styles = dict()
+        # e.g.{
+        #    "time_column": "background-color: #FF705B",
+        #    "case_column": "background-color: #629AFF",
+        #    "activity_column": "background-color: #57B868",
+        # }
+
+        raise NotImplementedError(
+            "Method __init__ must be implemented in the child class"
+        )
 
     def get_needed_columns(self) -> list[str]:
         """Returns the needed columns for the algorithm. This will be used to display the column selection options.
@@ -43,4 +49,6 @@ class BaseColumnSelectionViewTemplate(BaseColumnSelectionView):
         columns : list[str]
             The names of the needed columns
         """
-        pass
+        raise NotImplementedError(
+            "Method render_column_selections must be implemented in the child class"
+        )
