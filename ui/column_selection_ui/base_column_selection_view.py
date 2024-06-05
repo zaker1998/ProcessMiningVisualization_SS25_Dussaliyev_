@@ -9,6 +9,22 @@ class BaseColumnSelectionView(BaseView):
     It provides the basic layout and methods for the column selection view and allows for customization by the child classes.
     """
 
+    def __init__(
+        self, needed_columns: list[str] = None, column_styles: dict[str, str] = None
+    ):
+        """Initializes the BaseColumnSelectionView.
+
+        Parameters
+        ----------
+        needed_columns : list[str], optional
+            The columns needed for the algorithm. If not provided, it will be obtained from the child class, by default None
+        column_styles : dict[str, str], optional
+            The styles for the columns. If not provided, it will be obtained from the child class, by default None
+        """
+        super().__init__()
+        self.needed_columns = needed_columns if needed_columns else []
+        self.column_styles = column_styles if column_styles else dict()
+
     def create_layout(self):
         """Creates the layout for the column selection view."""
         super().create_layout()
@@ -18,43 +34,25 @@ class BaseColumnSelectionView(BaseView):
             [2, 1, 4, 1, 2]
         )
 
-    @abstractmethod
     def get_needed_columns(self) -> list[str]:
-        """Returns the columns needed for the algorithm. This will be used to display the column selection options.
-        This must be implemented in the child class.
+        """Returns the needed columns for the algorithm. This will be used to display the column selection options.
 
         Returns
         -------
         list[str]
-            The columns needed for the algorithm.
-
-        Raises
-        ------
-        NotImplementedError
-            If the method is not implemented in the child class.
+            The needed columns for the algorithm.
         """
-        raise NotImplementedError(
-            "Method get_needed_columns must be implemented in the child class"
-        )
+        return self.needed_columns
 
-    @abstractmethod
     def get_column_styles(self) -> dict[str, str]:
         """Returns the styles for the columns. This will be used to style the column selection options.
-        The keys are the column names (e.g. time_column) and the values are the styles for the selected columns.
 
         Returns
         -------
         dict[str, str]
-            The styles for the columns. The keys are the needed columns e.g 'time_column' and the values are the styles for the selected columns.
-
-        Raises
-        ------
-        NotImplementedError
-            If the method is not implemented in the child class.
+            The styles for the columns.
         """
-        raise NotImplementedError(
-            "Method get_column_styles must be implemented in the child class"
-        )
+        return self.column_styles
 
     @abstractmethod
     def render_column_selections(self, columns: list[str]):

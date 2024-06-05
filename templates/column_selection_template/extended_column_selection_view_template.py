@@ -11,7 +11,7 @@ class ExtendedColumnSelectionViewTemplate(StandardColumnSelectionView):
         """Initializes the standard column selection view. It sets the needed columns and column styles."""
         super().__init__()
 
-        # Add the needed columns and column styles here
+        # Add the needed columns and column styles here use extend or append
         # self.needed_columns.append("additional_column")
         # self.column_styles["additional_column"] = "background-color: #FF705B"
         raise NotImplementedError(
