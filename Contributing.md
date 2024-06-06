@@ -51,3 +51,20 @@ The Mining model has to either inherit from the `MiningInterface` or the `BaseMi
 
 Adding new ColumnSelections may be necessary in the future, for some algorithms, e.g. a resource columns, a person columns. To add these columns there are two templates in the `templates/column_selection_template`.
 The `BaseColumnSelectionViewTemplate` does not contain any columns at all and all columns need to be added by the new class. The `ExtendedColumnSelectionViewTemplate` contains the time_column, case_column and event_column/activity_column. The second template will be most likely the newly needed one. The `needed_columns` and `column_styles` need to be added with additional data. The method `render_column_selections` need to add a checkbox with a key equal to the `needed_column` name, so that the controller can assign the value to the correct field. Additionally the `select view` method of the `ColumnSelectionController` needs to be updated, to switch to this view if a specific algorithm has been chosen. The AlgorithmController will need a overridden `transform_df_to_log` method, to ensure that the new selection is considered.
+
+## Extending Models
+
+This section will be about how to extend model functionality across the application. This will not go over all the models, but only a few important ones.
+
+### Adding new Import formats
+
+Adding new Import formats needs a few changes to work. First the filetype needs to be added to the config. This is done by adding it to the `import_file_types_mapping` in the config file.
+Secondly the `HomeController` needs to be updated, so that it will process the file format. The format has to be added in the `process_file` method. Optionally the View needs to be extended to process the file correctly. The `ImportOperations` needs a method to read the new filetype.
+
+### Adding a new Export format
+
+To add a new export format, the `graph_export_mime_types` variable inside the config file needs to be updated with the new filetype and its mime type. The `ExportController` needs to be updated to allow the export of the file type and the `ExportOperations` class needs a function to export the graph to the disk in the correct format.
+
+### Updating the PredictionModel
+
+The `PredictionModel` uses a dictionary to assign columns to a specific type. This prediction data could be updated by adding new values to the dictionary. another solution would be to use an AI Model for predictions. If the second approach is uses either update the current `PredictionModel` or create a new class, but the function signature should stay the same, if possible, to integrate the new code easier.
