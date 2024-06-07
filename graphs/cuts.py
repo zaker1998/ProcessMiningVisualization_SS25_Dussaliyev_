@@ -3,6 +3,19 @@ from collections import deque
 
 
 def exclusive_cut(graph: DFG) -> list[set[str | int]]:
+    """Calculate the exclusive cut of a graph. The exclusive cut is a partitioning of the graph into multiple connected components.
+    If only one connected component exists, the exclusive cut is not possible and None is returned.
+
+    Parameters
+    ----------
+    graph : DFG
+        The graph that should be partitioned
+
+    Returns
+    -------
+    list[set[str | int]]
+        A list of connected components that represent the exclusive cut of the graph
+    """
     # check if the graph has only one start node or one end node
     # if this is the case return None, as no exclusive cut is possible
     if len(graph.get_start_nodes()) == 1 or len(graph.get_end_nodes()) == 1:
@@ -13,6 +26,22 @@ def exclusive_cut(graph: DFG) -> list[set[str | int]]:
 
 
 def sequence_cut(graph: DFG) -> list[set[str | int]]:
+    """Calculate the sequence cut of a graph. The sequence cut is an ordered cut,
+    where each a only a previous partition can reach a following partition, but not the other way around.
+    This implementation uses a greedy algorithm to merge partitions that are reachable or not reachable from each other.
+    After the merging, the partitions are sorted by the order of reachability.
+    If only one partition exists, the sequence cut is not possible and None is returned.
+
+    Parameters
+    ----------
+    graph : DFG
+        The graph that should be partitioned
+
+    Returns
+    -------
+    list[set[str | int]]
+        A list of partitions that represent the sequence cut of the graph
+    """
     partitions = [{node} for node in graph.get_nodes()]
     nodes = list(graph.get_nodes())
 
@@ -65,6 +94,23 @@ def sequence_cut(graph: DFG) -> list[set[str | int]]:
 
 
 def parallel_cut(graph: DFG) -> list[set[str | int]]:
+    """Calculate the parallel cut of a graph. The parallel cut is found by first removing all double edges from the graph
+    and then adding double edges between nodes with only one edge or no edge between them.
+    The the conntected components of the resulting graph are the partitions of the parallel cut.
+    Each partition has to contain at least one start node or one end node.
+    If only one connected component exists, the parallel cut is not possible and None is returned.
+
+
+    Parameters
+    ----------
+    graph : DFG
+        The graph that should be partitioned
+
+    Returns
+    -------
+    list[set[str | int]]
+        A list of partitions that represent the parallel cut of the graph
+    """
     # check if the graph has only one start node or one end node
     # if this is the case return None, as no exclusive cut is possible
     if len(graph.get_start_nodes()) == 1 or len(graph.get_end_nodes()) == 1:
@@ -135,6 +181,30 @@ def parallel_cut(graph: DFG) -> list[set[str | int]]:
 
 
 def loop_cut(graph: DFG) -> list[set[str | int]]:
+    """Calculate the loop cut of a graph. The loop cut is a partly ordered cut,
+    where the first partitions represents the do part of the loop and the second partition the redo part of the loop.
+    The first partitions contains all start and end nodes. The other partitions are found by first removing all start and end nodes from the graph.
+    Then the connected components of the resulting graph are the partitions of the loop cut.
+
+    Then the following conditions are checked for each partition that is not the first partition:
+    1. There is no edge from a start node, that is not also a end node, to a node in the partition
+    2. There is no edge from a node in the partition to an end node, that is not also a start node
+    3. if there is an edge from an end node to a node in the connected component there have to be edges from all end nodes to this node
+    4. if there is an edge from a node in the connected component to a start node there have to be edges from this node to all start nodes
+
+    If one of the conditions is not fullfiled the partition is merged with the first partition.
+    If only one partition exists, the loop cut is not possible and None is returned.
+
+    Parameters
+    ----------
+    graph : DFG
+        The graph that should be partitioned
+
+    Returns
+    -------
+    list[set[str | int]]
+        A list of partitions that represent the loop cut of the graph
+    """
     partition_1 = set(graph.get_start_nodes().union(graph.get_end_nodes()))
 
     starting_nodes = graph.get_start_nodes()

@@ -142,5 +142,4 @@ dmypy.json
 
 secret_data/
 
-**/*.txt
 **/*.ipynb

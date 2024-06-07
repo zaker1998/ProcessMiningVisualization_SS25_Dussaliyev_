@@ -6,16 +6,19 @@ import unittest
 
 from graphs.visualization.base_graph import BaseGraph
 from mining_algorithms.heuristic_mining import HeuristicMining
-from controllers.HeuristicMiningController import HeuristicMiningController
 from collections import deque
 
-from utils.io import read_file
-from utils.transformations import dataframe_to_cases_dict, cases_list_to_dict
+import pandas as pd
+from transformations.utils import cases_list_to_dict
+from transformations.dataframe_transformations import DataframeTransformations
 
 
 def read(filename, timeLabel="timestamp", caseLabel="case", eventLabel="event"):
-    df = read_file(filename)
-    return dataframe_to_cases_dict(df, timeLabel, caseLabel, eventLabel)
+    dataframe_transformations = DataframeTransformations()
+    dataframe_transformations.set_dataframe(pd.read_csv(filename))
+    return dataframe_transformations.dataframe_to_cases_dict(
+        timeLabel, caseLabel, eventLabel
+    )
 
 
 class TestHeuristic(unittest.TestCase):
@@ -48,13 +51,6 @@ class TestHeuristic(unittest.TestCase):
         print("-------------- Running large CallcenterExample ----------------")
         self.__run_CallcenterExample_csv(0.5, 1)
         print("---------------- CallcenterExample passed! ----------------")
-
-    def test_loading_pickle_HeuristicMining_model(self):
-        print("----------- Running pickle loading test ----------")
-        print("(This test fails if you messed with the HeuristicMining class)")
-        print("(Replace the pickle file with a new one if you did)")
-        self.__run_pickle_loading_test("tests/testpickle/test_csv.pickle")
-        print("---------------- pickle loading test passed! ----------------")
 
     # read test cases that are txt files for testing
     def __read_cases(self, filename):
@@ -90,29 +86,6 @@ class TestHeuristic(unittest.TestCase):
         )
         heuristicMining.create_dependency_graph_with_graphviz(threshold, min_freq)
         self.__check_graph_integrity(heuristicMining.get_graph())
-
-    def __run_pickle_loading_test(self, pickleFile):
-        model = read_file(pickleFile)
-
-        Controller = HeuristicMiningController()
-        Controller.set_model(model)
-
-        self.assertIsInstance(Controller.get_model(), HeuristicMining)
-        Controller.set_threshold(0.2)
-        Controller.set_frequency(4)
-        Controller.perform_mining()
-
-        G = Controller.get_graph()
-        self.assertIsNotNone(G)
-
-        max_frequency = Controller.get_max_frequency()
-        self.assertIsNotNone(max_frequency)
-
-        min_frequency = Controller.get_frequency()
-        self.assertIsNotNone(min_frequency)
-
-        threshold = Controller.get_threshold()
-        self.assertIsNotNone(threshold)
 
     def __check_graph_integrity(self, graph: BaseGraph):
         self.assertTrue(graph.contains_node("Start"), "Start node not found.")

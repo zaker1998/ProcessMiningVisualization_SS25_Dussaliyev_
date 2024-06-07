@@ -1,14 +1,15 @@
 from graphs.visualization.fuzzy_graph import FuzzyGraph
 import numpy as np
-from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 from mining_algorithms.base_mining import BaseMining
 
 
 class FuzzyMining(BaseMining):
 
-    cluster_seperator = "---"
-
     def __init__(self, cases):
+        from config import cluster_seperator
+
+        self.cluster_seperator = cluster_seperator
+
         super().__init__(cases)
         self.minimum_correlation = None
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()

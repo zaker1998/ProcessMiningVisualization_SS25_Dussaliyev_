@@ -1,10 +1,12 @@
 import streamlit as st
-from views.Home import Home
-from views.ColumnSelectionView import ColumnSelectionView
-from views.ExportView import ExportView
-from views.AlgorithmDocView import AlgorithmDocView
+from ui.home_ui.home_controller import HomeController
+from ui.column_selection_ui.column_selection_controller import ColumnSelectionController
+from ui.export_ui.export_controller import ExportController
+from ui.algorithm_explanation_ui.algorithm_explanation_controller import (
+    AlgorithmExplanationController,
+)
 
-from config import algorithm_routes, get_algorithm_view
+from config import algorithm_routes
 
 
 st.set_page_config(
@@ -16,17 +18,13 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-if "error" in st.session_state:
-    st.error(st.session_state.error)
-    del st.session_state.error
-
 if st.session_state.page == "Home":
-    Home().render()
+    HomeController().start()
 elif st.session_state.page == "Algorithm":
-    get_algorithm_view(st.session_state.algorithm).render()
+    algorithm_routes[st.session_state.algorithm]().start()
 elif st.session_state.page == "ColumnSelection":
-    ColumnSelectionView().render()
+    ColumnSelectionController().start()
 elif st.session_state.page == "Export":
-    ExportView().render()
+    ExportController().start()
 elif st.session_state.page == "Documentation":
-    AlgorithmDocView().render()
+    AlgorithmExplanationController().start()

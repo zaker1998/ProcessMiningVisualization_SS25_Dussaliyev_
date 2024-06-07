@@ -2,7 +2,16 @@ from clustering.ddcal import DDCAL
 
 
 class DensityDistributionClusterAlgorithm:
+    """A class to cluster the frequencies of the events in a log using the Density Distribution Cluster Algorithm (DDCAL)."""
+
     def __init__(self, frequencies):
+        """Constructor for the DensityDistributionClusterAlgorithm class.
+
+        Parameters
+        ----------
+        frequencies : list[int | float]
+            A list of frequencies of the events
+        """
         cluster_num = len(set(frequencies))
         max_cluster = 8
         if cluster_num > max_cluster:
