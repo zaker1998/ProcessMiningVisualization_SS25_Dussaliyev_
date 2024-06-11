@@ -1,11 +1,14 @@
 import numpy as np
 from graphs.visualization.heuristic_graph import HeuristicGraph
 from mining_algorithms.base_mining import BaseMining
+from logger import get_logger
 
 
 class HeuristicMining(BaseMining):
     def __init__(self, log):
         super().__init__(log)
+        self.logger = get_logger("HeuristicMining")
+
         self.dependency_matrix = self.__create_dependency_matrix()
 
         # Graph modifiers

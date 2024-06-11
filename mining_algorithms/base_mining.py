@@ -1,5 +1,6 @@
 import numpy as np
 from mining_algorithms.mining_interface import MiningInterface
+from logger import get_logger
 
 
 class BaseMining(MiningInterface):
@@ -18,11 +19,15 @@ class BaseMining(MiningInterface):
             The key is a tuple of strings representing the trace, and the value is an integer representing the frequency of the trace in the log.
         """
         super().__init__()
+        self.logger = get_logger("BaseMining")
         self.log = log
         # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
         self.events, self.appearance_frequency = self.__filter_out_all_events()
+        self.logger.debug(f"Events: {self.events}")
+        self.logger.debug(f"Appearance Frequency: {self.appearance_frequency}")
         self.event_positions = {event: i for i, event in enumerate(self.events)}
         self.succession_matrix = self.__create_succession_matrix()
+        self.logger.debug(f"Succession Matrix: {self.succession_matrix}")
 
         self.event_freq_sorted, self.event_freq_labels_sorted = self.get_clusters(
             list(self.appearance_frequency.values())
@@ -30,6 +35,9 @@ class BaseMining(MiningInterface):
 
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
+
+        self.logger.debug(f"Start Nodes: {self.start_nodes}")
+        self.logger.debug(f"End Nodes: {self.end_nodes}")
 
     def __filter_out_all_events(self) -> tuple[list[str], dict[str, int]]:
         """create a list of all events and a dictionary of all events with their frequencies
