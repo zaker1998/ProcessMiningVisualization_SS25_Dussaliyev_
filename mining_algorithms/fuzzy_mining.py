@@ -1,6 +1,7 @@
 from graphs.visualization.fuzzy_graph import FuzzyGraph
 import numpy as np
 from mining_algorithms.base_mining import BaseMining
+from logger import get_logger
 
 
 class FuzzyMining(BaseMining):
@@ -11,6 +12,7 @@ class FuzzyMining(BaseMining):
         self.cluster_seperator = cluster_seperator
 
         super().__init__(cases)
+        self.logger = get_logger("FuzzyMining")
         self.minimum_correlation = None
         self.correlation_of_nodes = self.__create_correlation_dependency_matrix()
         self.significance_of_nodes = self.__calculate_significance()
@@ -41,8 +43,9 @@ class FuzzyMining(BaseMining):
         self.minimum_correlation = correlation
         # self.correlation_of_nodes = self.__calculate_correlation_dependency_matrix(correlation)
         self.graph = FuzzyGraph()
-        print("Sign: " + str(significance))
-        print("Succession: " + "\n" + str(self.succession_matrix))
+
+        self.logger.debug("Significance: " + str(significance))
+        self.logger.debug("Succession: " + "\n" + str(self.succession_matrix))
         # 1 Rule remove less significant and less correlated nodes
         self.corr_after_first_rule, self.sign_after_first_rule = (
             self.__calculate_first_rule(
@@ -73,8 +76,12 @@ class FuzzyMining(BaseMining):
         nodes_after_first_rule = self.__calculate_significant_nodes(
             self.corr_after_first_rule
         )
-        print("sign_after_first_rule-->" + "\n" + str(self.sign_after_first_rule))
-        print("corr_after_first_rule-->" + "\n" + str(self.corr_after_first_rule))
+        self.logger.debug(
+            "sign_after_first_rule-->" + "\n" + str(self.sign_after_first_rule)
+        )
+        self.logger.debug(
+            "corr_after_first_rule-->" + "\n" + str(self.corr_after_first_rule)
+        )
 
         # 2 Rule less significant but highly correlated nodes are going to be clustered
         clustered_nodes_after_sec_rule = self.__calculate_clustered_nodes(
@@ -83,17 +90,17 @@ class FuzzyMining(BaseMining):
             self.sign_after_first_rule,
             significance,
         )
-        print("Clustered nodes: " + str(clustered_nodes_after_sec_rule))
+        self.logger.debug("Clustered nodes: " + str(clustered_nodes_after_sec_rule))
         self.list_of_clustered_nodes = self.__convert_clustered_nodes_to_list(
             clustered_nodes_after_sec_rule
         )
-        print(self.list_of_clustered_nodes)
+        self.logger.debug(self.list_of_clustered_nodes)
 
         # significance after clustering
         sign_after_sec_rule = self.__update_significance_matrix(
             self.sign_after_first_rule, clustered_nodes_after_sec_rule
         )
-        print(sign_after_sec_rule)
+        self.logger.debug(sign_after_sec_rule)
         self.sign_dict = self.__get_significance_dict_after_clustering(
             sign_after_sec_rule
         )
@@ -138,8 +145,8 @@ class FuzzyMining(BaseMining):
             )
         )
 
-        # print("Start nodes: " + str(start_nodes))
-        # print("End nodes: " + str(end_nodes))
+        self.logger.debug("Start nodes: " + str(start_nodes))
+        self.logger.debug("End nodes: " + str(end_nodes))
 
         # can cause exception needs fix, for some reason there can be a node which is not in the graph, needs to be checked
         self.graph.add_starting_edges(start_nodes)
@@ -203,8 +210,8 @@ class FuzzyMining(BaseMining):
 
             max_values[self.events[i]] = column_max
             min_values[self.events[i]] = column_min
-        # print("Maxx------: " + str(max_values))
-        # print("Minn------: " + str(min_values))
+        self.logger.debug("Maxx------: " + str(max_values))
+        self.logger.debug("Minn------: " + str(min_values))
         return min_values, max_values
 
     def __find_removed_edges_after_edge_filtering(
@@ -242,8 +249,22 @@ class FuzzyMining(BaseMining):
                     + (1 - utility_ratio) * corr_after_first_rule[i][j],
                     2,
                 )
-                # print("calculating util matriX " + str(self.events[i]) + " -> " + str(self.events[j]) + " value " + str(val))
-                # print("sign[i][j]= " + str(sign_after_first_rule[i][j]) + " corr[j][i]= "  + str(corr_after_first_rule[i][j]) + " value " + str(val))
+                self.logger.debug(
+                    "calculating util matriX "
+                    + str(self.events[i])
+                    + " -> "
+                    + str(self.events[j])
+                    + " value "
+                    + str(val)
+                )
+                self.logger.debug(
+                    "sign[i][j]= "
+                    + str(sign_after_first_rule[i][j])
+                    + " corr[j][i]= "
+                    + str(corr_after_first_rule[i][j])
+                    + " value "
+                    + str(val)
+                )
                 util_matrix[i][j] = np.round(
                     sign_after_first_rule[i][j] * utility_ratio
                     + (1 - utility_ratio) * corr_after_first_rule[i][j],
@@ -254,14 +275,14 @@ class FuzzyMining(BaseMining):
 
         minU, maxU = self.__find_min_and_max_util_value(util_matrix)
 
-        # print("111-printing utility ratio value \n" + str(utility_ratio))
-        # print("111-printing significance \n" + str(sign_after_first_rule))
+        self.logger.debug("111-printing utility ratio value \n" + str(utility_ratio))
+        self.logger.debug("111-printing significance \n" + str(sign_after_first_rule))
 
-        # print("111-printing correlation \n" + str(corr_after_first_rule))
+        self.logger.debug("111-printing correlation \n" + str(corr_after_first_rule))
 
-        # print("Util Matrix-----> \n" + str(util_matrix))
+        self.logger.debug("Util Matrix-----> \n" + str(util_matrix))
 
-        # print("calculate normalised util. ")
+        self.logger.debug("calculate normalised util. ")
 
         normalised_util_matrix = self.__calculate_normalised_util(
             util_matrix, edge_cutoff, minU, maxU, utility_ratio, corr_after_first_rule
@@ -271,7 +292,7 @@ class FuzzyMining(BaseMining):
             removed_indices = np.argwhere(
                 (corr_after_first_rule > 0.0) & (normalised_util_matrix == 0.0)
             )
-        # print("removed_indices = \n" + str(removed_indices))
+        self.logger.debug("removed_indices = \n" + str(removed_indices))
         return removed_indices
 
     def __calculate_normalised_util(
@@ -308,8 +329,7 @@ class FuzzyMining(BaseMining):
                 else:
                     normalised_matrix[i][j] = 0.0
 
-                # print("i = " + str(i) + "-" + str(self.events[i]) + " j = " + str(j) + "-" + str(self.events[j]) + " min_val = " + str(min_val) + " max_val = " + str(max_val) + " normalised_val = " + str(normalised_matrix[i][j]))
-        # print("normalised_matrix = \n" + str(normalised_matrix))
+        self.logger.debug("normalised_matrix = \n" + str(normalised_matrix))
         return normalised_matrix
 
     def __add_edges_to_graph_for_each_method(
@@ -319,10 +339,7 @@ class FuzzyMining(BaseMining):
         for pair, value in edges.items():
             current_cluster = pair[0]
             next_cluster = pair[1]
-            # print(f"Pair: {current_cluster} -> {next_cluster}, Value: {value}")
             if node_to_node_case:
-                # check if probably node-node is removes using edge filtering
-                # print("yes - " + str(current_cluster)+ "->" + str(next_cluster) + " is in list_of_removed")
                 if [current_cluster, next_cluster] in list_of_filtered_edges:
                     continue
 
@@ -467,14 +484,16 @@ class FuzzyMining(BaseMining):
                     else:
                         ret_node_to_node_edge[pair] = correlation_after_first_rule[i][j]
 
-        # print("node_to_cluster: " + str(ret_node_to_cluster_edge))
-        # print("cluster_to_node: " + str(ret_cluster_to_node_edge))
-        # print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge))
-        # print("node_to_node: " + str(ret_node_to_node_edge))
-        #
-        # print("node_to_cluster: " + str(ret_node_to_cluster_edge_counter))
-        # print("cluster_to_node: " + str(ret_cluster_to_node_edge_counter))
-        # print("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge_counter))
+        self.logger.debug("node_to_cluster: " + str(ret_node_to_cluster_edge))
+        self.logger.debug("cluster_to_node: " + str(ret_cluster_to_node_edge))
+        self.logger.debug("cluster_to_cluster: " + str(ret_cluster_to_cluster_edge))
+        self.logger.debug("node_to_node: " + str(ret_node_to_node_edge))
+
+        self.logger.debug("node_to_cluster: " + str(ret_node_to_cluster_edge_counter))
+        self.logger.debug("cluster_to_node: " + str(ret_cluster_to_node_edge_counter))
+        self.logger.debug(
+            "cluster_to_cluster: " + str(ret_cluster_to_cluster_edge_counter)
+        )
 
         node_to_cluster_avg = self.__calculate_avg(
             ret_node_to_cluster_edge, ret_node_to_cluster_edge_counter
@@ -486,9 +505,9 @@ class FuzzyMining(BaseMining):
             ret_cluster_to_cluster_edge, ret_cluster_to_cluster_edge_counter
         )
 
-        # print("node_to_cluster_avg--" + str(node_to_cluster_avg))
-        # print("cluster_to_node_avg--" + str(cluster_to_node_avg))
-        # print("cluster_to_cluster_avg--" + str(cluster_to_cluster_avg))
+        self.logger.debug("node_to_cluster_avg--" + str(node_to_cluster_avg))
+        self.logger.debug("cluster_to_node_avg--" + str(cluster_to_node_avg))
+        self.logger.debug("cluster_to_cluster_avg--" + str(cluster_to_cluster_avg))
 
         return (
             node_to_cluster_avg,
