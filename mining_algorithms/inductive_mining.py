@@ -9,6 +9,7 @@ from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
 from graphs.dfg import DFG
 from graphs.visualization.inductive_graph import InductiveGraph
 from logs.filters import filter_events, filter_traces
+from logger import get_logger
 
 
 class InductiveMining(BaseMining):
@@ -23,18 +24,19 @@ class InductiveMining(BaseMining):
             A dictionary containing the traces and their frequencies in the log.
         """
         super().__init__(log)
+        self.logger = get_logger("InductiveMining")
         self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
         self.activity_threshold = 0.0
         self.traces_threshold = 0.2
         self.filtered_log = None
 
-    def generate_graph(self, activity_threshold:float, traces_threshold:float):
+    def generate_graph(self, activity_threshold: float, traces_threshold: float):
         """Generate a graph from the log using the Inductive Mining algorithm.
 
         Parameters
         ----------
-        activity_threshold : float 
-            The activity threshold for the filtering of the log. 
+        activity_threshold : float
+            The activity threshold for the filtering of the log.
             All events with a frequency lower than the threshold * max_event_frequency will be removed.
         traces_threshold : float
             The traces threshold for the filtering of the log.
@@ -44,6 +46,8 @@ class InductiveMining(BaseMining):
         self.traces_threshold = traces_threshold
 
         events_to_remove = self.get_events_to_remove(activity_threshold)
+
+        self.logger.debug(f"Events to remove: {events_to_remove}")
         min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
 
         filtered_log = filter_traces(self.log, min_traces_frequency)
@@ -54,6 +58,7 @@ class InductiveMining(BaseMining):
 
         self.filtered_log = filtered_log
 
+        self.logger.info("Start Inductive Mining")
         process_tree = self.inductive_mining(self.filtered_log)
         self.graph = InductiveGraph(
             process_tree,
@@ -62,8 +67,8 @@ class InductiveMining(BaseMining):
         )
 
     def inductive_mining(self, log):
-        """Generate a process tree from the log using the Inductive Mining algorithm. 
-        This is a recursive function that generates the process tree from the log, 
+        """Generate a process tree from the log using the Inductive Mining algorithm.
+        This is a recursive function that generates the process tree from the log,
         by splitting the log into partitions and generating the tree for each partition.
         This function uses the base cases, the cut methods and the fallthrough method to generate the tree.
         If the log is a base case, the corresponding tree is returned. Otherwise, the log is split into partitions using the cut methods.
@@ -77,14 +82,16 @@ class InductiveMining(BaseMining):
         Returns
         -------
         tuple
-            A tuple representing the process tree. The first element is the operation of the node, the following elements are the children of the node. 
+            A tuple representing the process tree. The first element is the operation of the node, the following elements are the children of the node.
             The children are either strings representing the events or tuples representing a subtree.
         """
         if tree := self.base_cases(log):
+            self.logger.debug(f"Base case: {tree}")
             return tree
 
         if tuple() not in log:
             if partitions := self.calulate_cut(log):
+                self.logger.debug(f"Cut: {partitions}")
                 operation = partitions[0]
                 return (operation, *list(map(self.inductive_mining, partitions[1:])))
 
