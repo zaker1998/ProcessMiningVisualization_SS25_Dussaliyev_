@@ -1,6 +1,7 @@
 import streamlit as st
 from abc import ABC, abstractmethod
 from exceptions.type_exceptions import TypeIsNoneException, InvalidTypeException
+from logger import get_logger
 
 
 class BaseController(ABC):
@@ -22,6 +23,7 @@ class BaseController(ABC):
         InvalidTypeException
             If a view is not a subclass of BaseView.
         """
+        self.logger = get_logger("BaseController")
 
         if views is None:
             raise TypeIsNoneException("No views provided to the controller")
@@ -31,12 +33,14 @@ class BaseController(ABC):
         if isinstance(views, list) or isinstance(views, tuple):
             for view in views:
                 if not isinstance(view, BaseView):
-                    # TODO: add logging
+                    self.logger.error(
+                        f"Invalid type: {type(view)}, expected: {BaseView}"
+                    )
                     raise InvalidTypeException(BaseView, type(view))
             self.views = list(views)
         else:
             if not isinstance(views, BaseView):
-                # TODO:  add logging
+                self.logger.error(f"Invalid type: {type(views)}, expected: {BaseView}")
                 raise InvalidTypeException(BaseView, type(views))
             self.views = [views]
 

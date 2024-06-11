@@ -3,6 +3,7 @@ from ui.base_ui.base_controller import BaseController
 from components.buttons import navigate_to, to_home
 from io_operations.import_operations import ImportOperations
 from config import docs_path_mappings
+from logger import get_logger
 
 
 class AlgorithmExplanationController(BaseController):
@@ -18,6 +19,7 @@ class AlgorithmExplanationController(BaseController):
         import_model : ImportOperations, optional
             The import operations model for reading files. If None is passed, a new instance is created, by default None
         """
+
         if views is None:
             from ui.algorithm_explanation_ui.algorithm_explanation_view import (
                 AlgorithmExplanationView,
@@ -30,6 +32,8 @@ class AlgorithmExplanationController(BaseController):
 
         self.import_model = import_model
         super().__init__(views)
+
+        self.logger = get_logger("AlgorithmExplanationController")
 
     def get_page_title(self) -> str:
         """Returns the page title. Here a title is not needed as the title is written in the markdown file.
@@ -46,10 +50,14 @@ class AlgorithmExplanationController(BaseController):
         If not, an error message is displayed and the user is navigated back to the home or algorithm page.
         """
         if "algorithm" not in st.session_state:
+            self.logger.error("Algorithm was not selected")
+            self.logger.info("redirect to home page")
             st.session_state.error = "Algorithm not selected"
             to_home()
 
         if st.session_state.algorithm not in docs_path_mappings:
+            self.logger.error("Algorithm does not have documentation")
+            self.logger.info("redirect to algorithm page")
             st.session_state.error = "Algorithm does not have documentation"
             navigate_to("Algorithm")
 
@@ -82,7 +90,8 @@ class AlgorithmExplanationController(BaseController):
             file_content = self.read_algorithm_file()
             selected_view.display_algorithm_file(file_content)
         except FileNotFoundError as e:
-            # TODO: add logging
-            print(e)
+            self.logger.exception(e)
+            self.logger.error("Algorithm does not have a documentation file")
+            self.logger.info("redirect to algorithm page")
             st.session_state.error = "Algorithm does not have a documentation file"
             navigate_to("Algorithm")

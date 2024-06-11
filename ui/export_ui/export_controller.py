@@ -9,6 +9,7 @@ from exceptions.io_exceptions import (
     UnsupportedFileTypeException,
     NotImplementedFileTypeException,
 )
+from logger import get_logger
 
 
 class ExportController(BaseController):
@@ -63,6 +64,8 @@ class ExportController(BaseController):
         self.detection_model = detection_model
         super().__init__(views)
 
+        self.logger = get_logger("ExportController")
+
     def get_page_title(self) -> str:
         """Returns the page title.
 
@@ -80,6 +83,8 @@ class ExportController(BaseController):
         """
         super().process_session_state()
         if "model" not in st.session_state:
+            self.logger.error("Model was not selected")
+            self.logger.info("redirect to home page")
             st.session_state.error = "Model not selected"
             to_home("Home")
             st.rerun()
@@ -87,6 +92,8 @@ class ExportController(BaseController):
         self.mining_model = st.session_state.model
 
         if self.mining_model.graph is None:
+            self.logger.error("Graph not generated")
+            self.logger.info("redirect to algorithm page")
             st.session_state.error = "Graph not generated"
             navigate_to("Algorithm")
 
@@ -214,19 +221,17 @@ class ExportController(BaseController):
 
             selected_view.display_png(png_file)
         except UnsupportedFileTypeException as ex:
-            # TODO: add logging
-            print(ex)
+            self.logger.exception(ex)
             st.session_state.error = ex.message
             del st.session_state.export_format
             st.rerun()
         except FileNotFoundError as e:
-            # TODO: add logging
-            print(e)
+            self.logger.exception(e)
             st.session_state.warning = "Error exporting graph. Please wait until the graph is generated, before changing formats or dpi."
             st.rerun()
         except NotImplementedFileTypeException as ex:
-            # TODO: add logging
-            print(ex)
+            self.logger.exception(ex)
+            self.logger.info("Switching to SVG format")
             st.session_state.error = ex.message
             del st.session_state.export_format
             st.rerun()

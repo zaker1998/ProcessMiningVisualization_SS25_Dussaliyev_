@@ -1,6 +1,7 @@
 import csv
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from exceptions.io_exceptions import UnsupportedFileTypeException
+from logger import get_logger
 
 
 class DetectionModel:
@@ -81,8 +82,9 @@ class DetectionModel:
             dialect = csv.Sniffer().sniff(row)
             detected_delimiter = dialect.delimiter
         except Exception as e:
-            # TODO: use logging
-            print(e)
+            logger = get_logger("DetectionModel")
+            logger.error(f"Delimiter detection failed")
+            logger.info("set delimiter to empty string")
 
         return detected_delimiter
 

@@ -5,6 +5,7 @@ from transformations.dataframe_transformations import DataframeTransformations
 from components.buttons import to_home
 from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
 from exceptions.type_exceptions import TypeIsNoneException
+from logger import get_logger
 
 
 class BaseAlgorithmController(BaseController):
@@ -24,6 +25,8 @@ class BaseAlgorithmController(BaseController):
         dataframe_transformations : DataframeTransformations, optional
             The class for the dataframe transformations. If None is passed, a new instance is created, by default None
         """
+        self.logger = get_logger("BaseAlgorithmController")
+
         self.mining_model = None
 
         if dataframe_transformations is None:
@@ -32,7 +35,7 @@ class BaseAlgorithmController(BaseController):
         self.dataframe_transformations = dataframe_transformations
 
         if mining_model_class is None:
-            # TODO: add logging
+            self.logger.error("Mining model class is None")
             raise TypeIsNoneException("Mining model class is None")
 
         self.mining_model_class = mining_model_class
@@ -153,6 +156,10 @@ class BaseAlgorithmController(BaseController):
         super().process_session_state()
         if "model" in st.session_state:
             if not self.is_correct_model_type(st.session_state.model):
+                self.logger.error(
+                    f"Invalid model type. Expected model type: {str(self.mining_model_class)}, Received model type: {type(st.session_state.model)}"
+                )
+                self.logger.info("redirect to home page")
                 st.session_state.error = f""" Invalid model type. 
                 
                 Expected model type: {str(self.mining_model_class)}, Received model type: {str(type(st.session_state.model))}
@@ -165,6 +172,8 @@ class BaseAlgorithmController(BaseController):
                 "df" not in st.session_state
                 or "selected_columns" not in st.session_state
             ):
+                self.logger.error("DataFrame or selected columns are missing.")
+                self.logger.info("redirect to home page")
                 st.session_state.error = "A DataFrame and selected columns must be provided to create a model."
                 to_home()
                 st.rerun()
@@ -195,8 +204,10 @@ class BaseAlgorithmController(BaseController):
             try:
                 view.display_loading_spinner("Mining...", self.perform_mining)
             except InvalidNodeNameException as ex:
-                # TODO: add logging
-                print(ex)
+                self.logger.exception(ex)
+                self.logger.error(
+                    "Invalid node name. The string '___' is not allowed in node names."
+                )
                 st.session_state.error = (
                     ex.message
                     + "\n Please check the input data. The string '___' is not allowed in node names."
@@ -204,8 +215,10 @@ class BaseAlgorithmController(BaseController):
                 to_home()
                 st.rerun()
             except GraphException as ex:
-                # TODO: add logging
-                print(ex)
+                self.logger.exception(ex)
+                self.logger.warning(
+                    "Graph could not be created. Wait until the mining is finished before changing parameters."
+                )
                 st.warning(
                     "Do not change the parameters while mining. This will cause an error. Wait until the mining is finished."
                 )

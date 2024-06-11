@@ -6,6 +6,7 @@ from exceptions.io_exceptions import (
     UnsupportedFileTypeException,
     NotImplementedFileTypeException,
 )
+from logger import get_logger
 
 
 class HomeController(BaseController):
@@ -38,6 +39,7 @@ class HomeController(BaseController):
 
             views = [HomeView()]
         super().__init__(views)
+        self.logger = get_logger("HomeController")
 
         if supported_file_types is None:
             from config import import_file_suffixes
@@ -79,16 +81,13 @@ class HomeController(BaseController):
                 model = self.import_model.read_model(self.uploaded_file)
                 selected_view.display_model_import(model)
             else:
-                # TODO: use custom exceptions
                 raise NotImplementedFileTypeException(file_type)
         except UnsupportedFileTypeException as e:
-            # TODO: add logging
-            print(e)
+            self.logger.exception(e)
             st.session_state.error = e.message
             st.rerun()
         except NotImplementedFileTypeException as e:
-            # TODO: add logging
-            print(e)
+            self.logger.exception(e)
             st.session_state.error = e.message
             st.rerun()
 

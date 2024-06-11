@@ -1,12 +1,14 @@
 import streamlit as st
 from abc import ABC
 from exceptions.type_exceptions import InvalidTypeException
+from logger import get_logger
 
 
 class BaseView(ABC):
     """Base class for the views. It provides the basic layout and methods for the views."""
 
     controller = None
+    logger = get_logger("BaseView")
 
     def create_layout(self):
         """Creates the layout for the views."""
@@ -78,6 +80,8 @@ class BaseView(ABC):
         from ui.base_ui.base_controller import BaseController
 
         if not isinstance(controller, BaseController):
-            # TODO: add a logger
+            self.logger.error(
+                f"Invalid controller type: {type(controller)}, expected: {BaseController}"
+            )
             raise InvalidTypeException(BaseController, type(controller))
         self.controller = controller

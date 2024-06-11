@@ -5,6 +5,7 @@ from config import algorithm_mappings
 from analysis.predictions_model import PredictionModel
 from transformations.dataframe_styler import DataFrameStyler
 import pandas as pd
+from logger import get_logger
 
 
 class ColumnSelectionController(BaseController):
@@ -42,6 +43,8 @@ class ColumnSelectionController(BaseController):
         self.dataframe_styler = dataframe_styler
         super().__init__(views)
 
+        self.logger = get_logger("ColumnSelectionController")
+
     def get_page_title(self) -> str:
         """Returns the page title.
 
@@ -73,6 +76,8 @@ class ColumnSelectionController(BaseController):
         """
         super().process_session_state()
         if "df" not in st.session_state:
+            self.logger.error("No file uploaded")
+            self.logger.info("redirect to home page")
             self.error_message = "Please upload a file first"
             to_home("Home")
             st.rerun()
@@ -182,6 +187,7 @@ class ColumnSelectionController(BaseController):
         If a column is selected multiple times, an error message is displayed and the user is navigated back to the column selection page.
         """
         if not all(self.selected_columns.values()):
+            self.logger.error("Not all columns are selected")
             st.session_state.error = "Please select a column for all columns"
             st.session_state.page = "ColumnSelection"
             return
@@ -189,6 +195,7 @@ class ColumnSelectionController(BaseController):
         if len(set(self.selected_columns.values())) != len(
             self.selected_columns.values()
         ):
+            self.logger.error("Columns are selected multiple times")
             st.session_state.error = "Please select a different column for each column"
             st.session_state.page = "ColumnSelection"
             return

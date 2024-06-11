@@ -1,6 +1,7 @@
 from abc import ABC
 from mining_algorithms.ddcal_clustering import DensityDistributionClusterAlgorithm
 from graphs.visualization.base_graph import BaseGraph
+from logger import get_logger
 
 
 class MiningInterface(ABC):
@@ -32,8 +33,9 @@ class MiningInterface(ABC):
             cluster = DensityDistributionClusterAlgorithm(frequency)
             return list(cluster.sorted_data), list(cluster.labels_sorted_data)
         except ZeroDivisionError as e:
-            # TODO: use logging
-            print(e)
+            logger = get_logger("MiningInterface")
+            logger.error(e)
+            logger.info("use the first element as the only cluster")
             return [frequency[0]], [1.0]
 
     def get_graph(self) -> BaseGraph:
