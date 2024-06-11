@@ -1,5 +1,6 @@
 from ui.base_algorithm_ui.base_algorithm_view import BaseAlgorithmView
 import streamlit as st
+from components.number_input_slider import number_input_slider
 
 
 class FuzzyMinerView(BaseAlgorithmView):
@@ -17,7 +18,8 @@ class FuzzyMinerView(BaseAlgorithmView):
             The keys of the dictionary are equal to the keys of the sliders.
         """
         st.write("Significance Cutoff")
-        st.slider(
+
+        number_input_slider(
             label="Significance",
             min_value=sidebar_values["significance"][0],
             max_value=sidebar_values["significance"][1],
@@ -25,7 +27,7 @@ class FuzzyMinerView(BaseAlgorithmView):
             help="Significance measures the frequency of events that are observed more frequently and are therefore considered more significant.",
         )
 
-        st.slider(
+        number_input_slider(
             label="Correlation",
             min_value=sidebar_values["correlation"][0],
             max_value=sidebar_values["correlation"][1],
@@ -35,7 +37,7 @@ class FuzzyMinerView(BaseAlgorithmView):
 
         st.write("Edge filtering")
 
-        st.slider(
+        number_input_slider(
             label="Edge Cutoff",
             min_value=sidebar_values["edge_cutoff"][0],
             max_value=sidebar_values["edge_cutoff"][1],
@@ -43,7 +45,7 @@ class FuzzyMinerView(BaseAlgorithmView):
             help="The edge cutoff parameter determines the aggressiviness of the algorithm, i.e. the higher its value, the more likely the algorithm remove edges.",
         )
 
-        st.slider(
+        number_input_slider(
             label="Utility Ratio",
             min_value=sidebar_values["utility_ratio"][0],
             max_value=sidebar_values["utility_ratio"][1],
