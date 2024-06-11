@@ -24,6 +24,16 @@ class HeuristicMinerView(BaseAlgorithmView):
             help="Minimum frequency for displaying edges and nodes. Edges with a lower frequency (weight) will be removed. Node with a lower frequency will be removed.",
         )
 
+        st.number_input(
+            label=" ",
+            min_value=sidebar_values["frequency"][0],
+            max_value=sidebar_values["frequency"][1],
+            value=st.session_state.frequency,
+            key="frequency_text_input",
+            on_change=self.set_session_state,
+            args=("frequency", "frequency_text_input"),
+        )
+
         st.slider(
             label="Dependency Threshold",
             min_value=sidebar_values["threshold"][0],
@@ -31,3 +41,16 @@ class HeuristicMinerView(BaseAlgorithmView):
             key="threshold",
             help="Minimum dependency for displaying edges. Edges with a lower dependency will be removed.",
         )
+
+        st.number_input(
+            label=" ",
+            min_value=sidebar_values["threshold"][0],
+            max_value=sidebar_values["threshold"][1],
+            value=st.session_state.threshold,
+            key="threshold_text_input",
+            on_change=self.set_session_state,
+            args=("threshold", "threshold_text_input"),
+        )
+
+    def set_session_state(self, key, number_input_key) -> None:
+        st.session_state[key] = st.session_state[number_input_key]
