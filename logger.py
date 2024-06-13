@@ -15,7 +15,7 @@ logging_config = {
             "stream": "ext://sys.stdout",
         }
     },
-    "loggers": {"": {"level": "DEBUG", "handlers": ["console"]}},
+    "loggers": {"": {"level": "INFO", "handlers": ["console"]}},
 }
 
 logging.config.dictConfig(logging_config)
