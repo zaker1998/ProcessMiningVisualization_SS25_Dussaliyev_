@@ -10,6 +10,7 @@ class MiningInterface(ABC):
     def __init__(self):
         self.graph = None
         self.min_node_size = 1.5
+        self.logger = get_logger("MiningInterface")
 
     def get_clusters(
         self, frequency: list[int | float]
@@ -33,9 +34,8 @@ class MiningInterface(ABC):
             cluster = DensityDistributionClusterAlgorithm(frequency)
             return list(cluster.sorted_data), list(cluster.labels_sorted_data)
         except ZeroDivisionError as e:
-            logger = get_logger("MiningInterface")
-            logger.error(e)
-            logger.info("use the first element as the only cluster")
+            self.logger.error(e)
+            self.logger.info("Clustering failed. Returning the original frequency.")
             return [frequency[0]], [1.0]
 
     def get_graph(self) -> BaseGraph:
