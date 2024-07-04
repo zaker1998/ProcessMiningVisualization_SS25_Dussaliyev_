@@ -34,7 +34,7 @@ def number_input_slider(
     """
 
     if ratio is None:
-        ratio = [5, 1]
+        ratio = [5, 2]
 
     if isinstance(ratio, list):
         ratio = ratio[:2]
