@@ -2,7 +2,7 @@ numpy
 pandas
 graphviz
 ddcal
-streamlit==1.32.2
+streamlit==1.36.0
 
 # for testing
 parameterized
