@@ -17,6 +17,8 @@ The `run` method inside the controller is run at every reload, the `process_sess
 
 The View should also use the template from `templates/ui_template`. It is recommended to have a function for each section that should be displayed. The `create_layout` method can be uses to reserve space for a section and render these sections out of order.
 
+To add the page to the application, the controller needs to be called in the `streamlit_app.py` file.
+
 ## Adding a View to an existing page
 
 If a new view for a page is included, the view should be stored in the same folder as the page views and the controller. The view should either be a subclass of the BaseView class or should directly inherit from the page view class. The switch between views the `select view` method has to be implemented. If the two views do not have the same methods, the run methods also need to be changed to support the new view. An example of the `select view` method is displayed here:
@@ -43,7 +45,7 @@ All dataframes are transformed to algorithm data, by default a log dictionary. I
 
 The Mining model has to either inherit from the `MiningInterface` or the `BaseMining` class. The Models need to have getters for all the parameters, and the method to perform the mining has to store a graph of type `BaseGraph` in the `self.graph` variable.
 
-Optionally, a documentation page can be added to the mining algorithm. This should be written in a markdown file and stored in the `docs/algorithms` directory. To add the documentation, the docs path needs to be added to the `docs_path_mappings` dictionary, the key is the route of the algorithms and the value the path to the file.
+To add the algorithm to the page, it needs to be added in the `config.py`file. The `algorithm_mappings` map the name of the algorithm to the route, the `algorithm_routes` map the route to the controller class. Both dictionaries need to add the new data, to make the algorithm usable. Optionally, a documentation page can be added to the mining algorithm. This should be written in a markdown file and stored in the `docs/algorithms` directory. To add the documentation, the docs path needs to be added to the `docs_path_mappings` dictionary, the key is the route of the algorithms and the value the path to the file.
 
 ## Add new column selections
 

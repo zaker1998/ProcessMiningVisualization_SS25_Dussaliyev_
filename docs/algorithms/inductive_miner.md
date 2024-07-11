@@ -1,3 +1,77 @@
 # Inductive Miner
 
-TODO: add Description of Algorithm
+The Inductive Miner is a recursive mining algorithm. It does not consider frequencies, but only looks at directly-follows relations. This algorithm can create more powerful process models, because it does not only find directly follows relations, but also more complex ones. Exclusive execution, parallel executions can be found by this algorithm, but also redo loops are discovered. The algorithm uses an event log and create a directly follows graph from it.
+
+First, the algorithm checks for base cases, then it tries to find partitions in the directly follows graphs. Should a partition be found, the log is split in smaller logs and the algorithm is performed on them again until the algorithm terminates. If no cut is found, then a fall through is applied. In each recursion, a sub process tree is created. These trees are merged together to achieve the tree.
+
+This implementation uses a small deviation from the described algorithm. Frequency is taken into account before the algorithm is run. To eliminate small outliers, infrequent events or traces can be removed. This was done to make the model easier readable and to find better cuts.
+
+## Base Cases
+
+First, the log is checked for a base case. currently, there only exist two base cases, if the log is empty or only an empty trace is in the log, a silent activity is returned. This silent activity represents a silent transition, without an action. If there only exists one trace with exactly one event, then this event is returned. The base cases are one way to stop the recursive calls.
+
+## Cuts
+
+The second step is trying to find a cut in the directly-follows graph. There do exist 4 cuts in this implementation. The exclusive cut, the sequence cut, the parallel cut and the loop cut. If a cut is found, the log is split in multiple sublogs, the splitting depends on the found cut. Should an empty trace be in the log, cut detection is skipped and a fall through is applied. If, for cut detection, a partition of size one is found, the cut could not be detected and none is returned. The next cut will be performed until all cuts were checked.
+
+### Exclusive Cut
+
+The exclusive cut finds a partition in the graph, so that there does not exist an edge from one partition to any other partition. When all nodes are connected, no cut could be found and the algorithm checks for a sequence cut.
+
+### Sequence Cut
+
+The sequence cut is an order cut. It tries to find partitions so that there exists a path from a lower partition to a higher partition, but no path from the higher partition from the lower one. If only one partition was found, the algorithm checks for a parallel cut.
+
+### Parallel Cut
+
+The parallel cut shows that two partitions can be done concurrently. Every partition needs at least one start and one end event. A parallel cut is found if all nodes from one partition have an edge to all other nodes that are not in the partition. If no cut is found, the algorithm  tries to find a loop cut.
+
+### Loop Cut
+
+The last cut is the loop cut. It consists of a do part and one or multiple redo part. The do parts contains all start and end activities and represents a successful execution, the redo part does represent a failed execution. Redo parts always start at end activities and end at start activities. There does not exist an edge between multiple redo parts. Also, there does not exist an edge from a start activity to an activity of any redo partitions and there does not exist an edge from  a redo partition to any end activities. Furthermore, if an activity from a redo partition has an edge from an end activity to itself, then all end activities need to have an edge to that activity.The same is true for edges to start activities. If no cut can be found, then a fall through is applied.
+
+## Log Splitting
+
+Each cut has its own rules on how to split the log. Each of the four log splitting procedures will be explained. The log will be split in a number of sublogs, that is equal to the number of partitions.
+
+### Exclusive Split
+
+The first split will be the exclusive split. Each trace is checked as a whole and will be assigned to one sublog. If the events of a trace are all in the same partition, then the trace will be added to the sublog of the partition.
+
+### Sequence Split
+
+The sequence split does split each trace in subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first partition and an empty trace. While an event is part of the partition, the event will be added to the trace and the next element is checked. Should the element not be part of the trace, then the trace will be added to the sublog of the partition and a new empty trace will be created. The algorithm goes to the next partition and checks the event like described previously. This is done, until the full trace has been traversed.
+
+### Parallel Split
+
+The parallel split does project each trace, for each partition. The project function only includes the events of the partitions in the projected trace, but keeps the relative order of the events. Should a trace not contain any elements of a partition, then an empty trace is projected.
+
+### Loop Split
+
+The loop split does split each trace in subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first element and an empty trace. First, the partition of the current event needs to be found, and the event is added to the empty trace. Then the next event is checked. As long as the events are in the same partition, they are added to the trace. If an event is not in the partition, the trace will be added to the sublog of the partition, an empty trace will be created, and the new partition will be found. These steps continue, until the end of the trace.
+
+## Fall Through
+
+The fall through is the last resort of the algorithm, if no cuts can be found, multiple fall through can be applied.
+
+The first fall through checks if an empty trace is present in the log. Should this be the case, a process tree with the xor operation will be returned. The children will be tau, symbolizing a silent activity and the recursive call of the inductive miner on the log without the empty trace.
+
+The second case occurs, when the log has contains only one event, but it is executed more than one. Then a process tree, with a loop operation and the event and tau as children, will be returned. This process tree shows that the event can be executed more than once.
+
+The last fall through is the flower model. This is a process tree, with the loop operator and tau as the first child and all other events in the log as other children. This shows that any order of execution is possible.
+
+## Metrics
+
+The algorithm uses two metrics, the activity threshold, and the traces threshold.
+
+The activity threshold describes the frequency of an event in relation to the most frequent event. This metric is calculated, by dividing the frequency of the event by the maximum frequency of the events.
+
+The traces threshold describes the frequency of a trace in relation to the most frequent trace. This metric is calculated, by dividing the frequency of a trace by the maximum frequency of all traces.
+
+## Filtering
+
+Two metrics are used for filtering, the activity threshold, and the traces threshold.
+
+The activity threshold is in the range of 0.0 and 1.0. It will remove activities/events from the log, that have a lower threshold than set.
+
+The traces threshold is in the range of 0.0 and 1.0. It will remove traces from the log, that have a lower threshold than this parameter.
