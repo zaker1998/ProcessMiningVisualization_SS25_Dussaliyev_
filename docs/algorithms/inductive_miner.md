@@ -1,6 +1,6 @@
 # Inductive Miner
 
-The Inductive Miner is a recursive mining algorithm. It does not consider frequencies, but only looks at directly-follows relations. This algorithm can create more powerful process models, because it does not only find directly follows relations, but also more complex ones. Exclusive execution, parallel executions can be found by this algorithm, but also redo loops are discovered. The algorithm uses an event log and create a directly follows graph from it.
+The Inductive Miner is a recursive mining algorithm. It does not consider frequencies, but only looks at directly-follows relations. The algorithm uses an event log and create a directly follows graph from it.Through cuts in the graph, exclusive executuions, parallel executions, sequentail executions, and loops can be found. The algorithm produces sound process models.
 
 First, the algorithm checks for base cases, then it tries to find partitions in the directly follows graphs. Should a partition be found, the log is split in smaller logs and the algorithm is performed on them again until the algorithm terminates. If no cut is found, then a fall through is applied. In each recursion, a sub process tree is created. These trees are merged together to achieve the tree.
 
