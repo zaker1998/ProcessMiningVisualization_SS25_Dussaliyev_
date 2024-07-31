@@ -1,6 +1,6 @@
 # Fuzzy Miner
 
-The Fuzzy Miner is a mining algorithm is best used for less structured processes. The algorithm uses the significance and the correlation metric to abstract the process model. Nodes can be collapsed to clusters and edges can be merged for an easier view of the process model.
+The fuzzy miner is a mining algorithm is best used for less structured processes. The algorithm uses the significance and the correlation metric to abstract the process model. Nodes can be collapsed to clusters and edges can be merged for an easier view of the process model.
 
 Building clusters follows three rules. Significant nodes are kept and will not be merged, less significant nodes and highly correlated nodes will be merged into a cluster, and less significant and lowly correlated nodes will be removed. Edge filtering uses the edge cutoff metric, that will be described later.
 
@@ -18,7 +18,7 @@ The utility ratio defines a ratio to calculate the utility value by, weighting t
 
 The utility value is defined by using the binary significance, correlation, and the utility ratio. The edge cutoff is calculated by normalizing the utility value for edges with the same target node. The Min-Max normalization is used.
 
-util (A,B) = utility_ratio *signifcance(A,B) + (1 - utility_ratio)* correlation(A,B)
+util (A,B) = utility_ratio *significance(A,B) + (1 - utility_ratio)* correlation(A,B)
 
 ## Filtering
 

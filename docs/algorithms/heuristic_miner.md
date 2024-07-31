@@ -1,6 +1,6 @@
 # Heuristic Miner
 
-The Heuristic Miner is a simple, and effective process mining algorithm. It considers the frequencies of events and sequences when constructing the process model and focuses on the most common paths in the process while removing infrequent ones. Different metrics are used to remove connections and events from the process  model.
+The heuristic miner is a simple, and effective process mining algorithm. It considers the frequencies of events and sequences when constructing the process model and focuses on the most common paths in the process while removing infrequent ones. Different metrics are used to remove connections and events from the process  model.
 
 The Algorithm creates a directly-follows graph and stores it as a succession matrix. The different metrics are used to find infrequent nodes and edges and these are discarded.
 
@@ -8,9 +8,9 @@ The Algorithm creates a directly-follows graph and stores it as a succession mat
 
 Currently, two metrics are used to simplify the graph, the frequency metric and the dependency metric. Both metrics concentrate on the connections of the graph.
 
-The frequency metric is calulated for edges and nodes/events. The event frequency counts the occurences of an event in the log. The edge frequency counts the number of times one event is directly followed by another event.
+The frequency metric is calculated for edges and nodes/events. The event frequency counts the occurrences of an event in the log. The edge frequency counts the number of times one event is directly followed by another event.
 
-The dependency metric determines, how one-sided a relationship is between two edges. It compared how significant an edge is by the relative frequency of this relationship, compared to all other connections from the node. The formula to calculate the dependecy metrix is the following:
+The dependency metric determines, how one-sided a relationship is between two edges. It compared how significant an edge is by the relative frequency of this relationship, compared to all other connections from the node. The formula to calculate the dependency metric is the following:
 
 $$
 \text{if a} \neq \text{b} :   D(a > b) = \frac{S(a > b) - S(b > a)}{S(a > b) + S(b > a) + 1}\\
