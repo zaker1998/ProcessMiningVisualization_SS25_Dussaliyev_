@@ -12,7 +12,7 @@ First, the log is checked for a base case. Currently, there only exist two base 
 
 ## Cuts
 
-The second step is trying to find a cut in the directly-follows graph. There do exist 4 cuts in this implementation. The exclusive cut, the sequence cut, the parallel cut and the loop cut. If a cut is found, the log is split into multiple sublogs. The splitting depends on the found cut. Should an empty trace be in the log, cut detection is skipped and a fall through is applied. If, for cut detection, a partition of size one is found, the cut could not be detected and none is returned. The next cut will be performed until all cuts were checked.
+The second step is trying to find a cut in the directly-follows graph. There do exist 4 cuts in this implementation. The exclusive cut, the sequence cut, the parallel cut and the loop cut. If a cut is found, the log is split into multiple sublogs. The splitting depends on the found cut. Should an empty trace be in the log, cut detection is skipped and a fall through is applied. If, for cut detection, a partition of size one is found, a cut could not be detected and none is returned. The next cut will be performed until all cuts were checked.
 
 ### Exclusive Cut
 
@@ -40,7 +40,7 @@ The first split will be the exclusive split. Each trace is checked as a whole an
 
 ### Sequence Split
 
-The sequence split does split each trace in multiple subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first partition and an empty trace. While an event is part of the partition, the event will be added to the trace and the next element is checked. Should the element not be part of the trace, then the trace will be added to the sublog of the partition and a new empty trace will be created. The algorithm goes to the next partition and checks the event like described previously. This is done, until the full trace has been traversed. Should a trace not contain any events of a partition, then an empty log is added to the sublog of the partition.
+The sequence split does split each trace in multiple subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first partition and an empty subtrace. While an event is part of the partition, the event will be added to the subtrace and the next element of the trace is checked. Should the element not be part of the partition, then the subtrace will be added to the sublog of the partition and a new empty subtrace will be created. The algorithm advances to the next partition and checks the event as previously described. This is done, until the full trace has been traversed. Should a trace not contain any events of a partition, then an empty trace is added to the sublog of the partition.
 
 ### Parallel Split
 
@@ -48,15 +48,15 @@ The parallel split does project each trace, for each partition. The project func
 
 ### Loop Split
 
-The loop split does split each trace in multiple subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first element and an empty trace. First, the partition of the current event needs to be found, and the event is added to the empty trace. Then the next event is checked. As long as the events are in the same partition, they are added to the trace. If an event is not in the partition, the trace will be added to the sublog of the partition, an empty trace will be created, and the new partition will be found. These steps continue, until the end of the trace.
+The loop split does split each trace in multiple subtraces and each subtrace will be assigned to a sublog. The algorithm starts with the first element and an empty subtrace. First, the partition of the current event needs to be found, and the event is added to the  subtrace. Then the next event is checked. As long as the events are in the same partition, they are added to the trace. If an event is not in the partition, the subtrace will be added to the sublog of the partition, an empty subtrace will be created, and the new partition will be found. These steps continue, until the end of the trace.
 
 ## Fall Through
 
-The fall through is the last resort of the algorithm, if no cuts can be found, multiple fall through can be applied.
+The fall through is the last resort of the algorithm. If no cuts can be found, multiple fall through can be applied.
 
 The first fall through checks if an empty trace is present in the log. Should this be the case, a process tree with the xor operation will be returned. The children will be tau, symbolizing a silent activity and the recursive call of the inductive miner on the log without the empty trace.
 
-The second case occurs, when the log contains only one event, but it is executed more than one. Then a process tree, with a loop operation and the event and tau as children, will be returned. This process tree shows that the event can be executed more than once.
+The second case occurs, when the log contains only one event, but it is executed more than once. Then a process tree, with a loop operation and the event and tau as children, will be returned. This process tree shows that the event can be executed more than once.
 
 The last fall through is the flower model. This is a process tree, with the loop operator and tau as the first child and all other events in the log as other children. This shows that any order of execution is possible.
 

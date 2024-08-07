@@ -10,7 +10,7 @@ The fuzzy miner uses the following metrics, unary significance, binary significa
 
 The unary significance describes the relative importance of an event. A frequency significance is used, that counts the frequency of all the events and divides it by the maximum event frequency.
 
-The binary significance, or edge significance, is calculated by taking the source node frequency.
+The binary significance, or edge significance, is calculated by taking the source node's significance.
 
 Correlation measures how closely related two events are. All edges between two nodes are counted, and divided by the sum of all edges with the same source.
 
