@@ -1,4 +1,4 @@
-![alt text](https://github.com/MLUX-University-of-Vienna/ProcessMiningVisualization_WS23/blob/master/VisuPM.jpg?raw=true)
+![alt text](https://github.com/MLUX-University-of-Vienna/ProcessMiningVisualization_SS24_Frauenberger/blob/master/VisuPM.jpg?raw=true)
 
 # Process-Mining-Visualization
 
