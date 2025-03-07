@@ -10,10 +10,19 @@ class HomeView(BaseView):
     def create_layout(self):
         """Creates the layout for the Home page."""
         super().create_layout()
-        _, self.content_column, _ = st.columns([1, 3, 1])
+        _, self.content_column, _ = st.columns([1, 6, 1])
 
     def display_intro(self):
         """Displays the introduction text for the Home page."""
+        # Custom CSS to reduce margins
+        st.markdown("""
+            <style>
+                .block-container {
+                    padding-top: 1rem;
+                    padding-bottom: 1rem;
+                }
+            </style>
+            """, unsafe_allow_html=True)    
         with self.content_column:
             st.title("🚀 Welcome to the Process Mining Tool")
             st.markdown(
@@ -34,11 +43,12 @@ class HomeView(BaseView):
             The allowed file types.
         """
         with self.content_column:
-            st.file_uploader(
-                "Upload a file",
-                type=file_types,
-                accept_multiple_files=False,
-                key="uploaded_file",
+            st.markdown("### 📤 Upload your process log file")
+            uploaded_file = st.file_uploader(
+            label=f"Supported formats: {', '.join(file_types)}",
+            type=file_types,
+            accept_multiple_files=False,
+            key="uploaded_file",
             )
 
     def display_model_import(self, model):
