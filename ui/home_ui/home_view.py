@@ -92,27 +92,32 @@ class HomeView(BaseView):
             The detected delimiter of the CSV file.
         """
         with self.content_column:
+            st.markdown("""
+            <style>
+                div.stButton {
+                display: flex;
+                justify-content: center; /* Centers horizontally */
+                align-items: center; /* Aligns content vertically (if needed) */
+             }   
+             div.stButton > button {
+             width: 50rem; /* Adjust button width */
+            }
+             </style>
+                """, unsafe_allow_html=True)
+
             st.markdown("### 🔧 Import Settings")
 
-        # Create two horizontal columns
-            delimiter_col, button_col = st.columns([2, 1])
-
-        # Delimiter input with hidden label for alignment
-            with delimiter_col:
-                delimiter = st.text_input(
-                    "Delimiter",
-                    value=detected_delimiter,
-                    help=f"Detected delimiter: '{detected_delimiter}'. Adjust if necessary.",
-                    label_visibility="visible"
+            delimiter = st.text_input(
+                "Delimiter",
+                value=detected_delimiter,
+                help=f"Detected delimiter: '{detected_delimiter}'. Adjust if necessary.",
+                label_visibility="visible"
             )
 
-        # Precisely aligned button
-            with button_col: # precise vertical spacing (two hashes typically perfect)
-                navigation_button(
-                    label="Proceed ➡️",
-                    route="ColumnSelection",
-                    use_container_width=True,
-                    beforeNavigate=self.controller.set_df,
-                    args=(delimiter,)
-                )
-
+            navigation_button(
+                label="Proceed ➡️",
+                route="ColumnSelection",
+                use_container_width=True,
+                beforeNavigate=self.controller.set_df,
+                args=(delimiter,),
+            )
