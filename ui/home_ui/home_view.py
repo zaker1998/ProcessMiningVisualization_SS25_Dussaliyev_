@@ -16,13 +16,20 @@ class HomeView(BaseView):
         """Displays the introduction text for the Home page."""
         # Custom CSS to reduce margins
         st.markdown("""
-            <style>
-                .block-container {
-                    padding-top: 1rem;
-                    padding-bottom: 1rem;
-                }
-            </style>
-            """, unsafe_allow_html=True)    
+    <style>
+        .block-container {
+            padding-top: 0rem;
+            padding-bottom: 1rem;
+        }
+
+        /* Target only the h1 within block-container */
+        .block-container h1 {
+            padding-top: 0.5rem !important;
+            padding-bottom: 1rem !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
         with self.content_column:
             st.title("🚀 Welcome to the Process Mining Tool")
             st.markdown(
@@ -85,19 +92,27 @@ class HomeView(BaseView):
             The detected delimiter of the CSV file.
         """
         with self.content_column:
-            delimiter_col, _, button_column = st.columns([1, 3, 1])
+            st.markdown("### 🔧 Import Settings")
 
+        # Create two horizontal columns
+            delimiter_col, button_col = st.columns([2, 1])
+
+        # Delimiter input with hidden label for alignment
             with delimiter_col:
                 delimiter = st.text_input(
-                    "Delimiter", value=detected_delimiter, key="delimiter", max_chars=1
-                )
+                    "Delimiter",
+                    value=detected_delimiter,
+                    help=f"Detected delimiter: '{detected_delimiter}'. Adjust if necessary.",
+                    label_visibility="visible"
+            )
 
-            with button_column:
-                st.write("")
+        # Precisely aligned button
+            with button_col: # precise vertical spacing (two hashes typically perfect)
                 navigation_button(
-                    label="Mine from File",
+                    label="Proceed ➡️",
                     route="ColumnSelection",
                     use_container_width=True,
                     beforeNavigate=self.controller.set_df,
-                    args=(delimiter,),
+                    args=(delimiter,)
                 )
+
