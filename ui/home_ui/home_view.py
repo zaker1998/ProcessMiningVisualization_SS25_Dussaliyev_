@@ -15,11 +15,15 @@ class HomeView(BaseView):
     def display_intro(self):
         """Displays the introduction text for the Home page."""
         with self.content_column:
-            st.title("Welcome to the Process Mining Tool")
-            st.write(
-                "This tool is designed to help you visualize the dependencies between activities in your process logs."
+            st.title("🚀 Welcome to the Process Mining Tool")
+            st.markdown(
+                """
+                This tool helps you **visualize dependencies** in your process logs quickly and intuitively.  
+                
+                **Get started by uploading your log file below** 👇
+                """
             )
-            st.write("To get started, upload a CSV file containing your process logs.")
+            st.divider()
 
     def display_file_upload(self, file_types: list[str]):
         """Displays the file upload component.
