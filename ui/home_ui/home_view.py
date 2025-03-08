@@ -114,6 +114,8 @@ class HomeView(BaseView):
                 label_visibility="visible"
             )
 
+
+
             navigation_button(
                 label="Proceed ➡️",
                 route="ColumnSelection",
