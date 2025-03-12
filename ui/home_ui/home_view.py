@@ -31,14 +31,29 @@ class HomeView(BaseView):
 """, unsafe_allow_html=True)
 
         with self.content_column:
-            st.title("🚀 Welcome to the Process Mining Tool")
-            st.markdown(
-                """
-                This tool helps you **visualize dependencies** in your process logs quickly and intuitively.  
+            st.title("🚀 Process Mining Visualization")
+            
+            # Feature highlights in a grid
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                ### 📊 Key Features
+                - Intuitive process log visualization
+                - Multiple mining algorithms
+                - Interactive dependency graphs
+                - Easy data import/export
+                """)
                 
-                **Get started by uploading your log file below** 👇
-                """
-            )
+            with col2:
+                st.markdown("""
+                ### 🎯 Getting Started
+                1. Upload your process log file
+                2. Select mining algorithm
+                3. Configure parameters
+                4. Visualize your process
+                """)
+            
             st.divider()
 
     def display_file_upload(self, file_types: list[str]):
