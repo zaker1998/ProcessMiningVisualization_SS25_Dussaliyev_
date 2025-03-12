@@ -65,13 +65,26 @@ class HomeView(BaseView):
             The allowed file types.
         """
         with self.content_column:
-            st.markdown("### 📤 Upload your process log file")
-            uploaded_file = st.file_uploader(
-            label=f"Supported formats: {', '.join(file_types)}",
-            type=file_types,
-            accept_multiple_files=False,
-            key="uploaded_file",
-            )
+            st.markdown("### 📁 Upload Your Process Log")
+            
+            # File upload info box
+            st.info(f"""
+            **Supported file types:** {', '.join(file_types)}
+            
+            Make sure your log file contains:
+            - Activity/Event names
+            - Timestamps
+            - Case IDs
+            """)
+            
+            # Centered upload button with custom styling
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                uploaded_file = st.file_uploader(
+                    "Drag and drop your file here",
+                    type=file_types,
+                    help="Select a process log file to analyze"
+                )
 
     def display_model_import(self, model):
         """Displays the model import component. A dropdown is displayed to select the mining algorithm.
@@ -128,8 +141,6 @@ class HomeView(BaseView):
                 help=f"Detected delimiter: '{detected_delimiter}'. Adjust if necessary.",
                 label_visibility="visible"
             )
-
-
 
             navigation_button(
                 label="Proceed ➡️",
