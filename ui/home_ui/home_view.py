@@ -32,8 +32,9 @@ class HomeView(BaseView):
         /* Improve card-like appearance for sections */
         .highlight-card {
             background-color: #2d3748;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 5px;
+            padding: 12px;
+            padding-bottom: 3px; !important
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
             color: #ffffff;
@@ -124,10 +125,18 @@ class HomeView(BaseView):
                 st.markdown("""
                 <div class="highlight-card">
                     <div class="section-header">🎯 Getting Started</div>
-                    <div class="feature-item">1. Upload your process log file below</div>
-                    <div class="feature-item">2. Select your preferred mining algorithm</div>
-                    <div class="feature-item">3. Configure parameters as needed</div>
-                    <div class="feature-item">4. Explore your visualized process</div>
+                    <div class="feature-item">
+                             <span class="feature-icon">1.</span> Upload your process log file below
+                    </div>
+                    <div class="feature-item">
+                            <span class="feature-icon">2.</span> Select your preferred mining algorithm
+                    </div>
+                    <div class="feature-item">
+                            <span class="feature-icon">3.</span> Configure parameters as needed
+                    </div>
+                    <div class="feature-item">
+                            <span class="feature-icon">1.</span> Explore your visualized process
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             
