@@ -135,3 +135,23 @@ class HomeController(BaseController):
         selected_view.display_file_upload(self.supported_file_types)
         if self.uploaded_file is not None:
             self.process_file(selected_view)
+
+    def load_sample_file(self, file_path: str):
+        """Loads a sample file from the given path and proceeds directly to the next page.
+        
+        Parameters
+        ----------
+        file_path : str
+            The path to the sample file
+        """
+        try:
+            # Load the CSV file with comma delimiter (most common)
+            st.session_state.df = self.import_model.read_csv(file_path, delimiter=",")
+            
+            # Navigate directly to the ColumnSelection page
+            st.session_state.page = "ColumnSelection"
+            st.rerun()
+        except Exception as e:
+            self.logger.exception(e)
+            st.session_state.error = f"Error loading sample file: {str(e)}"
+            st.rerun()
