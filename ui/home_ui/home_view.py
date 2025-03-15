@@ -173,17 +173,18 @@ class HomeView(BaseView):
                 help=file_format_help
             )
             
-            # Replace the current sample file link with a simple button
-            st.markdown("""
-            <p style="font-size: 0.9em; margin-top: 10px;">
-                New to process mining? Try using our <span id="sample-file-link">sample file</span> to get started.
-            </p>
-            """, unsafe_allow_html=True)
-
-            # Add a simple button to load the sample file
-            if st.button("Load Sample File", key="load_sample_button"):
-                # Call the controller method to load the sample file and proceed
-                self.controller.load_sample_file("tests/testcsv/basicexample.csv")
+            # Replace the current sample file section with a clickable link
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown("""
+                <p style="font-size: 0.9em; margin-top: 10px;">
+                    New to process mining? Try using our sample file to get started.
+                </p>
+                """, unsafe_allow_html=True)
+            with col2:
+                if st.button("Load Sample", key="load_sample_button", help="Click to load a sample process log file"):
+                    # Call the controller method to load the sample file and proceed
+                    self.controller.load_sample_file("tests/testcsv/basicexample.csv")
 
     def display_model_import(self, model):
         """Displays the model import component. A dropdown is displayed to select the mining algorithm.
