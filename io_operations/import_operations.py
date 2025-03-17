@@ -2,6 +2,10 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 import pandas as pd
 import pickle
 import base64
+import pm4py
+from pm4py.objects.log.obj import EventLog
+import tempfile
+import os
 
 
 class ImportOperations:
