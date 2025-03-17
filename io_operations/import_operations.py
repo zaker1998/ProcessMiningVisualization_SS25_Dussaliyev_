@@ -127,3 +127,47 @@ class ImportOperations:
 
         with open(file_path, "r") as file:
             return file.readline()
+
+    def read_xes(self, file_path: str | UploadedFile) -> EventLog:
+        """Reads an XES file and returns a PM4Py EventLog object
+
+        Parameters
+        ----------
+        file_path : str | UploadedFile
+            Path to the XES file or the uploaded file object
+
+        Returns
+        -------
+        EventLog
+            The XES file as a PM4Py EventLog object
+        """
+        if isinstance(file_path, UploadedFile):
+            # Create a temporary file to store the uploaded content
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xes') as temp_file:
+                temp_file.write(file_path.getvalue())
+                temp_path = temp_file.name
+            
+            # Read the XES file using PM4Py
+            event_log = pm4py.read_xes(temp_path)
+            
+            # Clean up the temporary file
+            os.unlink(temp_path)
+            return event_log
+        else:
+            # Read directly from the file path
+            return pm4py.read_xes(file_path)
+    
+    def xes_to_dataframe(self, event_log: EventLog) -> pd.DataFrame:
+        """Converts a PM4Py EventLog object to a pandas DataFrame
+
+        Parameters
+        ----------
+        event_log : EventLog
+            The PM4Py EventLog object
+
+        Returns
+        -------
+        pd.DataFrame
+            The event log as a pandas DataFrame
+        """
+        return pm4py.convert_to_dataframe(event_log)
