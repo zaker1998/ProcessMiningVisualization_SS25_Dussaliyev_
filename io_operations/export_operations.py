@@ -5,6 +5,9 @@ from exceptions.io_exceptions import (
     NotImplementedFileTypeException,
 )
 from exceptions.type_exceptions import InvalidTypeException
+import pm4py
+import pandas as pd
+from pm4py.objects.log.obj import EventLog
 
 
 class ExportOperations:
@@ -98,3 +101,31 @@ class ExportOperations:
             The model as bytes
         """
         return pickle.dumps(model)
+
+    def export_to_xes(self, data, filename: str) -> None:
+        """Export data to an XES file.
+
+        Parameters
+        ----------
+        data : pd.DataFrame or EventLog
+            The data to export, either as a pandas DataFrame or a PM4Py EventLog
+        filename : str
+            The name of the file to export the data to
+
+        Raises
+        ------
+        InvalidTypeException
+            If data is not a pandas DataFrame or a PM4Py EventLog
+        """
+        if not filename.endswith(".xes"):
+            filename += ".xes"
+
+        if isinstance(data, pd.DataFrame):
+            # Convert DataFrame to EventLog
+            event_log = pm4py.convert_to_event_log(data)
+            pm4py.write_xes(event_log, filename)
+        elif isinstance(data, EventLog):
+            # Write EventLog directly
+            pm4py.write_xes(data, filename)
+        else:
+            raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
