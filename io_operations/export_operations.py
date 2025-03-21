@@ -8,6 +8,7 @@ from exceptions.type_exceptions import InvalidTypeException
 import pm4py
 import pandas as pd
 from pm4py.objects.log.obj import EventLog
+import os
 
 
 class ExportOperations:
@@ -58,6 +59,9 @@ class ExportOperations:
 
         if format not in self.graph_export_formats:
             raise UnsupportedFileTypeException(format)
+
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
         graphviz_graph = graph.get_graphviz_graph()
         export_format = format.lower()
