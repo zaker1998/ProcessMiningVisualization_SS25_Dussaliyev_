@@ -129,3 +129,69 @@ class ExportOperations:
             pm4py.write_xes(data, filename)
         else:
             raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
+
+    def export_to_excel(self, data: pd.DataFrame, filename: str, sheet_name: str = "Sheet1") -> None:
+        """Exports a pandas DataFrame to an Excel file
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to save to
+        sheet_name : str, optional
+            The name of the sheet in the Excel file, by default "Sheet1"
+        """
+        data.to_excel(filename, sheet_name=sheet_name, index=False)
+
+    def export_to_json(self, data: pd.DataFrame, filename: str, orient: str = "records") -> None:
+        """Exports a pandas DataFrame to a JSON file
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to save to
+        orient : str, optional
+            The orientation of the JSON file, by default "records"
+        """
+        data.to_json(filename, orient=orient)
+
+    def export_to_xml(self, data: pd.DataFrame, filename: str) -> None:
+        """Exports a pandas DataFrame to an XML file
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to save to
+        """
+        data.to_xml(filename)
+
+    def export_to_parquet(self, data: pd.DataFrame, filename: str) -> None:
+        """Exports a pandas DataFrame to a Parquet file
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to save to
+        """
+        data.to_parquet(filename)
+
+    def export_to_csv(self, data: pd.DataFrame, filename: str, delimiter: str = ",") -> None:
+        """Exports a pandas DataFrame to a CSV file
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to save to
+        delimiter : str, optional
+            The delimiter to use in the CSV file, by default ","
+        """
+        data.to_csv(filename, delimiter=delimiter, index=False)
