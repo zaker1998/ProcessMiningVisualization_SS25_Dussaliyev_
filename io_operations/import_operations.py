@@ -7,7 +7,7 @@ from pm4py.objects.log.obj import EventLog
 import tempfile
 import os
 import xml.etree.ElementTree as ET
-from exceptions.io_exceptions import UnsupportedFileTypeException
+from exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
 import logging
 
 
@@ -156,19 +156,21 @@ class ImportOperations:
                     temp_file.write(file_path.getvalue())
                     temp_path = temp_file.name
                 
-                # Read the XES file using PM4Py
-                event_log = pm4py.read_xes(temp_path)
+                # Read the XES file using PM4Py's xes importer directly
+                from pm4py.objects.log.importer.xes import importer as xes_importer
+                event_log = xes_importer.apply(temp_path)
                 
                 # Clean up the temporary file
                 os.unlink(temp_path)
                 return event_log
             else:
-                # Read directly from the file path
-                return pm4py.read_xes(file_path)
+                # Read directly from the file path using xes importer
+                from pm4py.objects.log.importer.xes import importer as xes_importer
+                return xes_importer.apply(file_path)
         except Exception as e:
             logging.error(f"Error reading XES file: {str(e)}")
             raise UnsupportedFileTypeException(f"XES file format error: {str(e)}")
-    
+
     def xes_to_dataframe(self, event_log: EventLog) -> pd.DataFrame:
         """Converts a PM4Py EventLog object to a pandas DataFrame
 
@@ -182,6 +184,8 @@ class ImportOperations:
         pd.DataFrame
             The event log as a pandas DataFrame
         """
+        if not isinstance(event_log, EventLog):
+            raise InvalidTypeException("PM4Py EventLog", type(event_log))
         return pm4py.convert_to_dataframe(event_log)
     
     def validate_xes(self, file_path: str | UploadedFile) -> bool:
@@ -198,21 +202,8 @@ class ImportOperations:
             True if the file is a valid XES file, False otherwise
         """
         try:
-            # If it's an uploaded file, write to temp file first
-            if isinstance(file_path, UploadedFile):
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xes') as temp_file:
-                    temp_file.write(file_path.getvalue())
-                    temp_path = temp_file.name
-                
-                # Parse XES to validate
-                result = self._validate_xes_structure(temp_path)
-                
-                # Clean up the temporary file
-                os.unlink(temp_path)
-                return result
-            else:
-                # Validate directly
-                return self._validate_xes_structure(file_path)
+            event_log = self.read_xes(file_path)
+            return isinstance(event_log, EventLog) and len(event_log) > 0
         except Exception:
             return False
     
