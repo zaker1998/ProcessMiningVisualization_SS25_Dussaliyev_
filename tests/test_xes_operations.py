@@ -18,19 +18,19 @@ class TestXESOperations(unittest.TestCase):
         self.test_output_dir = os.path.join(tempfile.gettempdir(), 'test_xes_output')
         os.makedirs(self.test_output_dir, exist_ok=True)
         
-        # Create a simple test DataFrame
+        # Create a simple test DataFrame with proper datetime format
         self.test_df = pd.DataFrame({
             'case:concept:name': ['case1', 'case1', 'case2', 'case2'],
             'concept:name': ['activity1', 'activity2', 'activity1', 'activity3'],
-            'time:timestamp': [
+            'time:timestamp': pd.to_datetime([
                 '2023-01-01 10:00:00', 
                 '2023-01-01 11:00:00', 
                 '2023-01-02 10:00:00', 
                 '2023-01-02 11:00:00'
-            ]
+            ])
         })
         
-        # Create a simple event log
+        # Create a simple event log with proper datetime format
         self.test_event_log = EventLog()
         
         # First trace
@@ -39,11 +39,11 @@ class TestXESOperations(unittest.TestCase):
         
         event1 = Event()
         event1['concept:name'] = 'activity1'
-        event1['time:timestamp'] = '2023-01-01 10:00:00'
+        event1['time:timestamp'] = pd.Timestamp('2023-01-01 10:00:00')
         
         event2 = Event()
         event2['concept:name'] = 'activity2'
-        event2['time:timestamp'] = '2023-01-01 11:00:00'
+        event2['time:timestamp'] = pd.Timestamp('2023-01-01 11:00:00')
         
         trace1.append(event1)
         trace1.append(event2)
@@ -54,11 +54,11 @@ class TestXESOperations(unittest.TestCase):
         
         event3 = Event()
         event3['concept:name'] = 'activity1'
-        event3['time:timestamp'] = '2023-01-02 10:00:00'
+        event3['time:timestamp'] = pd.Timestamp('2023-01-02 10:00:00')
         
         event4 = Event()
         event4['concept:name'] = 'activity3'
-        event4['time:timestamp'] = '2023-01-02 11:00:00'
+        event4['time:timestamp'] = pd.Timestamp('2023-01-02 11:00:00')
         
         trace2.append(event3)
         trace2.append(event4)
@@ -122,12 +122,12 @@ class TestXESOperations(unittest.TestCase):
         custom_df = pd.DataFrame({
             'case_id': ['case1', 'case1', 'case2', 'case2'],
             'activity': ['activity1', 'activity2', 'activity1', 'activity3'],
-            'timestamp': [
+            'timestamp': pd.to_datetime([
                 '2023-01-01 10:00:00', 
                 '2023-01-01 11:00:00', 
                 '2023-01-02 10:00:00', 
                 '2023-01-02 11:00:00'
-            ]
+            ])
         })
         
         output_file = os.path.join(self.test_output_dir, 'test_custom_cols.xes')
