@@ -9,6 +9,9 @@ import pm4py
 import pandas as pd
 from pm4py.objects.log.obj import EventLog
 import os
+import tempfile
+import logging
+from typing import Dict, Any, List, Union, Optional
 
 
 class ExportOperations:
@@ -123,13 +126,189 @@ class ExportOperations:
         """
         if not filename.endswith(".xes"):
             filename += ".xes"
+            
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
-        if isinstance(data, pd.DataFrame):
-            # Convert DataFrame to EventLog
-            event_log = pm4py.convert_to_event_log(data)
+        try:
+            if isinstance(data, pd.DataFrame):
+                # Convert DataFrame to EventLog
+                event_log = pm4py.convert_to_event_log(data)
+                pm4py.write_xes(event_log, filename)
+            elif isinstance(data, EventLog):
+                # Write EventLog directly
+                pm4py.write_xes(data, filename)
+            else:
+                raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
+        except Exception as e:
+            logging.error(f"Error exporting to XES: {str(e)}")
+            raise Exception(f"Failed to export to XES: {str(e)}")
+            
+    def export_dataframe_to_xes(
+        self, 
+        df: pd.DataFrame, 
+        filename: str,
+        case_id_col: str = "case:concept:name",
+        activity_col: str = "concept:name",
+        timestamp_col: str = "time:timestamp",
+        additional_attributes: Optional[List[str]] = None
+    ) -> None:
+        """Export a pandas DataFrame to an XES file with specified column mappings.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame to export
+        filename : str
+            The name of the file to export the data to
+        case_id_col : str, optional
+            The column containing case IDs, by default "case:concept:name"
+        activity_col : str, optional
+            The column containing activity names, by default "concept:name"
+        timestamp_col : str, optional
+            The column containing timestamps, by default "time:timestamp"
+        additional_attributes : List[str], optional
+            Additional columns to include in the XES file, by default None
+
+        Raises
+        ------
+        InvalidTypeException
+            If data is not a pandas DataFrame
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise InvalidTypeException("pandas DataFrame", type(df))
+            
+        if not filename.endswith(".xes"):
+            filename += ".xes"
+            
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+            
+        try:
+            # Create a copy of the DataFrame to avoid modifying the original
+            df_copy = df.copy()
+            
+            # Rename columns to match expected XES format if they don't already match
+            columns_mapping = {}
+            if case_id_col != "case:concept:name" and case_id_col in df_copy.columns:
+                columns_mapping[case_id_col] = "case:concept:name"
+                
+            if activity_col != "concept:name" and activity_col in df_copy.columns:
+                columns_mapping[activity_col] = "concept:name"
+                
+            if timestamp_col != "time:timestamp" and timestamp_col in df_copy.columns:
+                columns_mapping[timestamp_col] = "time:timestamp"
+                
+            if columns_mapping:
+                df_copy = df_copy.rename(columns=columns_mapping)
+            
+            # Convert to event log and write
+            event_log = pm4py.convert_to_event_log(df_copy)
             pm4py.write_xes(event_log, filename)
-        elif isinstance(data, EventLog):
-            # Write EventLog directly
-            pm4py.write_xes(data, filename)
-        else:
-            raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
+        except Exception as e:
+            logging.error(f"Error exporting DataFrame to XES: {str(e)}")
+            raise Exception(f"Failed to export DataFrame to XES: {str(e)}")
+            
+    def export_logs_with_attributes(
+        self,
+        data: Union[pd.DataFrame, EventLog],
+        filename: str,
+        log_attributes: Optional[Dict[str, Any]] = None,
+        trace_attributes: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Export data to an XES file with custom log and trace attributes.
+
+        Parameters
+        ----------
+        data : pd.DataFrame or EventLog
+            The data to export, either as a pandas DataFrame or a PM4Py EventLog
+        filename : str
+            The name of the file to export the data to
+        log_attributes : Dict[str, Any], optional
+            Custom log-level attributes to add, by default None
+        trace_attributes : Dict[str, Any], optional
+            Custom trace-level attributes to add, by default None
+
+        Raises
+        ------
+        InvalidTypeException
+            If data is not a pandas DataFrame or a PM4Py EventLog
+        """
+        if not filename.endswith(".xes"):
+            filename += ".xes"
+            
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+            
+        try:
+            if isinstance(data, pd.DataFrame):
+                # Convert DataFrame to EventLog
+                event_log = pm4py.convert_to_event_log(data)
+            elif isinstance(data, EventLog):
+                # Use EventLog directly
+                event_log = data
+            else:
+                raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
+                
+            # Add log-level attributes
+            if log_attributes:
+                for key, value in log_attributes.items():
+                    event_log.attributes[key] = value
+                
+            # Add trace-level attributes if provided
+            if trace_attributes and len(event_log) > 0:
+                for trace in event_log:
+                    for key, value in trace_attributes.items():
+                        trace.attributes[key] = value
+                
+            # Write to file
+            pm4py.write_xes(event_log, filename)
+        except Exception as e:
+            logging.error(f"Error exporting logs with attributes: {str(e)}")
+            raise Exception(f"Failed to export logs with attributes: {str(e)}")
+            
+    def export_to_xes_bytes(self, data: Union[pd.DataFrame, EventLog]) -> bytes:
+        """Export data to XES format and return as bytes.
+
+        Parameters
+        ----------
+        data : pd.DataFrame or EventLog
+            The data to export, either as a pandas DataFrame or a PM4Py EventLog
+
+        Returns
+        -------
+        bytes
+            The XES file as bytes
+
+        Raises
+        ------
+        InvalidTypeException
+            If data is not a pandas DataFrame or a PM4Py EventLog
+        """
+        try:
+            # Create a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xes') as temp_file:
+                temp_path = temp_file.name
+                
+            # Write data to the temporary file
+            if isinstance(data, pd.DataFrame):
+                # Convert DataFrame to EventLog
+                event_log = pm4py.convert_to_event_log(data)
+                pm4py.write_xes(event_log, temp_path)
+            elif isinstance(data, EventLog):
+                # Write EventLog directly
+                pm4py.write_xes(data, temp_path)
+            else:
+                raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
+                
+            # Read the file as bytes
+            with open(temp_path, 'rb') as file:
+                xes_bytes = file.read()
+                
+            # Clean up the temporary file
+            os.unlink(temp_path)
+            
+            return xes_bytes
+        except Exception as e:
+            logging.error(f"Error exporting to XES bytes: {str(e)}")
+            raise Exception(f"Failed to export to XES bytes: {str(e)}")
