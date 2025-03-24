@@ -109,7 +109,7 @@ class ExportOperations:
         """
         return pickle.dumps(model)
 
-    def export_to_xes(self, data, filename: str) -> None:
+    def export_to_xes(self, data: Union[pd.DataFrame, EventLog], filename: str) -> None:
         """Export data to an XES file.
 
         Parameters
@@ -132,12 +132,16 @@ class ExportOperations:
 
         try:
             if isinstance(data, pd.DataFrame):
-                # Convert DataFrame to EventLog
-                event_log = pm4py.convert_to_event_log(data)
-                pm4py.write_xes(event_log, filename)
+                # Convert DataFrame to EventLog using PM4Py's converter
+                from pm4py.objects.conversion.log import converter as log_converter
+                event_log = log_converter.apply(data, variant=log_converter.Variants.TO_EVENT_LOG)
+                # Write using XES exporter
+                from pm4py.objects.log.exporter.xes import exporter as xes_exporter
+                xes_exporter.apply(event_log, filename)
             elif isinstance(data, EventLog):
-                # Write EventLog directly
-                pm4py.write_xes(data, filename)
+                # Write EventLog directly using XES exporter
+                from pm4py.objects.log.exporter.xes import exporter as xes_exporter
+                xes_exporter.apply(data, filename)
             else:
                 raise InvalidTypeException("pandas DataFrame or PM4Py EventLog", type(data))
         except Exception as e:
