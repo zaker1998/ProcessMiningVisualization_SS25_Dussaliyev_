@@ -20,35 +20,45 @@ class StandardColumnSelectionView(BaseColumnSelectionView):
         )
 
     def render_column_selections(self, columns: list[str]):
-        """Renders the column selection options.
+        """Renders the column selection options."""
 
-        Parameters
-        ----------
-        columns : list[str]
-            The names of the needed columns
-        """
+        # Add a helpful card at the top
+        st.markdown("""
+        <div style="background-color: #2d3748; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #ffffff;">📋 Column Selection</h3>
+            <p style="color: #ffffff;">Please map your data columns to the required process mining fields:</p>
+            <ul style="color: #ffffff;">
+                <li><strong style="color: #FF705B;">Time column</strong>: Contains timestamps of events</li>
+                <li><strong style="color: #629AFF;">Case column</strong>: Identifies the process instance</li>
+                <li><strong style="color: #57B868;">Activity column</strong>: Describes the activity performed</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
         time_col, case_col, activity_col = st.columns(3)
         with time_col:
             st.selectbox(
-                "Select the :red[time column]",
+                "Select the :red[time column] ⏱️",
                 columns,
                 key=self.needed_columns[0],
                 index=None,
+                help="This column should contain timestamps indicating when each activity occurred"
             )
 
         with case_col:
             st.selectbox(
-                "Select the :blue[case column]",
+                "Select the :blue[case column] 📁",
                 columns,
                 key=self.needed_columns[1],
                 index=None,
+                help="This column should contain identifiers for each process instance"
             )
 
         with activity_col:
             st.selectbox(
-                "Select the :green[activity column]",
+                "Select the :green[activity column] 🔧",
                 columns,
                 key=self.needed_columns[2],
                 index=None,
+                help="This column should contain the names of activities performed in the process"
             )
