@@ -85,3 +85,30 @@ class BaseView(ABC):
             )
             raise InvalidTypeException(BaseController, type(controller))
         self.controller = controller
+
+    def display_progress_indicator(self, step, total_steps, step_names=None):
+        """
+        Displays a progress indicator showing the current step in a multi-step process.
+        
+        Parameters
+        ----------
+        step : int
+            Current step (1-indexed)
+        total_steps : int
+            Total number of steps
+        step_names : list[str], optional
+            Names for each step
+        """
+        if step_names is None:
+            step_names = [f"Step {i+1}" for i in range(total_steps)]
+        
+        progress = (step - 1) / (total_steps - 1) if total_steps > 1 else 1.0
+        st.progress(progress)
+        
+        # Create clickable step indicators
+        cols = st.columns(total_steps)
+        for i in range(total_steps):
+            with cols[i]:
+                style = "color: #4299e1; font-weight: bold;" if i == step-1 else "color: gray;"
+                st.markdown(f"<p style='text-align: center; {style}'>{step_names[i]}</p>", 
+                            unsafe_allow_html=True)

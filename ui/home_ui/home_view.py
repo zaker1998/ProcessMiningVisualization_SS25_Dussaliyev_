@@ -17,84 +17,63 @@ class HomeView(BaseView):
         # Custom CSS to improve overall appearance, spacing, and text visibility
         st.markdown("""
     <style>
-        /* Define a consistent color palette */
-        :root {
-            --primary-color: #4299e1;
-            --primary-dark: #3182ce;
-            --secondary-color: #2d3748;
-            --accent-color: #63b3ed;
-            --text-color: #ffffff;
-            --background-dark: #1a202c;
-            --success-color: #57B868;
-            --info-color: #629AFF;
-            --warning-color: #FFB259;
-            --danger-color: #FF705B;
-        }
-        
         .block-container {
             padding-top: 0rem;
             padding-bottom: 1rem;
         }
-        
-        /* Use the color palette variables throughout */
+
+        /* Target only the h1 within block-container */
         .block-container h1 {
             padding-top: 0.5rem !important;
             padding-bottom: 1rem !important;
-            color: var(--text-color);
+            color: #ffffff;
         }
         
+        /* Improve card-like appearance for sections */
         .highlight-card {
-            background-color: var(--secondary-color);
-            border-radius: 8px;
-            padding: 16px;
-            padding-bottom: 6px !important;
+            background-color: #2d3748;
+            border-radius: 5px;
+            padding: 12px;
+            padding-bottom: 3px; !important
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
-            color: var(--text-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: #ffffff;
         }
         
-        .highlight-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
-        }
-        
+        /* Section headers */
         .section-header {
             font-size: 24px;
             font-weight: bold;
             margin-bottom: 15px;
-            color: var(--text-color);
-            background-color: var(--primary-color);
+            color: #ffffff;
+            background-color: #4299e1;
             padding: 8px 15px;
             border-radius: 5px;
             display: inline-block;
         }
         
+        /* Feature items */
         .feature-item {
             background-color: #4a5568;
-            color: var(--text-color);
-            padding: 10px 15px;
+            color: #ffffff;
+            padding: 8px 15px;
             border-radius: 5px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-size: 16px;
             display: flex;
             align-items: center;
-            transition: background-color 0.2s ease;
         }
         
-        .feature-item:hover {
-            background-color: #515d6e;
-        }
-        
-        /* Style the rest of the elements similarly */
+        /* Feature icons */
         .feature-icon {
             font-size: 20px;
             margin-right: 10px;
-            color: var(--accent-color);
+            color: #63b3ed;
         }
         
+        /* Improve button styling */
         .stButton>button {
-            background-color: var(--primary-color);
+            background-color: #4299e1;
             color: white;
             border-radius: 5px;
             border: none;
@@ -104,7 +83,7 @@ class HomeView(BaseView):
         }
         
         .stButton>button:hover {
-            background-color: var(--primary-dark);
+            background-color: #3182ce;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
     </style>
