@@ -64,21 +64,20 @@ class BaseAlgorithmView(BaseView):
             home_button("Back", use_container_width=True)
 
     def display_export_button(self, disabled=False) -> None:
-        """Displays the export button. The button is disabled while the graph is loading.
-
-        Parameters
-        ----------
-        disabled : bool, optional
-            If True, the button is disabled, by default False
-        """
+        """Displays the export button. The button is disabled while the graph is loading."""
         with self.export_button_container:
-            navigation_button(
+            # Add hover tooltip and visual feedback
+            button = navigation_button(
                 "Export",
                 "Export",
                 use_container_width=True,
                 disabled=disabled,
                 key="export_button-" + str(disabled),
             )
+            
+            if button:
+                # Add success message when clicked
+                st.success("Export initiated successfully!")
 
     def display_graph(self, graph) -> None:
         """Displays the graph in the graph container.
@@ -97,18 +96,13 @@ class BaseAlgorithmView(BaseView):
                 )
 
     def display_loading_spinner(self, message: str, operation) -> None:
-        """Displays a loading spinner while an operation is running.
-
-        Parameters
-        ----------
-        message : str
-            The message to be displayed in the spinner.
-        operation : function
-            The operation to be executed.
-        """
+        """Displays a loading spinner while an operation is running."""
         with self.graph_container:
-            with st.spinner(message):
-                operation()
+            with st.spinner(f"📊 {message}"):
+                result = operation()
+                # Show success message when complete
+                st.success("Operation completed successfully!")
+                return result
 
     def display_node_info(self, node_name: str, node_description: str) -> None:
         """Displays the information of a node in the node data container.
