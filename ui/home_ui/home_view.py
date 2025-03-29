@@ -2,6 +2,7 @@ import streamlit as st
 from ui.base_ui.base_view import BaseView
 from config import algorithm_mappings
 from components.buttons import navigation_button
+from components.theme_manager import theme_toggle
 
 
 class HomeView(BaseView):
@@ -11,91 +12,25 @@ class HomeView(BaseView):
         """Creates the layout for the Home page."""
         super().create_layout()
         _, self.content_column, _ = st.columns([1, 6, 1])
+        
+        # Add theme toggle in sidebar
+        with st.sidebar:
+            st.markdown("### Settings")
+            current_theme = theme_toggle()
+            st.markdown("---")
 
     def display_intro(self):
         """Displays the introduction text for the Home page."""
-        # Custom CSS to improve overall appearance, spacing, and text visibility
-        st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 0rem;
-            padding-bottom: 1rem;
-        }
-
-        /* Target only the h1 within block-container */
-        .block-container h1 {
-            padding-top: 0.5rem !important;
-            padding-bottom: 1rem !important;
-            color: #ffffff;
-        }
+        # Note: Base CSS is now handled by the BaseView._apply_theme_css method
         
-        /* Improve card-like appearance for sections */
-        .highlight-card {
-            background-color: #2d3748;
-            border-radius: 5px;
-            padding: 12px;
-            padding-bottom: 3px; !important
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
-            color: #ffffff;
-        }
-        
-        /* Section headers */
-        .section-header {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #ffffff;
-            background-color: #4299e1;
-            padding: 8px 15px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-        
-        /* Feature items */
-        .feature-item {
-            background-color: #4a5568;
-            color: #ffffff;
-            padding: 8px 15px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-        }
-        
-        /* Feature icons */
-        .feature-icon {
-            font-size: 20px;
-            margin-right: 10px;
-            color: #63b3ed;
-        }
-        
-        /* Improve button styling */
-        .stButton>button {
-            background-color: #4299e1;
-            color: white;
-            border-radius: 5px;
-            border: none;
-            padding: 10px 15px;
-            transition: all 0.3s ease;
-            font-size: 16px;
-        }
-        
-        .stButton>button:hover {
-            background-color: #3182ce;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
         with self.content_column:
             st.title("🚀 Process Mining Visualization")
             
-            # Welcome message with brief explanation
+            # Welcome message with brief explanation and micro-interactions
             st.markdown("""
             <div class="highlight-card">
-                <p style="font-size: 16px;">Welcome to your process mining visualization tool! This application helps you analyze and visualize business processes from event logs, making it easier to understand process flows and identify optimization opportunities.</p>
+                <p style="font-size: 18px; font-weight: 500;">Welcome to your process mining visualization tool!</p>
+                <p style="font-size: 16px;">This application helps you analyze and visualize business processes from event logs, making it easier to understand process flows and identify optimization opportunities.</p>
             </div>
             """, unsafe_allow_html=True)
             
