@@ -12,7 +12,191 @@ class BaseView(ABC):
 
     def create_layout(self):
         """Creates the layout for the views."""
+        self._apply_theme_css()
         return
+
+    def _apply_theme_css(self):
+        """Applies the CSS for the current theme."""
+        # Get current theme from session state
+        theme = "dark" if "theme" not in st.session_state else st.session_state.theme
+        
+        # Define theme variables
+        theme_vars = {
+            "dark": {
+                "--bg-primary": "#121212",
+                "--bg-secondary": "#1e1e1e",
+                "--bg-card": "#2d3748",
+                "--bg-highlight": "#4a5568",
+                "--text-primary": "#ffffff",
+                "--text-secondary": "#e2e8f0",
+                "--accent-primary": "#4299e1",
+                "--accent-secondary": "#63b3ed",
+                "--accent-hover": "#3182ce",
+                "--shadow": "rgba(0, 0, 0, 0.3)",
+                "--success-color": "#57B868",
+                "--info-color": "#629AFF",
+                "--warning-color": "#FFB259",
+                "--danger-color": "#FF705B",
+            },
+            "light": {
+                "--bg-primary": "#ffffff",
+                "--bg-secondary": "#f7fafc",
+                "--bg-card": "#edf2f7",
+                "--bg-highlight": "#e2e8f0",
+                "--text-primary": "#1a202c",
+                "--text-secondary": "#4a5568",
+                "--accent-primary": "#3182ce",
+                "--accent-secondary": "#4299e1",
+                "--accent-hover": "#2b6cb0",
+                "--shadow": "rgba(0, 0, 0, 0.1)",
+                "--success-color": "#48bb78",
+                "--info-color": "#4299e1",
+                "--warning-color": "#ed8936",
+                "--danger-color": "#f56565",
+            }
+        }
+        
+        # CSS as an f-string to include theme variables
+        css = f"""
+        <style>
+            :root {{
+                {'; '.join([f"{k}: {v}" for k, v in theme_vars[theme].items()])}
+            }}
+            
+            /* Base styling for the entire app */
+            .block-container {{
+                padding-top: 0rem;
+                padding-bottom: 1rem;
+                background-color: var(--bg-primary);
+                transition: background-color 0.3s ease;
+            }}
+            
+            /* Dark mode Streamlit elements override */
+            {'body { background-color: var(--bg-primary); color: var(--text-primary); }' if theme == "dark" else ''}
+            
+            /* Headers */
+            .block-container h1, .block-container h2, .block-container h3 {{
+                color: var(--text-primary);
+                transition: color 0.3s ease;
+            }}
+            
+            /* Cards with animations */
+            .highlight-card {{
+                background-color: var(--bg-card);
+                border-radius: 8px;
+                padding: 16px;
+                padding-bottom: 6px !important;
+                box-shadow: 0 4px 6px var(--shadow);
+                margin-bottom: 20px;
+                color: var(--text-primary);
+                transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+            }}
+            
+            .highlight-card:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px var(--shadow);
+            }}
+            
+            /* Section headers */
+            .section-header {{
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                color: var(--text-primary);
+                background-color: var(--accent-primary);
+                padding: 8px 15px;
+                border-radius: 5px;
+                display: inline-block;
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }}
+            
+            /* Feature items with animations */
+            .feature-item {{
+                background-color: var(--bg-highlight);
+                color: var(--text-primary);
+                padding: 10px 15px;
+                border-radius: 5px;
+                margin-bottom: 12px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+            }}
+            
+            .feature-item:hover {{
+                background-color: var(--accent-secondary);
+                transform: translateX(5px);
+            }}
+            
+            /* Feature icons */
+            .feature-icon {{
+                font-size: 20px;
+                margin-right: 10px;
+                color: var(--accent-secondary);
+                transition: color 0.3s ease;
+            }}
+            
+            /* Buttons with animations */
+            .stButton>button {{
+                background-color: var(--accent-primary);
+                color: {'white' if theme == "dark" else 'var(--text-primary)'};
+                border-radius: 5px;
+                border: none;
+                padding: 10px 15px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .stButton>button:hover {{
+                background-color: var(--accent-hover);
+                box-shadow: 0 4px 8px var(--shadow);
+            }}
+            
+            .stButton>button:active {{
+                transform: scale(0.95);
+            }}
+            
+            /* Ripple effect for buttons */
+            .stButton>button::after {{
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                pointer-events: none;
+                background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+                background-repeat: no-repeat;
+                background-position: 50%;
+                transform: scale(10, 10);
+                opacity: 0;
+                transition: transform 0.5s, opacity 1s;
+            }}
+            
+            .stButton>button:active::after {{
+                transform: scale(0, 0);
+                opacity: 0.3;
+                transition: 0s;
+            }}
+            
+            /* Selectbox styling */
+            .stSelectbox label {{
+                color: var(--text-primary);
+                transition: color 0.3s ease;
+            }}
+            
+            /* Other Streamlit elements */
+            .stTextInput>div>div {{
+                background-color: var(--bg-secondary);
+                color: var(--text-primary);
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }}
+        </style>
+        """
+        
+        st.markdown(css, unsafe_allow_html=True)
 
     def display_error_message(self, error_message: str):
         """Displays an error message on the page.
