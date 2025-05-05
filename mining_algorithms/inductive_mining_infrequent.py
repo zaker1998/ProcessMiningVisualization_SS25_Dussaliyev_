@@ -1,12 +1,14 @@
 from mining_algorithms.inductive_mining import InductiveMining
 from graphs.dfg import DFG
 from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
+from logs.filters import filter_events, filter_traces
 
 
 class InductiveMiningInfrequent(InductiveMining):
     """
     A class to generate a graph from a log using the Inductive Mining Infrequent algorithm.
     This variant filters infrequent directly-follows relations during cut detection.
+    Implementation is designed to match PM4Py's behavior.
     """
 
     def __init__(self, log):
@@ -29,9 +31,36 @@ class InductiveMiningInfrequent(InductiveMining):
         self.noise_threshold = noise_threshold
         super().generate_graph(activity_threshold, traces_threshold)
     
+    def inductive_mining(self, log):
+        """Generate a process tree from the log using the Inductive Mining Infrequent algorithm.
+        This is a recursive function that generates the process tree from the log.
+
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            A dictionary containing the traces and their frequencies in the log.
+
+        Returns
+        -------
+        tuple
+            A tuple representing the process tree.
+        """
+        if tree := self.base_cases(log):
+            self.logger.debug(f"Base case: {tree}")
+            return tree
+
+        # Try to find a cut with noise filtering
+        if tuple() not in log:
+            if partitions := self.calulate_cut(log):
+                self.logger.debug(f"Cut: {partitions}")
+                operation = partitions[0]
+                return (operation, *list(map(self.inductive_mining, partitions[1:])))
+
+        return self.fallthrough(log)
+    
     def calulate_cut(self, log) -> tuple | None:
         """Find a partitioning of the log using the different cut methods.
-        This override filters infrequent directly-follows relations before cut detection.
+        Filters infrequent directly-follows relations before cut detection.
 
         Parameters
         ----------
@@ -62,7 +91,7 @@ class InductiveMiningInfrequent(InductiveMining):
         return None
     
     def filter_infrequent_relations(self, dfg):
-        """Filter infrequent directly-follows relations.
+        """Filter infrequent directly-follows relations based on PM4Py's approach.
         
         Parameters
         ----------
@@ -79,6 +108,8 @@ class InductiveMiningInfrequent(InductiveMining):
         
         # Find max relation frequency
         max_frequency = max(filtered_dfg.graph.values(), default=1)
+        
+        # Calculate threshold based on noise_threshold
         threshold = max_frequency * self.noise_threshold
         
         # Filter relations below threshold
@@ -87,6 +118,62 @@ class InductiveMiningInfrequent(InductiveMining):
                 del filtered_dfg.graph[(source, target)]
                 
         return filtered_dfg
+    
+    def fallthrough(self, log):
+        """Generate a process tree for the log using a fallthrough method.
+        In Inductive Miner Infrequent, the fallthrough is adjusted to handle noise better.
+
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            A dictionary containing the traces and their frequencies in the log.
+
+        Returns
+        -------
+        tuple
+            A tuple representing the process tree.
+        """
+        log_alphabet = self.get_log_alphabet(log)
+
+        # if there is a empty trace in the log
+        # make an xor split with tau and the inductive mining of the log without the empty trace
+        if tuple() in log:
+            empty_log = {tuple(): log[tuple()]}
+            non_empty_log = {k: v for k, v in log.items() if k != tuple()}
+            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(non_empty_log))
+
+        # if there is a single event in the log
+        # and it occurs more than once in a trace
+        # make a loop split with the event and tau
+        if len(log_alphabet) == 1:
+            activity = list(log_alphabet)[0]
+            
+            # Check if it appears multiple times in traces
+            for trace in log:
+                if trace.count(activity) > 1:
+                    return ("loop", activity, "tau")
+                    
+            return activity
+
+        # Analyze log to find most significant activities
+        # This matches PM4Py's approach
+        activity_freq = {activity: 0 for activity in log_alphabet}
+        for trace, freq in log.items():
+            for activity in set(trace): # Count each activity only once per trace
+                activity_freq[activity] += freq
+                
+        total_freq = sum(activity_freq.values())
+        
+        # Filter out infrequent activities using noise threshold
+        significant_activities = {act for act, freq in activity_freq.items() 
+                               if freq / total_freq >= self.noise_threshold}
+        
+        # If no significant activities found, use all activities
+        if not significant_activities:
+            significant_activities = log_alphabet
+        
+        # Use a loop model with significant activities
+        return ("loop", "tau", *significant_activities)
         
     def get_noise_threshold(self) -> float:
         """Get the noise threshold used for filtering directly-follows relations.
