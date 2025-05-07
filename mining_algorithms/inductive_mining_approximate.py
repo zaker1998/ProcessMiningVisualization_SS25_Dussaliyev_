@@ -2,6 +2,7 @@ from mining_algorithms.inductive_mining import InductiveMining
 from graphs.dfg import DFG
 from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
 import numpy as np
+from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 
 
 class InductiveMiningApproximate(InductiveMining):
@@ -117,25 +118,25 @@ class InductiveMiningApproximate(InductiveMining):
         
         # Try the different cuts
         if partitions := exclusive_cut(filtered_dfg):
-            return ("xor", *self.exclusive_split(log, partitions))
+            return ("xor", *exclusive_split(log, partitions))
         elif partitions := sequence_cut(filtered_dfg):
-            return ("seq", *self.sequence_split(log, partitions))
+            return ("seq", *sequence_split(log, partitions))
         elif partitions := parallel_cut(filtered_dfg):
-            return ("par", *self.parallel_split(log, partitions))
+            return ("par", *parallel_split(log, partitions))
         elif partitions := loop_cut(filtered_dfg):
-            return ("loop", *self.loop_split(log, partitions))
+            return ("loop", *loop_split(log, partitions))
             
         # If no cuts found with filtering, try aggressive filtering
         aggressive_dfg = self.aggressive_filter_relations(filtered_dfg)
         
         if partitions := exclusive_cut(aggressive_dfg):
-            return ("xor", *self.exclusive_split(log, partitions))
+            return ("xor", *exclusive_split(log, partitions))
         elif partitions := sequence_cut(aggressive_dfg):
-            return ("seq", *self.sequence_split(log, partitions))
+            return ("seq", *sequence_split(log, partitions))
         elif partitions := parallel_cut(aggressive_dfg):
-            return ("par", *self.parallel_split(log, partitions))
+            return ("par", *parallel_split(log, partitions))
         elif partitions := loop_cut(aggressive_dfg):
-            return ("loop", *self.loop_split(log, partitions))
+            return ("loop", *loop_split(log, partitions))
 
         return None
     
@@ -152,19 +153,54 @@ class InductiveMiningApproximate(InductiveMining):
         DFG
             A new DFG with infrequent relations filtered out.
         """
-        # Create a copy of the DFG
-        filtered_dfg = DFG(dfg.log)
+        # Create a new DFG
+        filtered_dfg = DFG()
         
-        # Find max relation frequency
-        max_frequency = max(filtered_dfg.graph.values(), default=1)
+        # Copy nodes
+        for node in dfg.get_nodes():
+            filtered_dfg.add_node(node)
+        
+        # Copy start and end nodes
+        filtered_dfg.start_nodes = dfg.start_nodes.copy()
+        filtered_dfg.end_nodes = dfg.end_nodes.copy()
+        
+        # Get all edges and their frequencies
+        edges = dfg.get_edges()
+        edge_frequencies = self.calculate_edge_frequencies(edges)
+        
+        # Find max frequency
+        max_frequency = max(edge_frequencies.values(), default=1)
         threshold = max_frequency * self.simplification_threshold
         
-        # Filter relations below threshold
-        for (source, target), frequency in list(filtered_dfg.graph.items()):
-            if frequency < threshold:
-                del filtered_dfg.graph[(source, target)]
+        # Add edges that pass the threshold
+        for (source, target), frequency in edge_frequencies.items():
+            if frequency >= threshold:
+                filtered_dfg.add_edge(source, target)
                 
         return filtered_dfg
+    
+    def calculate_edge_frequencies(self, edges):
+        """Calculate frequencies for edges based on the log.
+        
+        Parameters
+        ----------
+        edges : set[tuple[str, str]]
+            Set of edges in the DFG
+            
+        Returns
+        -------
+        dict
+            Dictionary mapping edges to frequencies
+        """
+        edge_frequencies = {edge: 0 for edge in edges}
+        
+        for trace, frequency in self.log.items():
+            for i in range(len(trace) - 1):
+                edge = (trace[i], trace[i + 1])
+                if edge in edge_frequencies:
+                    edge_frequencies[edge] += frequency
+        
+        return edge_frequencies
         
     def aggressive_filter_relations(self, dfg):
         """More aggressive filtering of directly-follows relations.
@@ -179,19 +215,35 @@ class InductiveMiningApproximate(InductiveMining):
         DFG
             A new DFG with aggressively filtered relations.
         """
-        filtered_dfg = DFG(dfg.log)
+        # Create a new DFG
+        filtered_dfg = DFG()
+        
+        # Copy nodes
+        for node in dfg.get_nodes():
+            filtered_dfg.add_node(node)
+        
+        # Copy start and end nodes
+        filtered_dfg.start_nodes = dfg.start_nodes.copy()
+        filtered_dfg.end_nodes = dfg.end_nodes.copy()
+        
+        # Get all edges
+        edges = dfg.get_edges()
+        
+        # Check if there are any edges
+        if not edges:
+            return filtered_dfg
+        
+        # Calculate frequencies
+        edge_frequencies = self.calculate_edge_frequencies(edges)
         
         # Get average frequency
-        if not filtered_dfg.graph:
-            return filtered_dfg
-            
-        frequencies = list(filtered_dfg.graph.values())
+        frequencies = list(edge_frequencies.values())
         avg_frequency = sum(frequencies) / len(frequencies)
         
-        # Filter relations below average frequency
-        for (source, target), frequency in list(filtered_dfg.graph.items()):
-            if frequency < avg_frequency:
-                del filtered_dfg.graph[(source, target)]
+        # Add edges above average frequency
+        for (source, target), frequency in edge_frequencies.items():
+            if frequency >= avg_frequency:
+                filtered_dfg.add_edge(source, target)
                 
         return filtered_dfg
     
@@ -219,15 +271,8 @@ class InductiveMiningApproximate(InductiveMining):
         # Create behavior profile for each activity based on incoming/outgoing edges
         behavior_profiles = {}
         for activity in activities:
-            incoming = set()
-            outgoing = set()
-            
-            for (src, tgt), _ in dfg.graph.items():
-                if tgt == activity:
-                    incoming.add(src)
-                if src == activity:
-                    outgoing.add(tgt)
-                    
+            incoming = dfg.get_predecessors(activity)
+            outgoing = dfg.get_successors(activity)
             behavior_profiles[activity] = (frozenset(incoming), frozenset(outgoing))
         
         # Group activities with similar behavior
