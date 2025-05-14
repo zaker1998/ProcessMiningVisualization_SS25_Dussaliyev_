@@ -1,6 +1,8 @@
 from ui.base_algorithm_ui.base_algorithm_controller import BaseAlgorithmController
 from ui.inductive_miner_ui.inductive_miner_view import InductiveMinerView
 from mining_algorithms.inductive_mining import InductiveMining
+from mining_algorithms.inductive_mining_infrequent import InductiveMiningInfrequent
+from mining_algorithms.inductive_mining_approximate import InductiveMiningApproximate
 import streamlit as st
 
 
@@ -27,6 +29,17 @@ class InductiveMinerController(BaseAlgorithmController):
         if mining_model_class is None:
             mining_model_class = InductiveMining
         super().__init__(views, mining_model_class, dataframe_transformations)
+        
+        # Initialize variant to Standard if not set
+        if "inductive_variant" not in st.session_state:
+            st.session_state.inductive_variant = "Standard"
+            
+        # Map of variant names to their class implementations
+        self.variant_classes = {
+            "Standard": InductiveMining,
+            "Infrequent": InductiveMiningInfrequent,
+            "Approximate": InductiveMiningApproximate
+        }
 
     def get_page_title(self) -> str:
         """Returns the page title.
@@ -54,9 +67,16 @@ class InductiveMinerController(BaseAlgorithmController):
         # set instance variables from session state
         self.traces_threshold = st.session_state.traces_threshold
         self.activity_threshold = st.session_state.activity_threshold
+        self.selected_variant = st.session_state.inductive_variant
 
     def perform_mining(self) -> None:
         """Performs the mining of the Inductive Miner algorithm."""
+        # Check if we need to switch the mining model class based on selected variant
+        variant_class = self.variant_classes[self.selected_variant]
+        if not isinstance(self.mining_model, variant_class):
+            # Create a new instance of the selected variant class
+            self.mining_model = variant_class(self.mining_model.log)
+        
         self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)
 
     def have_parameters_changed(self) -> bool:
@@ -70,6 +90,7 @@ class InductiveMinerController(BaseAlgorithmController):
         return (
             self.mining_model.get_activity_threshold() != self.activity_threshold
             or self.mining_model.get_traces_threshold() != self.traces_threshold
+            or not isinstance(self.mining_model, self.variant_classes[self.selected_variant])
         )
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
