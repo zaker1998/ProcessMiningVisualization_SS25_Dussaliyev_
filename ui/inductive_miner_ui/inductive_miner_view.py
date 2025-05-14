@@ -17,6 +17,16 @@ class InductiveMinerView(BaseAlgorithmView):
             A dictionary containing the minimum and maximum values for the sidebar sliders.
             The keys of the dictionary are equal to the keys of the sliders.
         """
+        st.selectbox(
+            "Mining Variant",
+            options=["Standard", "Infrequent", "Approximate"],
+            key="inductive_variant",
+            help="""Select the Inductive Mining variant to use:
+            - Standard: Classic inductive miner
+            - Infrequent: Inductive miner with infrequent behavior handling
+            - Approximate: Approximate inductive miner that provides a balance between precision and generalization"""
+        )
+        
         number_input_slider(
             label="Traces Threshold",
             min_value=sidebar_values["traces_threshold"][0],
