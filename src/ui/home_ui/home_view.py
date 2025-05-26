@@ -119,7 +119,7 @@ class HomeView(BaseView):
             with col2:
                 if st.button("Load Sample", key="load_sample_button", help="Click to load a sample process log file"):
                     # Call the controller method to load the sample file and proceed
-                    self.controller.load_sample_file("tests/testcsv/basicexample.csv")
+                    self.controller.load_sample_file("../tests/testcsv/basicexample.csv")
 
     def display_model_import(self, model):
         """Displays the model import component. A dropdown is displayed to select the mining algorithm.

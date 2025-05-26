@@ -25,7 +25,7 @@ st.markdown("""
     
     /* Additional space for titles */
     section.main h1:first-child {
-        margin-top: 1rem !important;
+        margin-top: -2rem !important;
     }
     
     /* Fix for streamlit components positioning */

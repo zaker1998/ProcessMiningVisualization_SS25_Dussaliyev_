@@ -1,0 +1,3 @@
+"""
+Process Mining Visualisation package.
+""" 
