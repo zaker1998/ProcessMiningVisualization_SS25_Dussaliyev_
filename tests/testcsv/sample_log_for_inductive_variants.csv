@@ -1,0 +1,156 @@
+case_id,activity,timestamp,resource
+1,register,2023-01-01 08:00:00,system
+1,check_documents,2023-01-01 08:15:00,employee1
+1,verify_identity,2023-01-01 09:30:00,employee2
+1,approve_application,2023-01-01 10:45:00,manager1
+1,create_account,2023-01-01 11:30:00,system
+1,send_welcome_email,2023-01-01 11:45:00,system
+
+2,register,2023-01-01 09:15:00,system
+2,check_documents,2023-01-01 09:45:00,employee3
+2,verify_identity,2023-01-01 10:30:00,employee1
+2,approve_application,2023-01-01 11:15:00,manager2
+2,create_account,2023-01-01 12:00:00,system
+2,send_welcome_email,2023-01-01 12:15:00,system
+
+3,register,2023-01-01 10:30:00,system
+3,check_documents,2023-01-01 11:00:00,employee2
+3,request_additional_info,2023-01-01 11:45:00,employee2
+3,receive_additional_info,2023-01-01 13:30:00,system
+3,verify_identity,2023-01-01 14:15:00,employee1
+3,approve_application,2023-01-01 15:00:00,manager1
+3,create_account,2023-01-01 15:30:00,system
+3,send_welcome_email,2023-01-01 15:45:00,system
+
+4,register,2023-01-01 11:45:00,system
+4,check_documents,2023-01-01 12:30:00,employee3
+4,verify_identity,2023-01-01 13:15:00,employee2
+4,reject_application,2023-01-01 14:00:00,manager2
+4,send_rejection_email,2023-01-01 14:15:00,system
+
+5,register,2023-01-01 13:00:00,system
+5,check_documents,2023-01-01 13:45:00,employee1
+5,verify_identity,2023-01-01 14:30:00,employee3
+5,approve_application,2023-01-01 15:15:00,manager1
+5,create_account,2023-01-01 16:00:00,system
+5,send_welcome_email,2023-01-01 16:15:00,system
+
+6,register,2023-01-01 14:15:00,system
+6,check_documents,2023-01-01 15:00:00,employee2
+6,verify_identity,2023-01-01 15:45:00,employee1
+6,request_additional_info,2023-01-01 16:30:00,employee1
+6,receive_additional_info,2023-01-01 09:15:00,system
+6,verify_identity,2023-01-02 10:00:00,employee3
+6,approve_application,2023-01-02 10:45:00,manager2
+6,create_account,2023-01-02 11:15:00,system
+6,send_welcome_email,2023-01-02 11:30:00,system
+
+7,register,2023-01-01 15:30:00,system
+7,check_documents,2023-01-01 16:15:00,employee3
+7,verify_identity,2023-01-01 09:00:00,employee2
+7,reject_application,2023-01-02 09:45:00,manager1
+7,appeal_rejection,2023-01-02 11:00:00,system
+7,review_appeal,2023-01-02 13:30:00,manager2
+7,approve_application,2023-01-02 14:15:00,manager2
+7,create_account,2023-01-02 15:00:00,system
+7,send_welcome_email,2023-01-02 15:15:00,system
+
+8,register,2023-01-01 16:45:00,system
+8,check_documents,2023-01-02 08:30:00,employee1
+8,verify_identity,2023-01-02 09:15:00,employee3
+8,approve_application,2023-01-02 10:00:00,manager1
+8,create_account,2023-01-02 10:30:00,system
+8,issue_card,2023-01-02 11:00:00,system
+8,send_welcome_email,2023-01-02 11:15:00,system
+
+9,register,2023-01-02 08:45:00,system
+9,check_documents,2023-01-02 09:30:00,employee2
+9,request_additional_info,2023-01-02 10:15:00,employee2
+9,timeout_application,2023-01-09 10:15:00,system
+
+10,register,2023-01-02 10:00:00,system
+10,check_documents,2023-01-02 10:45:00,employee1
+10,verify_identity,2023-01-02 11:30:00,employee2
+10,manual_review,2023-01-02 13:00:00,supervisor1
+10,approve_application,2023-01-02 14:30:00,manager2
+10,create_account,2023-01-02 15:15:00,system
+10,send_welcome_email,2023-01-02 15:30:00,system
+
+11,register,2023-01-02 11:15:00,system
+11,check_documents,2023-01-02 12:00:00,employee3
+11,verify_identity,2023-01-02 13:45:00,employee1
+11,approve_application,2023-01-02 14:30:00,manager1
+11,create_account,2023-01-02 15:15:00,system
+11,send_welcome_email,2023-01-02 15:30:00,system
+
+12,register,2023-01-02 12:30:00,system
+12,check_documents,2023-01-02 13:15:00,employee2
+12,verify_identity,2023-01-02 14:00:00,employee3
+12,reject_application,2023-01-02 14:45:00,manager2
+12,send_rejection_email,2023-01-02 15:00:00,system
+
+13,register,2023-01-02 13:45:00,system
+13,expedite_processing,2023-01-02 14:00:00,supervisor1
+13,check_documents,2023-01-02 14:15:00,employee1
+13,verify_identity,2023-01-02 14:30:00,employee1
+13,approve_application,2023-01-02 14:45:00,manager1
+13,create_account,2023-01-02 15:00:00,system
+13,issue_card,2023-01-02 15:15:00,system
+13,send_welcome_email,2023-01-02 15:30:00,system
+
+14,register,2023-01-02 15:00:00,system
+14,check_documents,2023-01-02 15:45:00,employee3
+14,verify_identity,2023-01-02 16:30:00,employee2
+14,approve_application,2023-01-03 08:15:00,manager2
+14,create_account,2023-01-03 09:00:00,system
+14,send_welcome_email,2023-01-03 09:15:00,system
+
+15,register,2023-01-02 16:15:00,system
+15,check_documents,2023-01-03 08:00:00,employee1
+15,verify_identity,2023-01-03 08:45:00,employee3
+15,request_additional_info,2023-01-03 09:30:00,employee3
+15,receive_additional_info,2023-01-03 13:15:00,system
+15,verify_identity,2023-01-03 14:00:00,employee1
+15,approve_application,2023-01-03 14:45:00,manager1
+15,create_account,2023-01-03 15:30:00,system
+15,send_welcome_email,2023-01-03 15:45:00,system
+
+16,register,2023-01-03 08:30:00,system
+16,special_handling,2023-01-03 08:45:00,supervisor1
+16,check_documents,2023-01-03 09:15:00,employee2
+16,verify_identity,2023-01-03 09:45:00,employee2
+16,approve_application,2023-01-03 10:30:00,manager2
+16,create_account,2023-01-03 11:15:00,system
+16,send_welcome_email,2023-01-03 11:30:00,system
+
+17,register,2023-01-03 09:45:00,system
+17,check_documents,2023-01-03 10:30:00,employee3
+17,data_error,2023-01-03 11:15:00,system
+17,fix_data,2023-01-03 11:45:00,employee1
+17,check_documents,2023-01-03 13:30:00,employee1
+17,verify_identity,2023-01-03 14:15:00,employee1
+17,approve_application,2023-01-03 15:00:00,manager1
+17,create_account,2023-01-03 15:45:00,system
+17,send_welcome_email,2023-01-03 16:00:00,system
+
+18,register,2023-01-03 11:00:00,system
+18,check_documents,2023-01-03 11:45:00,employee2
+18,verify_identity,2023-01-03 13:30:00,employee3
+18,approve_application,2023-01-03 14:15:00,manager2
+18,create_account,2023-01-03 15:00:00,system
+18,send_welcome_email,2023-01-03 15:15:00,system
+
+19,register,2023-01-03 12:15:00,system
+19,check_documents,2023-01-03 13:00:00,employee1
+19,verify_identity,2023-01-03 13:45:00,employee2
+19,fraud_detected,2023-01-03 14:30:00,system
+19,investigation,2023-01-03 15:15:00,fraud_team
+19,reject_application,2023-01-03 16:00:00,fraud_team
+19,send_rejection_email,2023-01-03 16:15:00,system
+
+20,register,2023-01-03 13:30:00,system
+20,check_documents,2023-01-03 14:15:00,employee3
+20,verify_identity,2023-01-03 15:00:00,employee1
+20,approve_application,2023-01-03 15:45:00,manager1
+20,create_account,2023-01-03 16:30:00,system
+20,send_welcome_email,2023-01-03 16:45:00,system 
