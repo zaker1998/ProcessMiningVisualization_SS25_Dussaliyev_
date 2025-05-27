@@ -1,6 +1,6 @@
 from mining_algorithms.inductive_mining import InductiveMining
 from graphs.dfg import DFG
-from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
+from graphs.cuts import exclusive_cut, sequence_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 import copy
@@ -16,6 +16,9 @@ class InductiveMiningInfrequent(InductiveMining):
     def __init__(self, log):
         super().__init__(log)
         self.noise_threshold = 0.2  # Default noise threshold
+        self.max_recursion_depth = 20  # Prevent infinite recursion
+        self.current_depth = 0  # Track current recursion depth
+        self.processed_logs = set()  # Track processed logs to prevent cycles
         
     def generate_graph(self, activity_threshold=0.0, traces_threshold=0.2, noise_threshold=0.2):
         """Generate a graph using the Inductive Mining Infrequent algorithm.
@@ -31,12 +34,34 @@ class InductiveMiningInfrequent(InductiveMining):
             Directly-follows relations with a frequency lower than threshold * max_relation_frequency will be ignored.
         """
         self.noise_threshold = noise_threshold
-        super().generate_graph(activity_threshold, traces_threshold)
+        self.current_depth = 0
+        self.processed_logs = set()
+        
+        # Apply filtering first
+        events_to_remove = self.get_events_to_remove(activity_threshold)
+        min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
+
+        filtered_log = filter_traces(self.log, min_traces_frequency)
+        filtered_log = filter_events(filtered_log, events_to_remove)
+
+        if filtered_log == self.filtered_log:
+            return
+
+        self.filtered_log = filtered_log
+        
+        # Generate process tree and create graph
+        self.logger.info("Start Inductive Mining Infrequent")
+        process_tree = self.inductive_mining(self.filtered_log)
+        
+        from graphs.visualization.inductive_graph import InductiveGraph
+        self.graph = InductiveGraph(
+            process_tree,
+            frequency=self.appearance_frequency,
+            node_sizes=self.node_sizes
+        )
     
     def inductive_mining(self, log):
         """Generate a process tree from the log using the Inductive Mining Infrequent algorithm.
-        This is a recursive function that generates the process tree from the log.
-        Modified to use PM4Py-style operators for better compatibility.
 
         Parameters
         ----------
@@ -48,12 +73,32 @@ class InductiveMiningInfrequent(InductiveMining):
         tuple
             A tuple representing the process tree.
         """
+        # Increment recursion depth
+        self.current_depth += 1
+        
+        # Check for maximum recursion depth
+        if self.current_depth > self.max_recursion_depth:
+            self.logger.warning(f"Max recursion depth {self.max_recursion_depth} exceeded. Using fallthrough.")
+            self.current_depth -= 1
+            return self.create_simple_flower_model(self.get_log_alphabet(log))
+            
+        # Create a hash of the log to check for cycles
+        log_hash = self._hash_log(log)
+        if log_hash in self.processed_logs:
+            self.logger.warning("Detected cycle in log processing. Using fallthrough.")
+            self.current_depth -= 1
+            return self.create_simple_flower_model(self.get_log_alphabet(log))
+            
+        self.processed_logs.add(log_hash)
+        
         # Check if log is empty or has no activities
         if not log or all(len(trace) == 0 for trace in log):
+            self.current_depth -= 1
             return "tau"
             
         if tree := self.base_cases(log):
             self.logger.debug(f"Base case: {tree}")
+            self.current_depth -= 1
             return tree
 
         # Try to find a cut with noise filtering
@@ -61,164 +106,130 @@ class InductiveMiningInfrequent(InductiveMining):
             # For high noise thresholds, we'll try special patterns first
             if self.noise_threshold > 0.3:
                 if tree := self.try_high_noise_patterns(log):
+                    self.current_depth -= 1
                     return tree
+             
+            # Create DFG with noise filtering
+            dfg = self.create_filtered_dfg(log)
+            
+            # Try each type of cut with the filtered DFG in a safe way
+            
+            # Exclusive cut (safe)
+            if cut := exclusive_cut(dfg):
+                splits = exclusive_split(log, cut)
+                if splits and self._splits_progress(log, splits):
+                    result = ("xor", *[self.inductive_mining(split) for split in splits])
+                    self.current_depth -= 1
+                    return result
                     
-            if partitions := self.calulate_cut(log):
-                self.logger.debug(f"Cut: {partitions}")
-                operation = partitions[0]
-                # Convert to PM4Py style operators
-                operation = self.convert_to_pm4py_style_operator(operation)
-                return (operation, *list(map(self.inductive_mining, partitions[1:])))
-
-        # Apply the fallthrough and convert operators
-        return self.convert_fallthrough_to_pm4py_style(self.fallthrough(log))
-    
-    def try_high_noise_patterns(self, log):
-        """Try to apply special patterns for high noise thresholds to better match PM4Py behavior.
-        
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-            
-        Returns
-        -------
-        tuple or None
-            Process tree if a pattern was found, otherwise None
-        """
-        log_alphabet = self.get_log_alphabet(log)
-        
-        # Only apply for logs with several activities
-        if len(log_alphabet) < 3:
-            return None
-            
-        # Check if we have clear start and end activities in all traces
-        start_activities = set(trace[0] for trace in log if len(trace) > 0)
-        end_activities = set(trace[-1] for trace in log if len(trace) > 0)
-        
-        # If all traces have the same start activity and same end activity
-        if len(start_activities) == 1 and len(end_activities) == 1:
-            start_activity = list(start_activities)[0]
-            end_activity = list(end_activities)[0]
-            
-            # If they're different, try a sequence pattern
-            if start_activity != end_activity:
-                # Create a middle log excluding start and end
-                middle_log = {}
-                for trace, freq in log.items():
-                    if len(trace) > 2 and trace[0] == start_activity and trace[-1] == end_activity:
-                        middle_trace = trace[1:-1]
-                        if middle_trace in middle_log:
-                            middle_log[middle_trace] += freq
-                        else:
-                            middle_log[middle_trace] = freq
+            # Sequence cut (safe)    
+            if cut := sequence_cut(dfg):
+                splits = sequence_split(log, cut)
+                if splits and self._splits_progress(log, splits):
+                    result = ("seq", *[self.inductive_mining(split) for split in splits])
+                    self.current_depth -= 1
+                    return result
                     
-                # If we have a middle part, create a sequence pattern similar to PM4Py
-                if middle_log:
-                    middle_activities = {a for t in middle_log for a in t}
+            # Safe parallel cut (using our custom implementation)
+            if cut := self.safe_parallel_cut(dfg):
+                splits = parallel_split(log, cut)
+                if splits and self._splits_progress(log, splits):
+                    result = ("par", *[self.inductive_mining(split) for split in splits])
+                    self.current_depth -= 1
+                    return result
                     
-                    # Apply parallel pattern for the middle part if all activities appear in similar frequencies
-                    if 2 <= len(middle_activities) <= 4:
-                        # For smaller middle sections, try to find 'b' and 'c' patterns
-                        if 'b' in middle_activities and 'c' in middle_activities:
-                            return ("->", start_activity, 
-                                    ("X", ("+", ("*", "c", "tau"), ("*", "b", "tau")), 
-                                     "e" if "e" in middle_activities else "tau"), 
-                                    end_activity)
-                                    
-                        # Generic parallel pattern for middle section
-                        middle_operators = []
-                        for activity in sorted(middle_activities):
-                            middle_operators.append(("*", activity, "tau"))
-                            
-                        if len(middle_operators) > 0:
-                            return ("->", start_activity, 
-                                    ("X", ("+", *middle_operators), 
-                                     "e" if "e" in middle_activities else "tau"), 
-                                    end_activity)
-            
-        return None
+            # Loop cut (safe) - especially careful with this one as it can cause recursion issues
+            if cut := loop_cut(dfg):
+                splits = loop_split(log, cut)
+                if len(splits) == 2 and self._splits_progress(log, splits):
+                    # Extra check for loop cut to avoid infinite recursion
+                    if self._can_make_loop(splits[0], splits[1]):
+                        result = ("loop", self.inductive_mining(splits[0]), self.inductive_mining(splits[1]))
+                        self.current_depth -= 1
+                        return result
+
+        # Apply the fallthrough
+        result = self.fallthrough(log)
+        self.current_depth -= 1
+        return result
     
-    def convert_to_pm4py_style_operator(self, operator):
-        """Convert our operator names to PM4Py style.
+    def _hash_log(self, log):
+        """Create a hash representation of a log to detect cycles.
         
         Parameters
         ----------
-        operator : str
-            Our operator name
+        log : dict
+            The log to hash
             
         Returns
         -------
-        str
-            PM4Py style operator
+        frozenset
+            A hashable representation of the log
         """
-        operator_map = {
-            "seq": "->",  # Sequence
-            "xor": "X",   # Exclusive choice
-            "par": "+",   # Parallel
-            "loop": "*"   # Loop
-        }
-        return operator_map.get(operator, operator)
-    
-    def convert_fallthrough_to_pm4py_style(self, tree):
-        """Convert an entire tree to use PM4Py style operators.
+        return frozenset((trace, freq) for trace, freq in log.items())
+        
+    def _splits_progress(self, original_log, splits):
+        """Check if splits are making progress (not just recreating the original log).
         
         Parameters
         ----------
-        tree : tuple or str
-            Process tree or leaf node
+        original_log : dict
+            The original log before splitting
+        splits : list
+            The list of split logs
             
         Returns
         -------
-        tuple or str
-            Converted tree
+        bool
+            True if splits are making progress, False otherwise
         """
-        if isinstance(tree, str):
-            return tree
+        # If any split is empty, it's not making progress
+        if any(not split for split in splits):
+            return False
             
-        operator = tree[0]
-        pm4py_operator = self.convert_to_pm4py_style_operator(operator)
+        # Check if splits are smaller than original
+        original_size = sum(len(trace) * freq for trace, freq in original_log.items())
+        for split in splits:
+            split_size = sum(len(trace) * freq for trace, freq in split.items())
+            # If any split is too close to original size, it might not be making progress
+            if split_size > original_size * 0.9:
+                # Further check to see if it's the same activities
+                original_acts = self.get_log_alphabet(original_log)
+                split_acts = self.get_log_alphabet(split)
+                if split_acts == original_acts:
+                    return False
         
-        # Convert children recursively
-        children = [self.convert_fallthrough_to_pm4py_style(child) for child in tree[1:]]
+        return True
         
-        return (pm4py_operator, *children)
-    
-    def calulate_cut(self, log) -> tuple | None:
-        """Find a partitioning of the log using the different cut methods.
-        Filters infrequent directly-follows relations before cut detection.
-
+    def _can_make_loop(self, body, redo):
+        """Special check for loop cut to avoid infinite recursion.
+        
         Parameters
         ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
+        body : dict
+            The body part of the loop
+        redo : dict
+            The redo part of the loop
+            
         Returns
         -------
-        tuple | None
-            A process tree representing the partitioning of the log if a cut was found, otherwise None.
+        bool
+            True if this is a valid loop structure, False otherwise
         """
-        # Create DFG from log
-        dfg = DFG(log)
-        
-        # Filter infrequent directly-follows relations
-        filtered_dfg = self.filter_infrequent_relations(dfg)
-        
-        # Try the different cuts using the imported split functions
-        # Order is important: xor, sequence, parallel, loop (same as PM4Py)
-        if partitions := exclusive_cut(filtered_dfg):
-            return ("xor", *exclusive_split(log, partitions))
-        elif partitions := sequence_cut(filtered_dfg):
-            return ("seq", *sequence_split(log, partitions))
-        elif partitions := parallel_cut(filtered_dfg):
-            return ("par", *parallel_split(log, partitions))
-        elif partitions := loop_cut(filtered_dfg):
-            return ("loop", *loop_split(log, partitions))
-
-        return None
+        # Check if redo part contains activities
+        redo_acts = self.get_log_alphabet(redo)
+        if not redo_acts:
+            return False
+            
+        # Check if body and redo share too many activities (could cause recursion)
+        body_acts = self.get_log_alphabet(body)
+        if len(body_acts.intersection(redo_acts)) > len(body_acts) * 0.8:
+            return False
+            
+        return True
     
-    def filter_infrequent_relations(self, dfg):
-        """Filter infrequent directly-follows relations based on PM4Py's approach.
+    def safe_parallel_cut(self, dfg):
+        """A safer implementation of parallel cut detection.
         
         Parameters
         ----------
@@ -227,70 +238,136 @@ class InductiveMiningInfrequent(InductiveMining):
             
         Returns
         -------
-        DFG
-            A new DFG with infrequent relations filtered out.
+        list or None
+            A list of partitions, or None if no parallel cut is found.
         """
-        # Create a new DFG
-        filtered_dfg = DFG()
+        # Get nodes from DFG
+        nodes = list(dfg.get_nodes())
+        if len(nodes) <= 1:
+            return None
+            
+        # Find connected components
+        visited = set()
+        partitions = []
         
-        # Copy nodes
-        for node in dfg.get_nodes():
-            filtered_dfg.add_node(node)
+        # Simple connected components algorithm
+        for node in nodes:
+            if node in visited:
+                continue
+                
+            # Start a new component
+            component = {node}
+            visited.add(node)
+            
+            # Find all nodes reachable from this node
+            queue = [node]
+            while queue:
+                current = queue.pop(0)
+                
+                # Get successors and predecessors
+                successors = dfg.get_successors(current)
+                predecessors = dfg.get_predecessors(current)
+                
+                # Check for parallel relationship
+                for other in nodes:
+                    if other in visited or other == current:
+                        continue
+                        
+                    # If there's no direct edge between nodes, they might be parallel
+                    if (other not in successors and 
+                        other not in predecessors):
+                        
+                        # Check if they have similar connections to other nodes
+                        other_successors = dfg.get_successors(other)
+                        other_predecessors = dfg.get_predecessors(other)
+                        
+                        # If they share similar connectivity patterns, add to component
+                        if (successors.intersection(other_successors) or 
+                            predecessors.intersection(other_predecessors)):
+                            component.add(other)
+                            visited.add(other)
+                            queue.append(other)
+            
+            if component:
+                partitions.append(component)
         
-        # Copy start and end nodes
-        filtered_dfg.start_nodes = dfg.start_nodes.copy()
-        filtered_dfg.end_nodes = dfg.end_nodes.copy()
+        # Only return partitions if we found more than one component
+        if len(partitions) > 1:
+            return partitions
+            
+        return None
+    
+    def try_high_noise_patterns(self, log):
+        """Try to identify common patterns in noisy logs.
+
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            The event log to analyze.
+
+        Returns
+        -------
+        tuple or None
+            A process tree representing the identified pattern, or None if no pattern is found.
+        """
+        activities = self.get_log_alphabet(log)
         
-        # Get all edges and their frequencies
-        edges = dfg.get_edges()
-        edge_frequencies = self.calculate_edge_frequencies(edges)
+        # For very noisy logs with many variants, try to identify the main sequence
+        if len(log) > 10 and len(activities) > 3:
+            # Find most frequent trace
+            most_frequent = max(log.items(), key=lambda x: x[1])
+            if most_frequent[1] / sum(log.values()) > (1 - self.noise_threshold):
+                return ("seq", *most_frequent[0])
+
+        return None
+    
+    def create_filtered_dfg(self, log):
+        """Create a DFG with noise filtering applied.
         
-        # Find max frequency
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            The event log to create the DFG from.
+            
+        Returns
+        -------
+        DFG
+            The filtered directly-follows graph.
+        """
+        # Create initial DFG
+        dfg = DFG()
+        
+        # Add all events as nodes
+        events = set()
+        for trace in log:
+            for event in trace:
+                events.add(event)
+        
+        for event in events:
+            dfg.add_node(event)
+            
+        # Calculate edge frequencies
+        edge_frequencies = {}
+        for trace, frequency in log.items():
+            for i in range(len(trace) - 1):
+                edge = (trace[i], trace[i + 1])
+                if edge not in edge_frequencies:
+                    edge_frequencies[edge] = 0
+                edge_frequencies[edge] += frequency
+                
+        # Find maximum frequency
         max_frequency = max(edge_frequencies.values(), default=1)
         threshold = max_frequency * self.noise_threshold
         
         # Add edges that pass the threshold
         for (source, target), frequency in edge_frequencies.items():
             if frequency >= threshold:
-                filtered_dfg.add_edge(source, target)
+                dfg.add_edge(source, target)
                 
-        return filtered_dfg
-    
-    def calculate_edge_frequencies(self, edges):
-        """Calculate frequencies for edges based on the log.
-        
-        Parameters
-        ----------
-        edges : set[tuple[str, str]]
-            Set of edges in the DFG
-            
-        Returns
-        -------
-        dict
-            Dictionary mapping edges to frequencies
-        """
-        edge_frequencies = {edge: 0 for edge in edges}
-        
-        # Use the filtered log to calculate edge frequencies
-        if self.filtered_log:
-            for trace, frequency in self.filtered_log.items():
-                for i in range(len(trace) - 1):
-                    edge = (trace[i], trace[i + 1])
-                    if edge in edge_frequencies:
-                        edge_frequencies[edge] += frequency
-        # Fallback to unfiltered log if filtered_log is not available
-        else:
-            for trace, frequency in self.log.items():
-                for i in range(len(trace) - 1):
-                    edge = (trace[i], trace[i + 1])
-                    if edge in edge_frequencies:
-                        edge_frequencies[edge] += frequency
-        
-        return edge_frequencies
+        return dfg
     
     def fallthrough(self, log):
         """Generate a process tree for the log using a fallthrough method.
-        Improved to better match PM4Py's fallthrough behavior based on noise threshold.
 
         Parameters
         ----------
@@ -305,15 +382,11 @@ class InductiveMiningInfrequent(InductiveMining):
         log_alphabet = self.get_log_alphabet(log)
 
         # If there is an empty trace in the log
-        # Make an xor split with tau and the inductive mining of the log without the empty trace
         if tuple() in log:
-            empty_log = {tuple(): log[tuple()]}
-            non_empty_log = {k: v for k, v in log.items() if k != tuple()}
-            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(non_empty_log))
+            # Special handling to avoid recursion issues
+            return ("xor", "tau", self.create_simple_flower_model(log_alphabet))
 
         # If there is a single event in the log
-        # and it occurs more than once in a trace
-        # make a loop split with the event and tau
         if len(log_alphabet) == 1:
             activity = list(log_alphabet)[0]
             
@@ -324,82 +397,29 @@ class InductiveMiningInfrequent(InductiveMining):
                     
             return activity
 
-        # Calculate activity frequencies
-        activity_frequencies = self.calculate_activity_frequencies(log)
-        
-        # Different behavior based on noise threshold
-        if self.noise_threshold > 0.3:
-            # PM4Py tree with higher noise threshold tends to be more structured
-            # Check for specific patterns in our test data
-            if 'a' in log_alphabet and 'b' in log_alphabet and 'c' in log_alphabet and 'd' in log_alphabet:
-                if 'e' in log_alphabet:
-                    # This matches PM4Py's structure for the test data with threshold 0.4
-                    return ("->", "a", ("X", ("+", ("*", "c", "tau"), ("*", "b", "tau")), "e"), "d")
-                else:
-                    # Simpler version without 'e'
-                    return ("->", "a", ("+", ("*", "c", "tau"), ("*", "b", "tau")), "d")
-                    
-            # For general cases
-            # Find the top activities that account for at least 80% of events
-            total_freq = sum(activity_frequencies.values())
-            sorted_activities = sorted(activity_frequencies.items(), key=lambda x: x[1], reverse=True)
-            
-            # For sequence patterns (common in PM4Py with high threshold)
-            start_activities = set(trace[0] for trace in log if len(trace) > 0)
-            end_activities = set(trace[-1] for trace in log if len(trace) > 0)
-            
-            if len(start_activities) == 1 and len(end_activities) == 1:
-                start_act = list(start_activities)[0]
-                end_act = list(end_activities)[0]
-                
-                middle_acts = log_alphabet - {start_act, end_act}
-                if middle_acts:
-                    if len(middle_acts) <= 2:
-                        return ("->", start_act, *middle_acts, end_act)
-                    else:
-                        # When there are multiple middle activities, use a complex structure
-                        # similar to what PM4Py produces with high thresholds
-                        return ("->", start_act, ("X", ("+", *[("*", act, "tau") for act in middle_acts]), "tau"), end_act)
-        
-        # For lower thresholds or when we have many activities
-        # Find the most frequent activity to center the model around
-        most_frequent_activity = max(activity_frequencies.items(), key=lambda x: x[1])[0]
-        
-        # PM4Py-style fallthrough: create a model centered on the most frequent activity
-        non_frequent_activities = [act for act in log_alphabet if act != most_frequent_activity]
-        
-        if len(non_frequent_activities) == 0:
-            return ("loop", most_frequent_activity, "tau")
-        
-        # If we have many activities, create a flower model around the most frequent one
-        if len(non_frequent_activities) > 2:
-            return ("->", most_frequent_activity, ("X", ("+", *non_frequent_activities), "tau"), "tau")
-        
-        # Simple sequential model for a few activities
-        return ("->", *sorted(log_alphabet, key=lambda x: -activity_frequencies[x]))
+        # Default approach: simple flower model
+        return self.create_simple_flower_model(log_alphabet)
     
-    def calculate_activity_frequencies(self, log):
-        """Calculate frequencies for activities in the log.
+    def create_simple_flower_model(self, activities):
+        """Create a simple flower model with the given activities.
         
         Parameters
         ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
+        activities : set
+            The set of activities to include in the model.
             
         Returns
         -------
-        dict
-            Dictionary mapping activities to frequencies
+        tuple
+            A process tree representing a flower model.
         """
-        activity_freq = {}
-        
-        for trace, frequency in log.items():
-            for activity in trace:
-                if activity not in activity_freq:
-                    activity_freq[activity] = 0
-                activity_freq[activity] += frequency
-                
-        return activity_freq
+        if not activities:
+            return "tau"
+            
+        if len(activities) == 1:
+            return list(activities)[0]
+            
+        return ("loop", "tau", *sorted(activities))
     
     def get_noise_threshold(self) -> float:
         """Get the noise threshold used for filtering directly-follows relations.
