@@ -83,20 +83,29 @@ def sequence_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
     """
     split_logs = [{} for _ in range(len(partitions))]
     for trace, frequency in log.items():
-        partition_iter = iter(partitions)
-        sub_traces = [[] for _ in range(len(partitions))]
         if trace == tuple():
             continue
-
-        current_partition = next(partition_iter)
-        partition_index = 0
+            
+        sub_traces = [[] for _ in range(len(partitions))]
+        
+        # Process each event in the trace
+        current_partition_idx = 0
         for event in trace:
-            while event not in current_partition:
-                partition_index += 1
-                current_partition = next(partition_iter)
+            # Find the right partition for this event
+            found_partition = False
+            for i in range(current_partition_idx, len(partitions)):
+                if event in partitions[i]:
+                    current_partition_idx = i
+                    found_partition = True
+                    break
+                    
+            # If we can't find a partition for this event, skip it
+            if not found_partition:
+                continue
+                
+            sub_traces[current_partition_idx].append(event)
 
-            sub_traces[partition_index].append(event)
-
+        # Add sub-traces to their respective split logs
         for i, sub_trace in enumerate(sub_traces):
             split_logs[i][tuple(sub_trace)] = (
                 split_logs[i].get(tuple(sub_trace), 0) + frequency
