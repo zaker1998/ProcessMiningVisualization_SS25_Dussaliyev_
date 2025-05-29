@@ -2,7 +2,6 @@ import streamlit as st
 from ui.base_ui.base_view import BaseView
 from config import algorithm_mappings
 from components.buttons import navigation_button
-from components.theme_manager import theme_toggle
 
 
 class HomeView(BaseView):
@@ -12,12 +11,6 @@ class HomeView(BaseView):
         """Creates the layout for the Home page."""
         super().create_layout()
         _, self.content_column, _ = st.columns([1, 6, 1])
-        
-        # Add theme toggle in sidebar
-        with st.sidebar:
-            st.markdown("### Settings")
-            current_theme = theme_toggle()
-            st.markdown("---")
 
     def display_intro(self):
         """Displays the introduction text for the Home page."""
@@ -96,8 +89,7 @@ class HomeView(BaseView):
             # Add a helpful tooltip/explanation about file formats
             file_format_help = """
             - CSV: Comma-separated values files with event logs
-            - XES: eXtensible Event Stream format for process mining
-            - Other supported formats will be processed accordingly
+            - Pickle/PKL: Serialized Python objects with process models
             """
             
             uploaded_file = st.file_uploader(
@@ -108,18 +100,7 @@ class HomeView(BaseView):
                 help=file_format_help
             )
             
-            # Replace the current sample file section with a clickable link
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown("""
-                <p style="font-size: 0.9em; margin-top: 10px;">
-                    New to process mining? Try using our sample file to get started.
-                </p>
-                """, unsafe_allow_html=True)
-            with col2:
-                if st.button("Load Sample", key="load_sample_button", help="Click to load a sample process log file"):
-                    # Call the controller method to load the sample file and proceed
-                    self.controller.load_sample_file("../tests/testcsv/sample_log_for_inductive_variants.csv")
+            # Remove the redundant "Load Sample" button since we now have the sample data section in the controller
 
     def display_model_import(self, model):
         """Displays the model import component. A dropdown is displayed to select the mining algorithm.
