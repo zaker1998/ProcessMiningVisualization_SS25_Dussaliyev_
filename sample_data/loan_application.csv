@@ -1,0 +1,33 @@
+case,event,time,department,outcome
+101,submit application,2023-02-01 09:30:00,Reception,pending
+101,check credit score,2023-02-01 11:15:00,Credit,passed
+101,verify documents,2023-02-01 14:00:00,Verification,complete
+101,approve loan,2023-02-02 10:30:00,Management,approved
+101,disburse funds,2023-02-03 13:45:00,Finance,complete
+102,submit application,2023-02-01 10:45:00,Reception,pending
+102,check credit score,2023-02-01 13:20:00,Credit,failed
+102,request additional documents,2023-02-01 15:30:00,Credit,pending
+102,submit additional documents,2023-02-02 11:00:00,Reception,pending
+102,check credit score,2023-02-02 14:30:00,Credit,passed
+102,verify documents,2023-02-02 16:15:00,Verification,incomplete
+102,request clarification,2023-02-03 09:45:00,Verification,pending
+102,provide clarification,2023-02-03 13:20:00,Reception,complete
+102,verify documents,2023-02-03 15:10:00,Verification,complete
+102,approve loan,2023-02-04 10:20:00,Management,approved
+102,disburse funds,2023-02-05 14:30:00,Finance,complete
+103,submit application,2023-02-02 08:50:00,Reception,pending
+103,check credit score,2023-02-02 10:30:00,Credit,passed
+103,verify documents,2023-02-02 13:15:00,Verification,complete
+103,approve loan,2023-02-03 09:45:00,Management,approved
+103,disburse funds,2023-02-04 11:30:00,Finance,complete
+104,submit application,2023-02-02 14:20:00,Reception,pending
+104,check credit score,2023-02-03 09:15:00,Credit,failed
+104,reject application,2023-02-03 11:00:00,Management,rejected
+105,submit application,2023-02-03 10:10:00,Reception,pending
+105,check credit score,2023-02-03 13:30:00,Credit,passed
+105,verify documents,2023-02-03 16:00:00,Verification,incomplete
+105,request clarification,2023-02-04 09:30:00,Verification,pending
+105,provide clarification,2023-02-04 14:15:00,Reception,complete
+105,verify documents,2023-02-04 16:45:00,Verification,complete
+105,approve loan,2023-02-05 10:30:00,Management,approved
+105,disburse funds,2023-02-06 13:45:00,Finance,complete 
