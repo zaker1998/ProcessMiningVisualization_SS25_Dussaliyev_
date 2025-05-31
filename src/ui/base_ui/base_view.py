@@ -37,6 +37,12 @@ class BaseView(ABC):
                 "--info-color": "#629AFF",
                 "--warning-color": "#FFB259",
                 "--danger-color": "#FF705B",
+                "--sidebar-text": "#e2e8f0",
+                "--form-text": "#ffffff",
+                "--form-border": "#4a5568",
+                "--sidebar-bg": "#0e1117",
+                "--main-bg": "#0e1117",
+                "--control-bg": "#262730",
             },
             "light": {
                 "--bg-primary": "#ffffff",
@@ -53,6 +59,12 @@ class BaseView(ABC):
                 "--info-color": "#4299e1",
                 "--warning-color": "#ed8936",
                 "--danger-color": "#f56565",
+                "--sidebar-text": "#1a202c",
+                "--form-text": "#1a202c",
+                "--form-border": "#e2e8f0",
+                "--sidebar-bg": "#f0f2f6",
+                "--main-bg": "#ffffff",
+                "--control-bg": "#f0f2f6",
             }
         }
         
@@ -71,13 +83,81 @@ class BaseView(ABC):
                 transition: background-color 0.3s ease;
             }}
             
+            /* Main app background */
+            .main .block-container,
+            [data-testid="stAppViewContainer"],
+            .stApp {{
+                background-color: var(--main-bg) !important;
+            }}
+            
             /* Dark mode Streamlit elements override */
-            {'body { background-color: var(--bg-primary); color: var(--text-primary); }' if theme == "dark" else ''}
+            body {{ 
+                background-color: var(--main-bg) !important; 
+                color: var(--text-primary) !important; 
+            }}
             
             /* Headers */
             .block-container h1, .block-container h2, .block-container h3 {{
-                color: var(--text-primary);
+                color: var(--text-primary) !important;
                 transition: color 0.3s ease;
+            }}
+            
+            /* Force sidebar text color to ensure visibility in both themes */
+            .css-10oheav, .css-12w0qpk, .css-1dp5vir, .css-1l40rmt,
+            [data-testid="stSidebarUserContent"] {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Fix sidebar titles */
+            [data-testid="stSidebar"] h1, 
+            [data-testid="stSidebar"] h2, 
+            [data-testid="stSidebar"] h3,
+            [data-testid="stSidebar"] .stMarkdown p,
+            [data-testid="stSidebar"] .stMarkdown span {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Fix sidebar captions */
+            [data-testid="stSidebar"] .stCaption {{
+                color: var(--text-secondary) !important;
+            }}
+            
+            /* Fix sidebar elements */
+            [data-testid="stSidebar"],
+            [data-testid="stSidebarContent"] {{
+                background-color: var(--sidebar-bg) !important;
+            }}
+            
+            /* Fix wrap/unwrap buttons */
+            [data-testid="baseButton-headerNoPadding"],
+            button[kind="headerNoPadding"] {{
+                background-color: var(--control-bg) !important;
+                color: var(--text-primary) !important;
+                border: 1px solid var(--form-border) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }}
+            
+            /* Fix sidebar text inputs */
+            [data-testid="stSidebar"] input, 
+            [data-testid="stSidebar"] textarea {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Mining variant dropdown fix */
+            div[data-testid="stForm"] {{
+                background-color: transparent !important;
+                border-color: var(--form-border) !important;
+            }}
+            
+            /* Fix dropdown menu items and popups */
+            div[data-baseweb="popover"] ul,
+            div[data-baseweb="popover"] li,
+            div[data-baseweb="select-dropdown"],
+            div[data-baseweb="select-dropdown"] ul,
+            div[data-baseweb="select-dropdown"] li {{
+                color: var(--text-primary) !important;
+                background-color: var(--control-bg) !important;
             }}
             
             /* Cards with animations */
@@ -139,7 +219,7 @@ class BaseView(ABC):
             /* Buttons with animations */
             .stButton>button {{
                 background-color: var(--accent-primary);
-                color: {'white' if theme == "dark" else 'var(--text-primary)'};
+                color: white;
                 border-radius: 5px;
                 border: none;
                 padding: 10px 15px;
@@ -156,6 +236,48 @@ class BaseView(ABC):
             
             .stButton>button:active {{
                 transform: scale(0.95);
+            }}
+            
+            /* Sample data section styling */
+            .sample-data-section {{
+                margin-top: 1.5rem;
+                margin-bottom: 1.5rem;
+            }}
+            
+            .sample-data-button {{
+                text-align: center;
+                border-radius: 8px !important;
+                font-weight: 500 !important;
+                height: 2.8rem !important;
+                margin-top: 0.5rem !important;
+                box-shadow: 0 2px 4px var(--shadow) !important;
+            }}
+            
+            /* Sample data button hover effect */
+            .sample-data-button:hover {{
+                transform: translateY(-2px) !important;
+                box-shadow: 0 4px 8px var(--shadow) !important;
+            }}
+            
+            /* Sample data header */
+            .sample-data-header {{
+                margin-bottom: 0.5rem !important;
+                font-weight: 600 !important;
+                color: var(--accent-primary) !important;
+            }}
+            
+            /* File uploader improvements */
+            .stFileUploader {{
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+                border: 2px dashed var(--accent-secondary);
+                transition: border-color 0.3s ease;
+            }}
+            
+            .stFileUploader:hover {{
+                border-color: var(--accent-primary);
             }}
             
             /* Ripple effect for buttons */
@@ -192,6 +314,39 @@ class BaseView(ABC):
                 background-color: var(--bg-secondary);
                 color: var(--text-primary);
                 transition: background-color 0.3s ease, color 0.3s ease;
+            }}
+            
+            /* Fix for alignment of columns */
+            .row-widget.stHorizontal {{
+                align-items: center !important;
+            }}
+            
+            /* Add spacing between elements */
+            .stText, .stMarkdown {{
+                margin-bottom: 0.5rem;
+            }}
+            
+            /* Tooltip styling */
+            .stTooltipIcon {{
+                color: var(--text-secondary) !important;
+            }}
+            
+            /* Radio button styling */
+            .stRadio > div {{
+                background-color: transparent !important;
+                padding: 10px;
+                border-radius: 5px;
+            }}
+            
+            /* Expander styling */
+            .streamlit-expanderHeader {{
+                background-color: var(--bg-highlight) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            .streamlit-expanderContent {{
+                background-color: var(--bg-secondary) !important;
+                color: var(--text-primary) !important;
             }}
         </style>
         """
