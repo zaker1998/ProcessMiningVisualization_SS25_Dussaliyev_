@@ -17,6 +17,9 @@ class HeuristicMinerView(BaseAlgorithmView):
             A dictionary containing the minimum and maximum values for the sidebar sliders.
             The keys of the dictionary are equal to the keys of the sliders.
         """
+        # Add header and description for parameter section
+        st.markdown("### Heuristic Miner Parameters")
+        st.caption("Adjust these parameters to control what is displayed in the process model")
 
         number_input_slider(
             label="Minimum Frequency",
@@ -33,3 +36,12 @@ class HeuristicMinerView(BaseAlgorithmView):
             key="threshold",
             help="Minimum dependency for displaying edges. Edges with a lower dependency will be removed.",
         )
+        
+        # Add helpful tip about parameters
+        with st.expander("💡 Parameter Tips"):
+            st.markdown("""
+            - **Higher frequency values** will show only the most common paths
+            - **Lower frequency values** will show more detailed, less common paths
+            - **Higher dependency values** show only strong relationships
+            - Adjust these parameters gradually to find the best visualization
+            """)
