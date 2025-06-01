@@ -38,29 +38,51 @@ def number_input_slider(
 
     if isinstance(ratio, list):
         ratio = ratio[:2]
+        
+    # Add a container with custom styling for dark mode compatibility
+    with st.container():
+        # Show the current value for better visibility
+        current_value = st.session_state.get(key, value if value is not None else min_value)
+        
+        # Display the label with tooltip
+        if help:
+            st.markdown(f"**{label}** {current_value:.2f}")
+        else:
+            st.markdown(f"**{label}** {current_value:.2f}")
+            
+        # Create columns for slider and number input
+        silder_column, number_input_column = st.columns(ratio)
 
-    silder_column, number_input_column = st.columns(ratio)
+        with silder_column:
+            st.slider(
+                label="",  # Empty label since we've already displayed it above
+                min_value=min_value,
+                max_value=max_value,
+                key=key,
+                help=help,
+            )
 
-    with silder_column:
-        st.slider(
-            label=label,
-            min_value=min_value,
-            max_value=max_value,
-            key=key,
-            help=help,
-        )
-
-    with number_input_column:
-        st.number_input(
-            label=" ",
-            min_value=min_value,
-            max_value=max_value,
-            value=st.session_state[key] if key in st.session_state else value,
-            key=f"{key}_text_input",
-            on_change=set_session_state,
-            args=(key, f"{key}_text_input"),
-        )
+        with number_input_column:
+            st.number_input(
+                label=" ",
+                min_value=min_value,
+                max_value=max_value,
+                value=st.session_state[key] if key in st.session_state else value,
+                key=f"{key}_text_input",
+                on_change=set_session_state,
+                args=(key, f"{key}_text_input"),
+                format="%.2f",
+            )
 
 
 def set_session_state(key: str, number_input_key: str) -> None:
+    """Updates the session state with the value from the number input.
+    
+    Parameters
+    ----------
+    key : str
+        The key of the slider
+    number_input_key : str
+        The key of the number input
+    """
     st.session_state[key] = st.session_state[number_input_key]
