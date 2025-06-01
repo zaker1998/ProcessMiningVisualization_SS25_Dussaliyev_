@@ -17,7 +17,9 @@ class FuzzyMinerView(BaseAlgorithmView):
             A dictionary containing the minimum and maximum values for the sidebar sliders.
             The keys of the dictionary are equal to the keys of the sliders.
         """
-        st.write("Significance Cutoff")
+        # Use markdown for consistent styling across themes
+        st.markdown("### Significance Cutoff")
+        st.caption("Configure the significance and correlation thresholds")
 
         number_input_slider(
             label="Significance",
@@ -35,7 +37,12 @@ class FuzzyMinerView(BaseAlgorithmView):
             help="Correlation measures how closely related two events following one another are.",
         )
 
-        st.write("Edge filtering")
+        # Add a divider for visual separation
+        st.divider()
+        
+        # Use markdown for consistent styling
+        st.markdown("### Edge Filtering")
+        st.caption("Control how edges are filtered in the process model")
 
         number_input_slider(
             label="Edge Cutoff",
