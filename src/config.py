@@ -16,6 +16,7 @@ cluster_seperator = "---"
 import_file_types_mapping = {
     "csv": [".csv"],
     "pickle": [".pickle", ".pkl"],
+    "xes": [".xes"],  # XES (eXtensible Event Stream) files for process mining
 }
 # List of all allowed file extensions.
 import_file_suffixes = [
@@ -51,9 +52,9 @@ algorithm_mappings = {
 }
 # Maps the algorithm routes to the paths of the documentation files.
 docs_path_mappings = {
-    "heuristic": "docs/algorithms/heuristic_miner.md",
-    "fuzzy": "docs/algorithms/fuzzy_miner.md",
-    "inductive": "docs/algorithms/inductive_miner.md",
+    "heuristic": "src/docs/algorithms/heuristic_miner.md",
+    "fuzzy": "src/docs/algorithms/fuzzy_miner.md",
+    "inductive": "src/docs/algorithms/inductive_miner.md",
 }
 
 # Maps the algorithm routes to the controllers.
