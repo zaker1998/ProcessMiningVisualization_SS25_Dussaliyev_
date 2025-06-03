@@ -89,6 +89,7 @@ class HomeView(BaseView):
             # Add a helpful tooltip/explanation about file formats
             file_format_help = """
             - CSV: Comma-separated values files with event logs
+            - XES: eXtensible Event Stream files (IEEE standard for process mining)
             - Pickle/PKL: Serialized Python objects with process models
             """
             
