@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from ui.base_ui.base_controller import BaseController
 from components.buttons import navigate_to, to_home
 from io_operations.import_operations import ImportOperations
@@ -62,6 +63,19 @@ class AlgorithmExplanationController(BaseController):
             navigate_to("Algorithm")
 
         self.file_path = docs_path_mappings[st.session_state.algorithm]
+        
+        # Verify the file exists
+        if not os.path.exists(self.file_path):
+            self.logger.error(f"Documentation file not found: {self.file_path}")
+            # Try to find the file in a different location
+            alt_path = self.file_path.replace("src/", "")
+            if os.path.exists(alt_path):
+                self.file_path = alt_path
+                self.logger.info(f"Found documentation at alternative path: {alt_path}")
+            else:
+                self.logger.error("Documentation file not found at alternative path")
+                st.session_state.error = f"Documentation file not found: {self.file_path}"
+                navigate_to("Algorithm")
 
     def read_algorithm_file(self) -> str:
         """Reads the content of the algorithm markdown file.
@@ -71,8 +85,12 @@ class AlgorithmExplanationController(BaseController):
         str
             The content of the algorithm markdown file.
         """
-        file_content = self.import_model.read_file(self.file_path)
-        return file_content
+        try:
+            file_content = self.import_model.read_file(self.file_path)
+            return file_content
+        except Exception as e:
+            self.logger.exception(f"Error reading file {self.file_path}: {str(e)}")
+            return f"# Error Loading Documentation\n\nUnable to load documentation for {st.session_state.algorithm}.\n\nPlease try again later or contact support."
 
     def run(self, selected_view, index):
         """Runs the controller. It reads the algorithm file and displays it in the view.
@@ -86,8 +104,14 @@ class AlgorithmExplanationController(BaseController):
         """
         self.selected_view = selected_view
         selected_view.display_back_button()
+        
         try:
             file_content = self.read_algorithm_file()
+            
+            # Check if content is empty
+            if not file_content or len(file_content.strip()) == 0:
+                file_content = f"# No Documentation Available\n\nDocumentation for {st.session_state.algorithm} is currently unavailable.\n\nPlease check back later."
+                
             selected_view.display_algorithm_file(file_content)
         except FileNotFoundError as e:
             self.logger.exception(e)
@@ -95,3 +119,7 @@ class AlgorithmExplanationController(BaseController):
             self.logger.info("redirect to algorithm page")
             st.session_state.error = "Algorithm does not have a documentation file"
             navigate_to("Algorithm")
+        except Exception as e:
+            self.logger.exception(e)
+            st.error(f"Error displaying documentation: {str(e)}")
+            selected_view.display_algorithm_file("# Error\n\nThere was an error loading the documentation.")

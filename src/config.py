@@ -52,9 +52,9 @@ algorithm_mappings = {
 }
 # Maps the algorithm routes to the paths of the documentation files.
 docs_path_mappings = {
-    "heuristic": "src/docs/algorithms/heuristic_miner.md",
-    "fuzzy": "src/docs/algorithms/fuzzy_miner.md",
-    "inductive": "src/docs/algorithms/inductive_miner.md",
+    "heuristic": "docs/algorithms/heuristic_miner.md",
+    "fuzzy": "docs/algorithms/fuzzy_miner.md",
+    "inductive": "docs/algorithms/inductive_miner.md",
 }
 
 # Maps the algorithm routes to the controllers.
