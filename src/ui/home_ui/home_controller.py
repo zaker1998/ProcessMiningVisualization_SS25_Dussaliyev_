@@ -60,12 +60,25 @@ class HomeController(BaseController):
         sample_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "sample_data")
         
         if os.path.exists(sample_dir):
+            # Get CSV files from sample_data directory
             for file in os.listdir(sample_dir):
                 if file.endswith(".csv"):
                     samples.append({
                         "name": file.replace(".csv", "").replace("_", " ").title(),
-                        "path": os.path.join(sample_dir, file)
+                        "path": os.path.join(sample_dir, file),
+                        "type": "csv"
                     })
+            
+            # Get XES files from sample_data/xes_examples directory
+            xes_dir = os.path.join(sample_dir, "xes_examples")
+            if os.path.exists(xes_dir):
+                for file in os.listdir(xes_dir):
+                    if file.endswith(".xes"):
+                        samples.append({
+                            "name": file.replace(".xes", "").replace("_", " ").title() + " (XES)",
+                            "path": os.path.join(xes_dir, file),
+                            "type": "xes"
+                        })
         
         return samples
 
@@ -103,6 +116,30 @@ class HomeController(BaseController):
                 elif file_type == "pickle":
                     model = self.import_model.read_model(self.uploaded_file)
                     selected_view.display_model_import(model)
+                elif file_type == "xes":
+                    # Process XES file
+                    with st.spinner("Importing XES file..."):
+                        # Validate XES file
+                        if not self.import_model.validate_xes(self.uploaded_file):
+                            raise UnsupportedFileTypeException("Invalid XES file format")
+                        
+                        # Import XES and convert to DataFrame
+                        event_log = self.import_model.read_xes(self.uploaded_file)
+                        df = self.import_model.xes_to_dataframe(event_log)
+                        
+                        # Rename columns to more user-friendly names for consistency
+                        df = df.rename(columns={
+                            'case:concept:name': 'case_id',
+                            'concept:name': 'activity',
+                            'time:timestamp': 'timestamp'
+                        })
+                        
+                        # Store dataframe in session state
+                        st.session_state.df = df
+                        
+                        # Navigate directly to the ColumnSelection page
+                        st.session_state.page = "ColumnSelection"
+                        st.rerun()
                 else:
                     raise NotImplementedFileTypeException(file_type)
         except UnsupportedFileTypeException as e:
@@ -214,8 +251,25 @@ class HomeController(BaseController):
         """
         try:
             with st.spinner("Loading sample data..."):
-                # Load the CSV file with comma delimiter (most common)
-                df = self.import_model.read_csv(file_path, delimiter=",")
+                # Detect the file type based on extension
+                file_type = "csv" if file_path.endswith(".csv") else "xes" if file_path.endswith(".xes") else None
+                
+                if file_type == "csv":
+                    # Load the CSV file with comma delimiter (most common)
+                    df = self.import_model.read_csv(file_path, delimiter=",")
+                elif file_type == "xes":
+                    # Load the XES file
+                    event_log = self.import_model.read_xes(file_path)
+                    df = self.import_model.xes_to_dataframe(event_log)
+                    
+                    # Rename columns to more user-friendly names for consistency
+                    df = df.rename(columns={
+                        'case:concept:name': 'case_id',
+                        'concept:name': 'activity',
+                        'time:timestamp': 'timestamp'
+                    })
+                else:
+                    raise UnsupportedFileTypeException(f"Unknown file type for {file_path}")
                 
                 # Validate the event log
                 is_valid, message = validate_event_log(df)
