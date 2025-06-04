@@ -55,16 +55,17 @@ def number_input_slider(
 
         with silder_column:
             st.slider(
-                label="",  # Empty label since we've already displayed it above
+                label=f"{label} slider",  # Proper label for accessibility
                 min_value=min_value,
                 max_value=max_value,
                 key=key,
                 help=help,
+                label_visibility="collapsed",  # Hide the label since we've displayed it above
             )
 
         with number_input_column:
             st.number_input(
-                label=" ",
+                label=f"{label} input",  # Proper label for accessibility
                 min_value=min_value,
                 max_value=max_value,
                 value=st.session_state[key] if key in st.session_state else value,
@@ -72,6 +73,7 @@ def number_input_slider(
                 on_change=set_session_state,
                 args=(key, f"{key}_text_input"),
                 format="%.2f",
+                label_visibility="collapsed",  # Hide the label since we've displayed it above
             )
 
 
