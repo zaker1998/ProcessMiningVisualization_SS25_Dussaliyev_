@@ -76,6 +76,7 @@ class AlgorithmExplanationController(BaseController):
                 self.logger.error("Documentation file not found at alternative path")
                 st.session_state.error = f"Documentation file not found: {self.file_path}"
                 navigate_to("Algorithm")
+                
 
     def read_algorithm_file(self) -> str:
         """Reads the content of the algorithm markdown file.
