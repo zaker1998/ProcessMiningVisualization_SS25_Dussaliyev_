@@ -4,8 +4,8 @@ import pandas as pd
 import tempfile
 import shutil
 from pm4py.objects.log.obj import EventLog, Trace, Event
-from io_operations.import_operations import ImportOperations
-from io_operations.export_operations import ExportOperations
+from src.io_operations.import_operations import ImportOperations
+from src.io_operations.export_operations import ExportOperations
 
 class TestXESOperations(unittest.TestCase):
     
