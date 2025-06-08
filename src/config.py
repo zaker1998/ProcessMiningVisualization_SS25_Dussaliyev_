@@ -1,7 +1,4 @@
-from ui.heuristic_miner_ui.heuristic_miner_controller import HeuristicMinerController
-from ui.fuzzy_miner_ui.fuzzy_miner_controller import FuzzyMinerController
-from ui.inductive_miner_ui.inductive_miner_controller import InductiveMinerController
-
+# Define constants and configurations that don't depend on UI modules
 
 # colon_substitute is used to replace the colon in event names to make them compatible with graphviz.
 colon_substitute = "___"
@@ -57,9 +54,22 @@ docs_path_mappings = {
     "inductive": "docs/algorithms/inductive_miner.md",
 }
 
-# Maps the algorithm routes to the controllers.
-algorithm_routes = {
-    "heuristic": HeuristicMinerController,
-    "fuzzy": FuzzyMinerController,
-    "inductive": InductiveMinerController,
-}
+# Import UI modules only if they can be found (i.e., not when running tests)
+try:
+    from ui.heuristic_miner_ui.heuristic_miner_controller import HeuristicMinerController
+    from ui.fuzzy_miner_ui.fuzzy_miner_controller import FuzzyMinerController
+    from ui.inductive_miner_ui.inductive_miner_controller import InductiveMinerController
+
+    # Maps the algorithm routes to the controllers.
+    algorithm_routes = {
+        "heuristic": HeuristicMinerController,
+        "fuzzy": FuzzyMinerController,
+        "inductive": InductiveMinerController,
+    }
+except ImportError:
+    # Define dummy controllers for testing
+    algorithm_routes = {
+        "heuristic": None,
+        "fuzzy": None,
+        "inductive": None,
+    }
