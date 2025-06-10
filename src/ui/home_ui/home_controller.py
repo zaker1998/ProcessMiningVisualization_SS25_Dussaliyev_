@@ -57,7 +57,7 @@ class HomeController(BaseController):
     def _get_sample_files(self):
         """Get available sample files to showcase the application."""
         samples = []
-        sample_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "sample_data")
+        sample_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "sample_data")
         
         if os.path.exists(sample_dir):
             # Get CSV files from sample_data directory

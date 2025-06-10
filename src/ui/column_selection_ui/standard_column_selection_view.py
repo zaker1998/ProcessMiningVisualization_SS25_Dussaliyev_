@@ -1,5 +1,6 @@
 import streamlit as st
 from ui.column_selection_ui.base_column_selection_view import BaseColumnSelectionView
+from ui.base_ui.base_view import BaseView
 
 
 class StandardColumnSelectionView(BaseColumnSelectionView):
