@@ -30,16 +30,20 @@ class BaseController(ABC):
 
         from ui.base_ui.base_view import BaseView
 
+        # Helper function to check inheritance relationship
+        def is_baseview_instance(obj):
+            return isinstance(obj, BaseView) or BaseView in type(obj).__mro__[1:]
+
         if isinstance(views, list) or isinstance(views, tuple):
             for view in views:
-                if not isinstance(view, BaseView):
+                if not is_baseview_instance(view):
                     self.logger.error(
                         f"Invalid type: {type(view)}, expected: {BaseView}"
                     )
                     raise InvalidTypeException(BaseView, type(view))
             self.views = list(views)
         else:
-            if not isinstance(views, BaseView):
+            if not is_baseview_instance(views):
                 self.logger.error(f"Invalid type: {type(views)}, expected: {BaseView}")
                 raise InvalidTypeException(BaseView, type(views))
             self.views = [views]
