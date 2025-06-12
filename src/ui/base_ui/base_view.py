@@ -169,13 +169,9 @@ class BaseView(ABC):
                 box-shadow: 0 4px 6px var(--shadow);
                 margin-bottom: 20px;
                 color: var(--text-primary);
-                transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+                transition: background-color 0.3s ease, color 0.3s ease;
             }}
             
-            .highlight-card:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 6px 12px var(--shadow);
-            }}
             
             /* Section headers */
             .section-header {{
@@ -200,13 +196,9 @@ class BaseView(ABC):
                 font-size: 16px;
                 display: flex;
                 align-items: center;
-                transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+                transition: color 0.3s ease;
             }}
             
-            .feature-item:hover {{
-                background-color: var(--accent-secondary);
-                transform: translateX(5px);
-            }}
             
             /* Feature icons */
             .feature-icon {{
@@ -418,7 +410,7 @@ class BaseView(ABC):
         """
         from ui.base_ui.base_controller import BaseController
 
-        if not isinstance(controller, BaseController):
+        if not any(cls.__name__ == 'BaseController' for cls in type(controller).__mro__):
             self.logger.error(
                 f"Invalid controller type: {type(controller)}, expected: {BaseController}"
             )
