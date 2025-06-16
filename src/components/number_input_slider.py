@@ -64,15 +64,22 @@ def number_input_slider(
             )
 
         with number_input_column:
+            # Ensure the value is properly typed to prevent warnings
+            current_val = st.session_state[key] if key in st.session_state else value
+            if current_val is not None:
+                # Convert to float if it's an integer to match the format
+                if isinstance(current_val, int) and step is not None and isinstance(step, float):
+                    current_val = float(current_val)
+            
             st.number_input(
                 label=f"{label} input",  # Proper label for accessibility
                 min_value=min_value,
                 max_value=max_value,
-                value=st.session_state[key] if key in st.session_state else value,
+                value=current_val,
                 key=f"{key}_text_input",
                 on_change=set_session_state,
                 args=(key, f"{key}_text_input"),
-                format="%.2f",
+                format="%.2f" if isinstance(step, float) or isinstance(min_value, float) or isinstance(max_value, float) else "%d",
                 label_visibility="collapsed",  # Hide the label since we've displayed it above
             )
 
