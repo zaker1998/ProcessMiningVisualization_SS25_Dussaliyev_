@@ -1,8 +1,8 @@
-from src.mining_algorithms.inductive_mining import InductiveMining
-from src.graphs.dfg import DFG
-from src.graphs.cuts import exclusive_cut, sequence_cut, loop_cut
-from src.logs.filters import filter_events, filter_traces
-from src.logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
+from mining_algorithms.inductive_mining import InductiveMining
+from graphs.dfg import DFG
+from graphs.cuts import exclusive_cut, sequence_cut, loop_cut
+from logs.filters import filter_events, filter_traces
+from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 import numpy as np
 
 

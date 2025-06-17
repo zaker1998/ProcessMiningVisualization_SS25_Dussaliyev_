@@ -7,7 +7,7 @@ from pm4py.objects.log.obj import EventLog
 import tempfile
 import os
 import xml.etree.ElementTree as ET
-from src.exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
+from exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
 import logging
 
 

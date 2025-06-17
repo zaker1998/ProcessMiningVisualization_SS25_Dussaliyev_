@@ -1,10 +1,10 @@
-from src.graphs.visualization.base_graph import BaseGraph
+from graphs.visualization.base_graph import BaseGraph
 import pickle
-from src.exceptions.io_exceptions import (
+from exceptions.io_exceptions import (
     UnsupportedFileTypeException,
     NotImplementedFileTypeException,
 )
-from src.exceptions.type_exceptions import InvalidTypeException
+from exceptions.type_exceptions import InvalidTypeException
 import pm4py
 import pandas as pd
 from pm4py.objects.log.obj import EventLog
@@ -25,7 +25,7 @@ class ExportOperations:
             The supported graph export formats, by default None
         """
         if supported_graph_export_formats is None:
-            from src.config import graph_export_formats
+            from config import graph_export_formats
 
             supported_graph_export_formats = graph_export_formats
 

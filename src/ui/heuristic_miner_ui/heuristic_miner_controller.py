@@ -1,7 +1,7 @@
-from src.ui.base_algorithm_ui.base_algorithm_controller import BaseAlgorithmController
-from src.ui.heuristic_miner_ui.heuristic_miner_view import HeuristicMinerView
+from ui.base_algorithm_ui.base_algorithm_controller import BaseAlgorithmController
+from ui.heuristic_miner_ui.heuristic_miner_view import HeuristicMinerView
 import streamlit as st
-from src.mining_algorithms.heuristic_mining import HeuristicMining
+from mining_algorithms.heuristic_mining import HeuristicMining
 
 
 class HeuristicMinerController(BaseAlgorithmController):
