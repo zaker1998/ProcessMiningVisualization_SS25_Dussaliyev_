@@ -220,7 +220,7 @@ class BaseAlgorithmController(BaseController):
                     "Graph could not be created. Wait until the mining is finished before changing parameters."
                 )
                 st.warning(
-                    "Do not change the parameters while mining. This will cause an error. Wait until the mining is finished."
+                    "⚠️ Please wait for mining to complete before changing parameters."
                 )
         view.display_graph(self.mining_model.get_graph())
         view.display_export_button(disabled=False)
