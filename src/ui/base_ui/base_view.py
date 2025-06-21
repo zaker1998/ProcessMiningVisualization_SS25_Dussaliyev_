@@ -96,11 +96,7 @@ class BaseView(ABC):
                 color: var(--text-primary) !important; 
             }}
             
-            /* Headers */
-            .block-container h1, .block-container h2, .block-container h3 {{
-                color: var(--text-primary) !important;
-                transition: color 0.3s ease;
-            }}
+            /* Headers - removed to use neutral colors from theme_manager */
             
             /* Force sidebar text color to ensure visibility in both themes */
             .css-10oheav, .css-12w0qpk, .css-1dp5vir, .css-1l40rmt,
@@ -260,7 +256,6 @@ class BaseView(ABC):
             
             /* File uploader improvements */
             .stFileUploader {{
-                background-color: var(--bg-secondary);
                 border-radius: 8px;
                 padding: 1rem;
                 margin-bottom: 1.5rem;

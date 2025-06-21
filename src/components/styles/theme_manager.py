@@ -65,6 +65,64 @@ def apply_theme():
     {get_form_styles(colors["bg_color"], colors["text_color"], colors["input_bg"])}
     
     {get_button_styles()}
+    
+    /* Dataframe styling to respect theme */
+    .stDataFrame {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
+    }}
+    
+    .stDataFrame > div {{
+        background-color: {colors["bg_color"]} !important;
+    }}
+    
+    /* Table headers and cells */
+    .stDataFrame table {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
+    }}
+    
+    .stDataFrame th {{
+        background-color: {colors["control_bg"]} !important;
+        color: {colors["text_color"]} !important;
+        border-color: {colors["control_bg"]} !important;
+    }}
+    
+    .stDataFrame td {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
+        border-color: {colors["control_bg"]} !important;
+    }}
+    
+    /* Page headers with neutral colors */
+    h1, h2, h3, h4, h5, h6 {{
+        color: {'#4a5568' if current_theme == 'light' else '#a0aec0'} !important;
+    }}
+    
+    /* Main page title */
+    .main h1 {{
+        color: {'#2d3748' if current_theme == 'light' else '#cbd5e0'} !important;
+    }}
+    
+    /* File uploader styling for theme compatibility */
+    section[data-testid="stFileUploadDropzone"] {{
+        background-color: {colors["control_bg"]} !important;
+    }}
+    
+    section[data-testid="stFileUploadDropzone"] small {{
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Drag and drop area */
+    [data-testid="stFileUploadDropzone"] > div {{
+        background-color: {colors["control_bg"]} !important;
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Upload icon in drag-drop area */
+    [data-testid="stFileUploadDropzone"] svg {{
+        color: {colors["text_color"]} !important;
+    }}
     </style>
     """
     

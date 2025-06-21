@@ -46,7 +46,7 @@ class DataFrameStyler:
         """
         self.default_style = default_style
 
-    def stlye_df(
+    def style_df(
         self,
         selected_columns: dict[str, str],
     ) -> pd.DataFrame:
