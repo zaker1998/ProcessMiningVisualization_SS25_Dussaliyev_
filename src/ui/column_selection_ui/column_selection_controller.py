@@ -123,8 +123,16 @@ class ColumnSelectionController(BaseController):
         pd.DataFrame
             The styled dataframe.
         """
+        # Set theme-aware default style for non-selected columns
+        current_theme = st.session_state.get("theme", "light")
+        if current_theme == "dark":
+            default_style = "background-color: #262730; color: #fafafa"
+        else:
+            default_style = "background-color: #ffffff; color: #1a202c"
+        
+        self.dataframe_styler.set_default_style(default_style)
         self.dataframe_styler.set_column_styles(column_styles)
-        return self.dataframe_styler.stlye_df(self.selected_columns)
+        return self.dataframe_styler.style_df(self.selected_columns)
 
     def process_needed_columns(self):
         """Processes the needed columns for the algorithm. If the columns are not selected by the user, they are predicted. The prediction is based on the column names.
