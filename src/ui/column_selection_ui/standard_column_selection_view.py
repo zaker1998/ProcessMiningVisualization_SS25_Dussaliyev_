@@ -23,12 +23,22 @@ class StandardColumnSelectionView(BaseColumnSelectionView):
     def render_column_selections(self, columns: list[str]):
         """Renders the column selection options."""
 
-        # Add a helpful card at the top
-        st.markdown("""
-        <div style="background-color: #2d3748; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <h3 style="color: #ffffff;">📋 Column Selection</h3>
-            <p style="color: #ffffff;">Please map your data columns to the required process mining fields:</p>
-            <ul style="color: #ffffff;">
+        # Get current theme to style the card appropriately
+        current_theme = st.session_state.get("theme", "light")
+        
+        if current_theme == "dark":
+            card_bg = "#2d3748"
+            text_color = "#ffffff"
+        else:
+            card_bg = "#f7fafc"
+            text_color = "#2d3748"
+
+        # Add a helpful card at the top with theme-aware styling
+        st.markdown(f"""
+        <div style="background-color: {card_bg}; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+            <h3 style="color: {text_color};">📋 Column Selection</h3>
+            <p style="color: {text_color};">Please map your data columns to the required process mining fields:</p>
+            <ul style="color: {text_color};">
                 <li><strong style="color: #FF705B;">Time column</strong>: Contains timestamps of events</li>
                 <li><strong style="color: #629AFF;">Case column</strong>: Identifies the process instance</li>
                 <li><strong style="color: #57B868;">Activity column</strong>: Describes the activity performed</li>
