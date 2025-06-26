@@ -1,6 +1,6 @@
 from mining_algorithms.inductive_mining import InductiveMining
 from graphs.dfg import DFG
-from graphs.cuts import exclusive_cut, sequence_cut, loop_cut
+from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 import numpy as np
@@ -82,8 +82,8 @@ class InductiveMiningApproximate(InductiveMining):
                     self.current_depth -= 1
                     return result
                     
-            # Safe parallel cut (using our custom implementation)
-            if cut := self.safe_parallel_cut(dfg):
+            # Parallel cut (using the existing implementation)
+            if cut := parallel_cut(dfg):
                 splits = parallel_split(log, cut)
                 if splits and self._splits_progress(log, splits):
                     result = ("par", *[self.inductive_mining(split) for split in splits])
@@ -223,74 +223,7 @@ class InductiveMiningApproximate(InductiveMining):
             node_sizes=self.node_sizes
         )
 
-    def safe_parallel_cut(self, dfg):
-        """A safer implementation of parallel cut detection.
-        
-        Parameters
-        ----------
-        dfg : DFG
-            The directly-follows graph.
-            
-        Returns
-        -------
-        list or None
-            A list of partitions, or None if no parallel cut is found.
-        """
-        # Get nodes from DFG
-        nodes = list(dfg.get_nodes())
-        if len(nodes) <= 1:
-            return None
-            
-        # Find connected components
-        visited = set()
-        partitions = []
-        
-        # Simple connected components algorithm
-        for node in nodes:
-            if node in visited:
-                continue
-                
-            # Start a new component
-            component = {node}
-            visited.add(node)
-            
-            # Find all nodes reachable from this node
-            queue = [node]
-            while queue:
-                current = queue.pop(0)
-                
-                # Get successors and predecessors
-                successors = dfg.get_successors(current)
-                predecessors = dfg.get_predecessors(current)
-                
-                # Check for parallel relationship
-                for other in nodes:
-                    if other in visited or other == current:
-                        continue
-                        
-                    # If there's no direct edge between nodes, they might be parallel
-                    if (other not in successors and 
-                        other not in predecessors):
-                        
-                        # Check if they have similar connections to other nodes
-                        other_successors = dfg.get_successors(other)
-                        other_predecessors = dfg.get_predecessors(other)
-                        
-                        # If they share similar connectivity patterns, add to component
-                        if (successors.intersection(other_successors) or 
-                            predecessors.intersection(other_predecessors)):
-                            component.add(other)
-                            visited.add(other)
-                            queue.append(other)
-            
-            if component:
-                partitions.append(component)
-        
-        # Only return partitions if we found more than one component
-        if len(partitions) > 1:
-            return partitions
-            
-        return None
+
 
     def create_simplified_dfg(self, log):
         """Create a DFG with approximation strategies applied.
@@ -305,60 +238,78 @@ class InductiveMiningApproximate(InductiveMining):
         DFG
             The simplified directly-follows graph.
         """
-        # Create initial DFG
-        dfg = DFG()
-        
-        # Add all events as nodes
-        events = set()
-        for trace in log:
-            for event in trace:
-                events.add(event)
-        
-        for event in events:
-            dfg.add_node(event)
+        try:
+            # Create initial DFG
+            dfg = DFG()
             
-        # Calculate edge frequencies and behavior profiles
-        edge_frequencies = {}
-        behavior_profiles = {act: (set(), set()) for act in events}  # (incoming, outgoing)
-        
-        for trace, frequency in log.items():
-            for i in range(len(trace)):
-                current = trace[i]
-                # Record incoming edges
-                if i > 0:
-                    prev = trace[i-1]
-                    edge = (prev, current)
-                    edge_frequencies[edge] = edge_frequencies.get(edge, 0) + frequency
-                    behavior_profiles[current][0].add(prev)
-                # Record outgoing edges
-                if i < len(trace) - 1:
-                    next_act = trace[i+1]
-                    behavior_profiles[current][1].add(next_act)
-                    
-        # Apply behavior-based binning for similar activities
-        if len(events) > 5:  # Only apply binning for larger event sets
-            binned_activities = self.bin_similar_activities(behavior_profiles)
+            # Add all events as nodes
+            events = set()
+            for trace in log:
+                for event in trace:
+                    events.add(event)
             
-            # Update edge frequencies based on binning
-            new_frequencies = {}
-            for (src, tgt), freq in edge_frequencies.items():
-                new_src = binned_activities.get(src, src)
-                new_tgt = binned_activities.get(tgt, tgt)
-                new_edge = (new_src, new_tgt)
-                new_frequencies[new_edge] = new_frequencies.get(new_edge, 0) + freq
-            
-            edge_frequencies = new_frequencies
+            for event in events:
+                dfg.add_node(event)
                 
-        # Add edges that pass the threshold
-        if edge_frequencies:
-            max_frequency = max(edge_frequencies.values())
-            threshold = max_frequency * self.simplification_threshold
+            # Calculate edge frequencies and behavior profiles
+            edge_frequencies = {}
+            behavior_profiles = {act: (set(), set()) for act in events}  # (incoming, outgoing)
             
-            for (source, target), frequency in edge_frequencies.items():
-                if frequency >= threshold:
-                    dfg.add_edge(source, target)
+            for trace, frequency in log.items():
+                for i in range(len(trace)):
+                    current = trace[i]
+                    # Record incoming edges
+                    if i > 0:
+                        prev = trace[i-1]
+                        edge = (prev, current)
+                        edge_frequencies[edge] = edge_frequencies.get(edge, 0) + frequency
+                        behavior_profiles[current][0].add(prev)
+                    # Record outgoing edges
+                    if i < len(trace) - 1:
+                        next_act = trace[i+1]
+                        behavior_profiles[current][1].add(next_act)
+                        
+            # Apply behavior-based binning for similar activities
+            if len(events) > 5:  # Only apply binning for larger event sets
+                try:
+                    binned_activities = self.bin_similar_activities(behavior_profiles)
                     
-        return dfg
+                    # Update edge frequencies based on binning
+                    new_frequencies = {}
+                    for (src, tgt), freq in edge_frequencies.items():
+                        new_src = binned_activities.get(src, src)
+                        new_tgt = binned_activities.get(tgt, tgt)
+                        new_edge = (new_src, new_tgt)
+                        new_frequencies[new_edge] = new_frequencies.get(new_edge, 0) + freq
+                    
+                    edge_frequencies = new_frequencies
+                except Exception as e:
+                    self.logger.warning(f"Error during activity binning: {e}. Proceeding without binning.")
+                    
+            # Add edges that pass the threshold
+            if edge_frequencies:
+                try:
+                    max_frequency = max(edge_frequencies.values())
+                    threshold = max_frequency * self.simplification_threshold
+                    
+                    for (source, target), frequency in edge_frequencies.items():
+                        if frequency >= threshold:
+                            dfg.add_edge(source, target)
+                except Exception as e:
+                    self.logger.warning(f"Error applying threshold to edges: {e}. Adding all edges.")
+                    # Fall back to adding all edges if threshold application fails
+                    for (source, target), _ in edge_frequencies.items():
+                        dfg.add_edge(source, target)
+                        
+            return dfg
+            
+        except Exception as e:
+            self.logger.error(f"Error creating simplified DFG: {e}")
+            # Return a simple DFG with no edges in case of failure
+            basic_dfg = DFG()
+            for event in set([event for trace in log for event in trace]):
+                basic_dfg.add_node(event)
+            return basic_dfg
 
     def bin_similar_activities(self, behavior_profiles):
         """Bin activities with similar behavior patterns.
@@ -383,7 +334,12 @@ class InductiveMiningApproximate(InductiveMining):
                 in_sim = len(behavior_profiles[act1][0].intersection(behavior_profiles[act2][0]))
                 out_sim = len(behavior_profiles[act1][1].intersection(behavior_profiles[act2][1]))
                 
-                total_sim = (in_sim + out_sim) / max(1, len(behavior_profiles[act1][0]) + len(behavior_profiles[act1][1]))
+                # Calculate total possible connections for both activities
+                act1_total = len(behavior_profiles[act1][0]) + len(behavior_profiles[act1][1])
+                act2_total = len(behavior_profiles[act2][0]) + len(behavior_profiles[act2][1])
+                total_possible = max(1, (act1_total + act2_total) / 2)  # Average of both activities' profile sizes
+                
+                total_sim = (in_sim + out_sim) / total_possible
                 
                 if total_sim >= self.min_bin_freq:
                     # Use the alphabetically first activity as representative
@@ -437,13 +393,22 @@ class InductiveMiningApproximate(InductiveMining):
             return list(activities)[0]
         
         # For larger activity sets, limit to most frequent ones to avoid overly complex models
-        if len(activities) > 4:
-            # Calculate activity frequencies
-            act_freq = {act: sum(freq for trace, freq in self.filtered_log.items() if act in trace)
-                      for act in activities}
+        if len(activities) > 4 and self.filtered_log:
+            try:
+                # Calculate activity frequencies
+                act_freq = {act: sum(freq for trace, freq in self.filtered_log.items() if act in trace)
+                          for act in activities}
+                
+                # Keep only the most frequent activities
+                top_activities = sorted(act_freq.items(), key=lambda x: x[1], reverse=True)[:4]
+                activities = {act for act, _ in top_activities}
+            except Exception as e:
+                self.logger.warning(f"Error calculating activity frequencies: {e}")
+                # Fall back to using all activities
+                activities = set(sorted(list(activities))[:4])
             
-            # Keep only the most frequent activities
-            top_activities = sorted(act_freq.items(), key=lambda x: x[1], reverse=True)[:4]
-            activities = {act for act, _ in top_activities}
+        # Ensure we don't create an overly complex model even if we can't calculate frequencies
+        if len(activities) > 4:
+            activities = set(sorted(list(activities))[:4])
             
         return ("loop", "tau", *sorted(activities)) 

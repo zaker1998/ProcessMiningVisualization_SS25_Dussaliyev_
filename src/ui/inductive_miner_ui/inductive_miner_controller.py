@@ -34,6 +34,13 @@ class InductiveMinerController(BaseAlgorithmController):
         if "inductive_variant" not in st.session_state:
             st.session_state.inductive_variant = "Standard"
             
+        # Initialize approximate miner specific parameters
+        if "simplification_threshold" not in st.session_state:
+            st.session_state.simplification_threshold = 0.1
+            
+        if "min_bin_freq" not in st.session_state:
+            st.session_state.min_bin_freq = 0.2
+            
         # Map of variant names to their class implementations
         self.variant_classes = {
             "Standard": InductiveMining,
@@ -63,11 +70,24 @@ class InductiveMinerController(BaseAlgorithmController):
             st.session_state.activity_threshold = (
                 self.mining_model.get_activity_threshold()
             )
+            
+        # Handle approximate miner parameters
+        if isinstance(self.mining_model, InductiveMiningApproximate):
+            if "simplification_threshold" not in st.session_state:
+                st.session_state.simplification_threshold = getattr(
+                    self.mining_model, "simplification_threshold", 0.1
+                )
+            if "min_bin_freq" not in st.session_state:
+                st.session_state.min_bin_freq = getattr(
+                    self.mining_model, "min_bin_freq", 0.2
+                )
 
         # set instance variables from session state
         self.traces_threshold = st.session_state.traces_threshold
         self.activity_threshold = st.session_state.activity_threshold
         self.selected_variant = st.session_state.inductive_variant
+        self.simplification_threshold = st.session_state.simplification_threshold
+        self.min_bin_freq = st.session_state.min_bin_freq
 
     def perform_mining(self) -> None:
         """Performs the mining of the Inductive Miner algorithm."""
@@ -77,7 +97,24 @@ class InductiveMinerController(BaseAlgorithmController):
             # Create a new instance of the selected variant class
             self.mining_model = variant_class(self.mining_model.log)
         
-        self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)
+        # Validate parameters
+        self.activity_threshold = max(0.0, min(1.0, self.activity_threshold))
+        self.traces_threshold = max(0.0, min(1.0, self.traces_threshold))
+        
+        # Call generate_graph with appropriate parameters based on variant
+        if self.selected_variant == "Approximate":
+            # Validate approximate miner specific parameters
+            self.simplification_threshold = max(0.0, min(0.9, self.simplification_threshold))
+            self.min_bin_freq = max(0.0, min(0.9, self.min_bin_freq))
+            
+            self.mining_model.generate_graph(
+                self.activity_threshold, 
+                self.traces_threshold,
+                simplification_threshold=self.simplification_threshold,
+                min_bin_freq=self.min_bin_freq
+            )
+        else:
+            self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)
 
     def have_parameters_changed(self) -> bool:
         """Checks if the algorithm parameters have changed.
@@ -87,11 +124,22 @@ class InductiveMinerController(BaseAlgorithmController):
         bool
             True if the algorithm parameters have changed, False otherwise.
         """
-        return (
+        # Check basic parameters
+        basic_params_changed = (
             self.mining_model.get_activity_threshold() != self.activity_threshold
             or self.mining_model.get_traces_threshold() != self.traces_threshold
             or not isinstance(self.mining_model, self.variant_classes[self.selected_variant])
         )
+        
+        # Check approximate miner parameters if applicable
+        if self.selected_variant == "Approximate" and isinstance(self.mining_model, InductiveMiningApproximate):
+            approx_params_changed = (
+                getattr(self.mining_model, "simplification_threshold", 0.1) != self.simplification_threshold
+                or getattr(self.mining_model, "min_bin_freq", 0.2) != self.min_bin_freq
+            )
+            return basic_params_changed or approx_params_changed
+            
+        return basic_params_changed
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
         """Returns the sidebar values for the Inductive Miner algorithm.
@@ -105,6 +153,8 @@ class InductiveMinerController(BaseAlgorithmController):
         sidebar_values = {
             "traces_threshold": (0.0, 1.0),
             "activity_threshold": (0.0, 1.0),
+            "simplification_threshold": (0.0, 0.9),
+            "min_bin_freq": (0.0, 0.9),
         }
 
         return sidebar_values

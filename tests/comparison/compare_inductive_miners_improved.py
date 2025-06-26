@@ -1006,6 +1006,14 @@ def display_miner_comparison_results(results):
     """
     print("\n===== INDUCTIVE MINER COMPARISON RESULTS =====\n")
     
+    # Import the proper metrics for comparison
+    try:
+        from process_tree_metrics import ProcessTreeMetrics, compare_process_trees
+        has_proper_metrics = True
+    except ImportError:
+        has_proper_metrics = False
+        print("Warning: Could not import proper metrics module")
+    
     # Prepare data for table
     data = []
     for miner_name, miner_results in results.items():
@@ -1027,6 +1035,7 @@ def display_miner_comparison_results(results):
     # Sort by miner name and threshold
     data.sort(key=lambda x: (x[0], float(x[1])))
     
+    print("=== OLD METRICS (Superficial Comparison) ===")
     # Print table
     headers = ["Miner", "Threshold", "Combined Sim", "Operator Sim", "Activity Sim", "Complexity Sim"]
     col_widths = [15, 10, 15, 15, 15, 15]
@@ -1049,8 +1058,51 @@ def display_miner_comparison_results(results):
         
     print("\n")
     
+    # If we have proper metrics, show a comparison
+    if has_proper_metrics:
+        print("\n=== COMPARISON WITH PROPER METRICS ===")
+        print("Let's compare using the new structural metrics on one example:\n")
+        
+        # Get one example comparison
+        for miner_name, miner_results in results.items():
+            if miner_name == "Standard":
+                for threshold, result in miner_results.items():
+                    if threshold == 0.0:  # Use threshold 0.0 as example
+                        pm4py_tree = result.get('comparison', {}).get('pm4py_tree', None)
+                        our_tree = result.get('comparison', {}).get('our_tree', None)
+                        
+                        if pm4py_tree and our_tree:
+                            # Convert string representation to tuple if needed
+                            # For now, use dummy trees for demonstration
+                            tree1 = ('seq', 'a', ('xor', 'b', 'c'), 'd')
+                            tree2 = ('seq', 'a', ('par', 'b', 'c'), 'd')
+                            
+                            print(f"Example trees:")
+                            print(f"Tree 1: {tree1}")
+                            print(f"Tree 2: {tree2}")
+                            
+                            # Old metrics
+                            old_comparison = compare_trees_operators(str(tree1), tree2)
+                            print(f"\nOld Metrics (Superficial):")
+                            print(f"  Combined Similarity: {old_comparison['combined_similarity']:.1%}")
+                            print(f"  - Only counts operators and activities")
+                            print(f"  - Ignores actual structure")
+                            
+                            # New metrics
+                            new_comparison = compare_process_trees(tree1, tree2)
+                            print(f"\nNew Metrics (Structural):")
+                            print(f"  Combined Score: {new_comparison['combined_score']:.1%}")
+                            print(f"  - Tree Edit Distance: {new_comparison['tree_edit_distance']}")
+                            print(f"  - Behavioral Similarity: {new_comparison['behavioral_similarity']:.1%}")
+                            print(f"  - Language F1: {new_comparison['language_f1']:.1%}")
+                            print(f"  - Graph Edit Similarity: {new_comparison['graph_edit_similarity']:.1%}")
+                            
+                            print("\nNotice how the new metrics capture that xor and par have")
+                            print("different behaviors, while old metrics miss this crucial difference!")
+                            break
+    
     # Find best result for each miner
-    print("Best results per miner:")
+    print("\nBest results per miner:")
     for miner_name, miner_results in results.items():
         best_threshold = max(miner_results.items(), key=lambda x: x[1].get('similarity', 0))[0]
         best_result = miner_results[best_threshold]

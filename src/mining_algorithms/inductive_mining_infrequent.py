@@ -1,6 +1,6 @@
 from mining_algorithms.inductive_mining import InductiveMining
 from graphs.dfg import DFG
-from graphs.cuts import exclusive_cut, sequence_cut, loop_cut
+from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 import copy
@@ -130,8 +130,8 @@ class InductiveMiningInfrequent(InductiveMining):
                     self.current_depth -= 1
                     return result
                     
-            # Safe parallel cut (using our custom implementation)
-            if cut := self.safe_parallel_cut(dfg):
+            # Parallel cut (using the existing implementation)
+            if cut := parallel_cut(dfg):
                 splits = parallel_split(log, cut)
                 if splits and self._splits_progress(log, splits):
                     result = ("par", *[self.inductive_mining(split) for split in splits])
@@ -228,74 +228,7 @@ class InductiveMiningInfrequent(InductiveMining):
             
         return True
     
-    def safe_parallel_cut(self, dfg):
-        """A safer implementation of parallel cut detection.
-        
-        Parameters
-        ----------
-        dfg : DFG
-            The directly-follows graph.
-            
-        Returns
-        -------
-        list or None
-            A list of partitions, or None if no parallel cut is found.
-        """
-        # Get nodes from DFG
-        nodes = list(dfg.get_nodes())
-        if len(nodes) <= 1:
-            return None
-            
-        # Find connected components
-        visited = set()
-        partitions = []
-        
-        # Simple connected components algorithm
-        for node in nodes:
-            if node in visited:
-                continue
-                
-            # Start a new component
-            component = {node}
-            visited.add(node)
-            
-            # Find all nodes reachable from this node
-            queue = [node]
-            while queue:
-                current = queue.pop(0)
-                
-                # Get successors and predecessors
-                successors = dfg.get_successors(current)
-                predecessors = dfg.get_predecessors(current)
-                
-                # Check for parallel relationship
-                for other in nodes:
-                    if other in visited or other == current:
-                        continue
-                        
-                    # If there's no direct edge between nodes, they might be parallel
-                    if (other not in successors and 
-                        other not in predecessors):
-                        
-                        # Check if they have similar connections to other nodes
-                        other_successors = dfg.get_successors(other)
-                        other_predecessors = dfg.get_predecessors(other)
-                        
-                        # If they share similar connectivity patterns, add to component
-                        if (successors.intersection(other_successors) or 
-                            predecessors.intersection(other_predecessors)):
-                            component.add(other)
-                            visited.add(other)
-                            queue.append(other)
-            
-            if component:
-                partitions.append(component)
-        
-        # Only return partitions if we found more than one component
-        if len(partitions) > 1:
-            return partitions
-            
-        return None
+
     
     def try_high_noise_patterns(self, log):
         """Try to identify common patterns in noisy logs.

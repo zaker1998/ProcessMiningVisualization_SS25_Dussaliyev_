@@ -172,10 +172,13 @@ def parallel_cut(graph: DFG) -> list[set[str | int]]:
             partitions_to_merge.extend(partitions_with_only_end_nodes[index:])
 
     # merge partitions without start and end nodes with partitions with start and end nodes
-    index_to_merge = 0
-    for partition in partitions_to_merge:
-        partitions[index_to_merge] = partitions[index_to_merge].union(partition)
-        index_to_merge = (index_to_merge + 1) % len(partitions)
+    if partitions and partitions_to_merge:  # Only merge if we have both partitions and partitions to merge
+        index_to_merge = 0
+        for partition in partitions_to_merge:
+            partitions[index_to_merge] = partitions[index_to_merge].union(partition)
+            index_to_merge = (index_to_merge + 1) % len(partitions)
+    elif not partitions and partitions_to_merge:  # If we only have partitions to merge, return None
+        return None
 
     return partitions if len(partitions) > 1 else None
 

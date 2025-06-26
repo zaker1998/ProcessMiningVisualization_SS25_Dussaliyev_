@@ -33,7 +33,7 @@ class ExportOperations:
 
     def export_graph(
         self, graph: BaseGraph, filename: str, format: str = "png", dpi=96
-    ) -> None:
+    ) -> str:
         """Export a graph to a file.
 
         Parameters
@@ -46,6 +46,11 @@ class ExportOperations:
             The format of the exported file, by default "png"
         dpi : int, optional
             The DPI of the exported file. Only considered if the format is png, by default 96
+
+        Returns
+        -------
+        str
+            The actual filename that was used (may be different if temporary directory was used)
 
         Raises
         ------
@@ -63,20 +68,65 @@ class ExportOperations:
         if format not in self.graph_export_formats:
             raise UnsupportedFileTypeException(format)
 
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        # Use a robust approach that prefers temporary files to avoid permission issues
+        use_filename = None
+        
+        # On Windows or when dealing with temp directories, use system temp by default
+        import platform
+        if platform.system() == "Windows" or "temp" in filename.lower():
+            logging.info("Using temporary directory for better Windows compatibility")
+            base_filename = os.path.basename(filename) or "graph"
+            # Create a temporary file that we know we can write to
+            temp_fd, temp_path = tempfile.mkstemp(prefix=base_filename + "_", suffix="", dir=tempfile.gettempdir())
+            os.close(temp_fd)  # Close the file descriptor, but keep the path
+            os.remove(temp_path)  # Remove the temp file, we just need the safe path
+            use_filename = temp_path
+            logging.info(f"Using temporary file: {use_filename}")
+        else:
+            # For non-Windows systems, try the original approach with fallback
+            try:
+                # First try to use the requested filename
+                dirname = os.path.dirname(filename)
+                if dirname:
+                    os.makedirs(dirname, exist_ok=True)
+                
+                # Test if we can actually write to this location
+                test_file = filename + "_test"
+                try:
+                    with open(test_file, 'w') as f:
+                        f.write("test")
+                    os.remove(test_file)
+                    # If we get here, the directory is writable
+                    use_filename = filename
+                except (OSError, PermissionError):
+                    raise OSError("Cannot write to requested location")
+                    
+            except OSError:
+                # If we can't use the requested location, use a proper temporary file
+                logging.warning(f"Could not write to requested location {filename}. Using temporary directory.")
+                base_filename = os.path.basename(filename) or "graph"
+                
+                # Create a temporary file that we know we can write to
+                temp_fd, temp_path = tempfile.mkstemp(prefix=base_filename + "_", suffix="", dir=tempfile.gettempdir())
+                os.close(temp_fd)  # Close the file descriptor, but keep the path
+                os.remove(temp_path)  # Remove the temp file, we just need the safe path
+                use_filename = temp_path
+                logging.info(f"Using temporary file: {use_filename}")
 
         graphviz_graph = graph.get_graphviz_graph()
         export_format = format.lower()
 
         if export_format == "png":
             graphviz_graph.attr(dpi=str(dpi))
-            graphviz_graph.render(filename, format=export_format, cleanup=True)
+            graphviz_graph.render(use_filename, format=export_format, cleanup=True)
             graphviz_graph.attr(dpi="0")
         elif export_format in ["svg", "dot"]:
-            graphviz_graph.render(filename, format=export_format, cleanup=True)
+            graphviz_graph.render(use_filename, format=export_format, cleanup=True)
         else:
             raise NotImplementedFileTypeException(export_format)
+        
+        # Return the actual filename with the correct extension
+        return use_filename + "." + export_format
 
     def export_model_to_file(self, model, filename: str) -> None:
         """Export a model to a file.

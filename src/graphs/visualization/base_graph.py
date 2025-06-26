@@ -1,5 +1,5 @@
 import graphviz
-from src.exceptions.graph_exceptions import (
+from exceptions.graph_exceptions import (
     DuplicateNodeException,
     DuplicateEdgeException,
     NodeDoesNotExistException,

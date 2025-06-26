@@ -61,3 +61,38 @@ class InductiveMinerView(BaseAlgorithmView):
             All activities with a frequency that is lower than treshold * max_event_frequency will be removed.
             The higher the value, the less activities will be included in the graph.""",
         )
+
+        # Add Approximate miner specific controls that only show when the variant is Approximate
+        if st.session_state.get('inductive_variant') == "Approximate":
+            st.divider()
+            st.markdown("### Approximate Miner Settings")
+            
+            # Display help text for the approximate miner
+            st.info("""
+            The Approximate Inductive Miner uses simplification strategies to handle complex or noisy logs.
+            It can:
+            - Group similar activities
+            - Simplify the directly-follows graph
+            - Handle recursive structures better
+            - Create more generalized models
+            
+            Adjust the parameters below to control how aggressively the algorithm simplifies the model.
+            """)
+            
+            number_input_slider(
+                label="Simplification Threshold",
+                min_value=sidebar_values["simplification_threshold"][0],
+                max_value=sidebar_values["simplification_threshold"][1],
+                key="simplification_threshold",
+                help="""The simplification threshold determines how aggressively the miner simplifies directly-follows relations. 
+                Higher values result in simpler models but may lose precision. A value of 0.0 means no simplification.""",
+            )
+            
+            number_input_slider(
+                label="Min. Behavior Frequency",
+                min_value=sidebar_values["min_bin_freq"][0],
+                max_value=sidebar_values["min_bin_freq"][1],
+                key="min_bin_freq",
+                help="""Minimum frequency for binning activities with similar behavior.
+                Higher values will group more activities together, resulting in a simpler model.""",
+            )

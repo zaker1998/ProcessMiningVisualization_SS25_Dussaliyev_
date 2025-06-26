@@ -125,8 +125,8 @@ class ExportController(BaseController):
         UnsupportedFileTypeException
             If the export format is not supported.
         """
-        self.export_model.export_graph(self.graph, "temp/graph", format, dpi=self.dpi)
-        return "temp/graph" + "." + format.lower()
+        actual_filename = self.export_model.export_graph(self.graph, "temp/graph", format, dpi=self.dpi)
+        return actual_filename
 
     def read_png(self, file_path: str) -> str:
         """Reads the PNG file from the disk and returns the image.
