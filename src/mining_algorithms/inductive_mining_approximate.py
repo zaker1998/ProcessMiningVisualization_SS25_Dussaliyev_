@@ -3,7 +3,6 @@ from graphs.dfg import DFG
 from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
-import numpy as np
 
 
 class InductiveMiningApproximate(InductiveMining):
@@ -15,173 +14,9 @@ class InductiveMiningApproximate(InductiveMining):
     def __init__(self, log):
         super().__init__(log)
         self.simplification_threshold = 0.1  # Default threshold for simplifying relations
-        self.min_bin_freq = 0.2  # Default minimum frequency for binning activities
-        self.max_recursion_depth = 20  # Prevent infinite recursion
-        self.current_depth = 0  # Track current recursion depth
-        self.processed_logs = set()  # Track processed logs to detect cycles
     
-    def inductive_mining(self, log):
-        """Generate a process tree from the log using the Approximate Inductive Mining algorithm.
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
-        Returns
-        -------
-        tuple
-            A tuple representing the process tree.
-        """
-        # Increment recursion depth
-        self.current_depth += 1
-        
-        # Check for maximum recursion depth
-        if self.current_depth > self.max_recursion_depth:
-            self.logger.warning(f"Max recursion depth {self.max_recursion_depth} exceeded. Using fallthrough.")
-            self.current_depth -= 1
-            return self.create_simple_flower_model(self.get_log_alphabet(log))
-            
-        # Create a hash of the log to check for cycles
-        log_hash = self._hash_log(log)
-        if log_hash in self.processed_logs:
-            self.logger.warning("Detected cycle in log processing. Using fallthrough.")
-            self.current_depth -= 1
-            return self.create_simple_flower_model(self.get_log_alphabet(log))
-            
-        self.processed_logs.add(log_hash)
-
-        # Check base cases first
-        if not log or all(len(trace) == 0 for trace in log):
-            self.current_depth -= 1
-            return "tau"
-        
-        if tree := self.base_cases(log):
-            self.current_depth -= 1
-            return tree
-            
-        # Try to find a cut
-        if tuple() not in log:
-            # Create simplified DFG
-            dfg = self.create_simplified_dfg(log)
-            
-            # Try each cut type with safety checks
-            # Exclusive cut (safe)
-            if cut := exclusive_cut(dfg):
-                splits = exclusive_split(log, cut)
-                if splits and self._splits_progress(log, splits):
-                    result = ("xor", *[self.inductive_mining(split) for split in splits])
-                    self.current_depth -= 1
-                    return result
-                    
-            # Sequence cut (safe)    
-            if cut := sequence_cut(dfg):
-                splits = sequence_split(log, cut)
-                if splits and self._splits_progress(log, splits):
-                    result = ("seq", *[self.inductive_mining(split) for split in splits])
-                    self.current_depth -= 1
-                    return result
-                    
-            # Parallel cut (using the existing implementation)
-            if cut := parallel_cut(dfg):
-                splits = parallel_split(log, cut)
-                if splits and self._splits_progress(log, splits):
-                    result = ("par", *[self.inductive_mining(split) for split in splits])
-                    self.current_depth -= 1
-                    return result
-        
-            # Loop cut (safe) - especially careful with this one as it can cause recursion issues
-            if cut := loop_cut(dfg):
-                splits = loop_split(log, cut)
-                if len(splits) == 2 and self._splits_progress(log, splits):
-                    # Extra check for loop cut to avoid infinite recursion
-                    if self._can_make_loop(splits[0], splits[1]):
-                        result = ("loop", self.inductive_mining(splits[0]), self.inductive_mining(splits[1]))
-                        self.current_depth -= 1
-                        return result
-        
-        # If no cut is found, use fallthrough
-        result = self.fallthrough(log)
-        self.current_depth -= 1
-        return result
-        
-    def _hash_log(self, log):
-        """Create a hash representation of a log to detect cycles.
-
-        Parameters
-        ----------
-        log : dict
-            The log to hash
-
-        Returns
-        -------
-        frozenset
-            A hashable representation of the log
-        """
-        return frozenset((trace, freq) for trace, freq in log.items())
-        
-    def _splits_progress(self, original_log, splits):
-        """Check if splits are making progress (not just recreating the original log).
-        
-        Parameters
-        ----------
-        original_log : dict
-            The original log before splitting
-        splits : list
-            The list of split logs
-            
-        Returns
-        -------
-        bool
-            True if splits are making progress, False otherwise
-        """
-        # If any split is empty, it's not making progress
-        if any(not split for split in splits):
-            return False
-            
-        # Check if splits are smaller than original
-        original_size = sum(len(trace) * freq for trace, freq in original_log.items())
-        for split in splits:
-            split_size = sum(len(trace) * freq for trace, freq in split.items())
-            # If any split is too close to original size, it might not be making progress
-            if split_size > original_size * 0.9:
-                # Further check to see if it's the same activities
-                original_acts = self.get_log_alphabet(original_log)
-                split_acts = self.get_log_alphabet(split)
-                if split_acts == original_acts:
-                    return False
-        
-        return True
-        
-    def _can_make_loop(self, body, redo):
-        """Special check for loop cut to avoid infinite recursion.
-        
-        Parameters
-        ----------
-        body : dict
-            The body part of the loop
-        redo : dict
-            The redo part of the loop
-            
-        Returns
-        -------
-        bool
-            True if this is a valid loop structure, False otherwise
-        """
-        # Check if redo part contains activities
-        redo_acts = self.get_log_alphabet(redo)
-        if not redo_acts:
-            return False
-            
-        # Check if body and redo share too many activities (could cause recursion)
-        body_acts = self.get_log_alphabet(body)
-        if len(body_acts.intersection(redo_acts)) > len(body_acts) * 0.8:
-            return False
-            
-        return True
-        
     def generate_graph(self, activity_threshold=0.0, traces_threshold=0.2, 
-                      simplification_threshold=0.1, min_bin_freq=0.2):
+                      simplification_threshold=0.1):
         """Generate a graph using the Approximate Inductive Mining algorithm.
 
         Parameters
@@ -192,15 +27,10 @@ class InductiveMiningApproximate(InductiveMining):
             The traces threshold for filtering of the log.
         simplification_threshold : float
             Threshold for simplifying directly-follows relations.
-        min_bin_freq : float
-            Minimum frequency for binning activities with similar behavior.
         """
         self.simplification_threshold = simplification_threshold
-        self.min_bin_freq = min_bin_freq
-        self.current_depth = 0
-        self.processed_logs = set()
         
-        # Apply filtering first
+        # Apply filtering first (same as standard inductive mining)
         events_to_remove = self.get_events_to_remove(activity_threshold)
         min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
 
@@ -223,10 +53,73 @@ class InductiveMiningApproximate(InductiveMining):
             node_sizes=self.node_sizes
         )
 
+    def inductive_mining(self, log):
+        """Generate a process tree from the log using the Approximate Inductive Mining algorithm.
+        
+        This follows the same pattern as standard inductive mining but uses a simplified DFG
+        for cut detection to handle noisy logs better.
 
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            A dictionary containing the traces and their frequencies in the log.
+
+        Returns
+        -------
+        tuple
+            A tuple representing the process tree.
+        """
+        # Check base cases first (same as standard)
+        if tree := self.base_cases(log):
+            self.logger.debug(f"Base case: {tree}")
+            return tree
+
+        # Try to find cuts (with approximation for complex logs)
+        if tuple() not in log:
+            if partitions := self.calculate_approximate_cut(log):
+                self.logger.debug(f"Cut: {partitions}")
+                operation = partitions[0]
+                return (operation, *list(map(self.inductive_mining, partitions[1:])))
+
+        # Use fallthrough if no cut found
+        return self.fallthrough(log)
+
+    def calculate_approximate_cut(self, log):
+        """Find a partitioning of the log using simplified DFG for better noise handling.
+        
+        This is similar to the standard calulate_cut but uses a simplified DFG
+        to better handle noisy or complex logs.
+
+        Parameters
+        ----------
+        log : dict[tuple[str, ...], int]
+            A dictionary containing the traces and their frequencies in the log.
+
+        Returns
+        -------
+        tuple | None
+            A process tree representing the partitioning of the log if a cut was found, otherwise None.
+        """
+        # Create simplified DFG for better cut detection in noisy logs
+        dfg = self.create_simplified_dfg(log)
+
+        # Try cuts in the same order as standard inductive mining
+        if partitions := exclusive_cut(dfg):
+            return ("xor", *exclusive_split(log, partitions))
+        elif partitions := sequence_cut(dfg):
+            return ("seq", *sequence_split(log, partitions))
+        elif partitions := parallel_cut(dfg):
+            return ("par", *parallel_split(log, partitions))
+        elif partitions := loop_cut(dfg):
+            return ("loop", *loop_split(log, partitions))
+
+        return None
 
     def create_simplified_dfg(self, log):
-        """Create a DFG with approximation strategies applied.
+        """Create a DFG with noise filtering applied.
+        
+        This creates a standard DFG but filters out low-frequency edges
+        to reduce noise and improve cut detection.
         
         Parameters
         ----------
@@ -238,177 +131,84 @@ class InductiveMiningApproximate(InductiveMining):
         DFG
             The simplified directly-follows graph.
         """
-        try:
-            # Create initial DFG
-            dfg = DFG()
-            
-            # Add all events as nodes
-            events = set()
-            for trace in log:
-                for event in trace:
-                    events.add(event)
-            
-            for event in events:
-                dfg.add_node(event)
-                
-            # Calculate edge frequencies and behavior profiles
-            edge_frequencies = {}
-            behavior_profiles = {act: (set(), set()) for act in events}  # (incoming, outgoing)
-            
-            for trace, frequency in log.items():
-                for i in range(len(trace)):
-                    current = trace[i]
-                    # Record incoming edges
-                    if i > 0:
-                        prev = trace[i-1]
-                        edge = (prev, current)
-                        edge_frequencies[edge] = edge_frequencies.get(edge, 0) + frequency
-                        behavior_profiles[current][0].add(prev)
-                    # Record outgoing edges
-                    if i < len(trace) - 1:
-                        next_act = trace[i+1]
-                        behavior_profiles[current][1].add(next_act)
-                        
-            # Apply behavior-based binning for similar activities
-            if len(events) > 5:  # Only apply binning for larger event sets
-                try:
-                    binned_activities = self.bin_similar_activities(behavior_profiles)
-                    
-                    # Update edge frequencies based on binning
-                    new_frequencies = {}
-                    for (src, tgt), freq in edge_frequencies.items():
-                        new_src = binned_activities.get(src, src)
-                        new_tgt = binned_activities.get(tgt, tgt)
-                        new_edge = (new_src, new_tgt)
-                        new_frequencies[new_edge] = new_frequencies.get(new_edge, 0) + freq
-                    
-                    edge_frequencies = new_frequencies
-                except Exception as e:
-                    self.logger.warning(f"Error during activity binning: {e}. Proceeding without binning.")
-                    
-            # Add edges that pass the threshold
-            if edge_frequencies:
-                try:
-                    max_frequency = max(edge_frequencies.values())
-                    threshold = max_frequency * self.simplification_threshold
-                    
-                    for (source, target), frequency in edge_frequencies.items():
-                        if frequency >= threshold:
-                            dfg.add_edge(source, target)
-                except Exception as e:
-                    self.logger.warning(f"Error applying threshold to edges: {e}. Adding all edges.")
-                    # Fall back to adding all edges if threshold application fails
-                    for (source, target), _ in edge_frequencies.items():
-                        dfg.add_edge(source, target)
-                        
+        # Create standard DFG first
+        dfg = DFG(log)
+        
+        # If simplification threshold is 0, return standard DFG
+        if self.simplification_threshold <= 0:
             return dfg
             
-        except Exception as e:
-            self.logger.error(f"Error creating simplified DFG: {e}")
-            # Return a simple DFG with no edges in case of failure
-            basic_dfg = DFG()
-            for event in set([event for trace in log for event in trace]):
-                basic_dfg.add_node(event)
-            return basic_dfg
-
-    def bin_similar_activities(self, behavior_profiles):
-        """Bin activities with similar behavior patterns.
+        # Calculate edge frequencies for filtering
+        edge_frequencies = {}
+        for trace, frequency in log.items():
+            for i in range(len(trace) - 1):
+                edge = (trace[i], trace[i + 1])
+                edge_frequencies[edge] = edge_frequencies.get(edge, 0) + frequency
         
-        Parameters
-        ----------
-        behavior_profiles : dict
-            Dictionary mapping activities to their behavior profiles.
+        if not edge_frequencies:
+            return dfg
             
-        Returns
-        -------
-        dict
-            Mapping from original activities to their representative activities.
-        """
-        binned_activities = {}
+        # Calculate threshold for edge filtering
+        max_frequency = max(edge_frequencies.values())
+        threshold = max_frequency * self.simplification_threshold
         
-        # Calculate similarity between activities
-        activities = list(behavior_profiles.keys())
-        for i, act1 in enumerate(activities):
-            for act2 in activities[i+1:]:
-                # Calculate similarity based on shared connections
-                in_sim = len(behavior_profiles[act1][0].intersection(behavior_profiles[act2][0]))
-                out_sim = len(behavior_profiles[act1][1].intersection(behavior_profiles[act2][1]))
+        # Create new simplified DFG
+        simplified_dfg = DFG()
+        
+        # Add all nodes
+        for node in dfg.get_nodes():
+            simplified_dfg.add_node(node)
+            
+        # Add only edges that meet the threshold
+        for edge in dfg.get_edges():
+            if edge_frequencies.get(edge, 0) >= threshold:
+                simplified_dfg.add_edge(edge[0], edge[1])
                 
-                # Calculate total possible connections for both activities
-                act1_total = len(behavior_profiles[act1][0]) + len(behavior_profiles[act1][1])
-                act2_total = len(behavior_profiles[act2][0]) + len(behavior_profiles[act2][1])
-                total_possible = max(1, (act1_total + act2_total) / 2)  # Average of both activities' profile sizes
-                
-                total_sim = (in_sim + out_sim) / total_possible
-                
-                if total_sim >= self.min_bin_freq:
-                    # Use the alphabetically first activity as representative
-                    rep = min(act1, act2)
-                    binned_activities[max(act1, act2)] = rep
-                    
-        return binned_activities
+        # Ensure start and end nodes are preserved
+        simplified_dfg.start_nodes = dfg.start_nodes.copy()
+        simplified_dfg.end_nodes = dfg.end_nodes.copy()
+        
+        return simplified_dfg
 
     def fallthrough(self, log):
-        """Modified fallthrough method for approximate mining.
+        """Generate a process tree for the log using fallthrough method.
+        
+        Uses the same fallthrough logic as standard inductive mining
+        but with better handling for complex logs.
         
         Parameters
         ----------
         log : dict[tuple[str, ...], int]
-            The event log to process.
-            
+            A dictionary containing the traces and their frequencies in the log.
+
         Returns
         -------
         tuple
-            A process tree representing an approximation.
+            A tuple representing the process tree.
         """
-        # For small logs, try to find the most representative trace
-        if len(log) <= 5:
-            most_freq_trace = max(log.items(), key=lambda x: x[1])[0]
-            if len(most_freq_trace) > 0:
-                return ("seq", *most_freq_trace)
-        
-        # For larger logs, use a flower model with the most frequent activities
-        activities = self.get_log_alphabet(log)
-        
-        # Create a simple flower model
-        return self.create_simple_flower_model(activities)
-        
-    def create_simple_flower_model(self, activities):
-        """Create a simple flower model with the given activities.
-        
-        Parameters
-        ----------
-        activities : set
-            The set of activities to include in the model.
-        
-        Returns
-        -------
-        tuple
-            A process tree representing a flower model.
-        """
-        if not activities:
-            return "tau"
+        log_alphabet = self.get_log_alphabet(log)
+
+        # Handle empty trace case (same as standard)
+        if tuple() in log:
+            empty_log = {tuple(): log[tuple()]}
+            del log[tuple()]
+            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log))
+
+        # Handle single event case (same as standard)
+        if len(log_alphabet) == 1:
+            return ("loop", list(log_alphabet)[0], "tau")
+
+        # For multiple events, create flower model (same as standard)
+        # But limit complexity for very large alphabets
+        if len(log_alphabet) > 10:
+            # Use only the most frequent activities to avoid overly complex models
+            activity_frequencies = {}
+            for trace, freq in log.items():
+                for activity in trace:
+                    activity_frequencies[activity] = activity_frequencies.get(activity, 0) + freq
             
-        if len(activities) == 1:
-            return list(activities)[0]
-        
-        # For larger activity sets, limit to most frequent ones to avoid overly complex models
-        if len(activities) > 4 and self.filtered_log:
-            try:
-                # Calculate activity frequencies
-                act_freq = {act: sum(freq for trace, freq in self.filtered_log.items() if act in trace)
-                          for act in activities}
-                
-                # Keep only the most frequent activities
-                top_activities = sorted(act_freq.items(), key=lambda x: x[1], reverse=True)[:4]
-                activities = {act for act, _ in top_activities}
-            except Exception as e:
-                self.logger.warning(f"Error calculating activity frequencies: {e}")
-                # Fall back to using all activities
-                activities = set(sorted(list(activities))[:4])
-            
-        # Ensure we don't create an overly complex model even if we can't calculate frequencies
-        if len(activities) > 4:
-            activities = set(sorted(list(activities))[:4])
-            
-        return ("loop", "tau", *sorted(activities)) 
+            # Keep top 10 most frequent activities
+            top_activities = sorted(activity_frequencies.items(), key=lambda x: x[1], reverse=True)[:10]
+            log_alphabet = {activity for activity, _ in top_activities}
+
+        return ("loop", "tau", *sorted(log_alphabet)) 
