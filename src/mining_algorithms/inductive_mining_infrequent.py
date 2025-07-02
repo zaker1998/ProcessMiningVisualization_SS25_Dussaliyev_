@@ -257,9 +257,13 @@ class InductiveMiningInfrequent(InductiveMining):
         """
         activities = self.get_log_alphabet(log)
 
-        # Handle empty trace case
+        # Handle empty trace case - follow standard algorithm approach
         if tuple() in log:
-            return ("xor", "tau", self._create_flower_model(activities))
+            # Create a copy to avoid modifying the original log
+            log_copy = log.copy()
+            empty_log = {tuple(): log_copy[tuple()]}
+            del log_copy[tuple()]
+            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log_copy))
 
         # Handle single activity case
         if len(activities) == 1:
