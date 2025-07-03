@@ -8,7 +8,9 @@ from logs.splits import exclusive_split, parallel_split, sequence_split, loop_sp
 class InductiveMiningApproximate(InductiveMining):
     """
     A class to generate a graph from a log using the Approximate Inductive Mining algorithm.
-    This variant uses approximation strategies to handle complex or noisy logs.
+    This hybrid variant first tries cuts on the full DFG to preserve structural information,
+    then falls back to simplification strategies if cut quality is poor.
+    This approach balances information preservation with noise handling for complex logs.
     """
 
     def __init__(self, log):
@@ -81,17 +83,16 @@ class InductiveMiningApproximate(InductiveMining):
         if tuple() not in log:
             if partitions := self.calculate_approximate_cut(log):
                 self.logger.debug(f"Cut: {partitions}")
-                operation = partitions[0]
-                return (operation, *list(map(self.inductive_mining, partitions[1:])))
+                return partitions
 
         # Use fallthrough if no cut found
         return self.fallthrough(log)
 
     def calculate_approximate_cut(self, log):
-        """Find a partitioning of the log using simplified DFG for better noise handling.
+        """Hybrid approach: Try cuts on full DFG first, then fallback to simplified DFG.
         
-        This is similar to the standard calulate_cut but uses a simplified DFG
-        to better handle noisy or complex logs.
+        This preserves structural information while providing fallback simplification
+        for complex or noisy logs when the full approach doesn't yield good cuts.
 
         Parameters
         ----------
@@ -103,20 +104,222 @@ class InductiveMiningApproximate(InductiveMining):
         tuple | None
             A process tree representing the partitioning of the log if a cut was found, otherwise None.
         """
-        # Create simplified DFG for better cut detection in noisy logs
-        dfg = self.create_simplified_dfg(log)
-
-        # Try cuts in the same order as standard inductive mining
-        if partitions := exclusive_cut(dfg):
-            return ("xor", *exclusive_split(log, partitions))
-        elif partitions := sequence_cut(dfg):
-            return ("seq", *sequence_split(log, partitions))
-        elif partitions := parallel_cut(dfg):
-            return ("par", *parallel_split(log, partitions))
-        elif partitions := loop_cut(dfg):
-            return ("loop", *loop_split(log, partitions))
-
+        self.logger.debug("Trying hybrid cut detection approach")
+        
+        # Step 1: Try cuts on full DFG (preserves all structural information)
+        full_dfg = DFG(log)
+        cut_result = self._try_all_cuts_on_dfg(full_dfg, log, "full")
+        
+        if cut_result and self._validate_cut_quality(cut_result, log):
+            self.logger.debug(f"Found good cut on full DFG: {cut_result[0]}")
+            return cut_result
+        
+        # Step 2: Fallback to simplified approach for complex/noisy logs
+        self.logger.debug("Falling back to simplified DFG approach")
+        simplified_dfg = self.create_simplified_dfg(log)
+        cut_result = self._try_all_cuts_on_dfg(simplified_dfg, log, "simplified")
+        
+        if cut_result:
+            self.logger.debug(f"Found cut on simplified DFG: {cut_result[0]}")
+            return cut_result
+        
         return None
+    
+    def _try_all_cuts_on_dfg(self, dfg, log, dfg_type):
+        """Try all cut types on a given DFG."""
+        cut_methods = [
+            (exclusive_cut, exclusive_split, "xor"),
+            (sequence_cut, sequence_split, "seq"),
+            (parallel_cut, parallel_split, "par"),
+            (loop_cut, loop_split, "loop")
+        ]
+        
+        for cut_func, split_func, operation in cut_methods:
+            if partitions := cut_func(dfg):
+                splits = split_func(log, partitions)
+                if splits and self._are_splits_valid(log, splits, operation):
+                    # Process each split recursively
+                    sub_results = []
+                    for split in splits:
+                        sub_results.append(self.inductive_mining(split))
+                    return (operation, *sub_results)
+        
+        return None
+    
+    def _validate_cut_quality(self, cut_result, log):
+        """Validate the quality of a cut found on the full DFG.
+        
+        Parameters
+        ----------
+        cut_result : tuple
+            The cut result (operation, *splits)
+        log : dict
+            The original log
+            
+        Returns
+        -------
+        bool
+            True if the cut quality is acceptable, False otherwise
+        """
+        if not cut_result or len(cut_result) < 2:
+            return False
+            
+        operation = cut_result[0]
+        splits = cut_result[1:]
+        
+        # Quality checks based on cut type and simplification threshold
+        if operation == "xor":
+            return self._validate_exclusive_cut_quality(splits, log)
+        elif operation == "seq":
+            return self._validate_sequence_cut_quality(splits, log)
+        elif operation == "par":
+            return self._validate_parallel_cut_quality(splits, log)
+        elif operation == "loop":
+            return self._validate_loop_cut_quality(splits, log)
+        
+        return True
+    
+    def _validate_exclusive_cut_quality(self, splits, log):
+        """Validate exclusive cut quality using simplification threshold."""
+        if len(splits) < 2:
+            return False
+            
+        # Check that splits don't share too many activities (complexity tolerance)
+        split_activities = [self.get_log_alphabet(split) for split in splits]
+        
+        # Calculate overlap between splits
+        total_overlaps = 0
+        total_comparisons = 0
+        
+        for i in range(len(split_activities)):
+            for j in range(i + 1, len(split_activities)):
+                overlap = len(split_activities[i].intersection(split_activities[j]))
+                union_size = len(split_activities[i].union(split_activities[j]))
+                if union_size > 0:
+                    overlap_ratio = overlap / union_size
+                    total_overlaps += overlap_ratio
+                    total_comparisons += 1
+        
+        if total_comparisons == 0:
+            return True
+            
+        average_overlap = total_overlaps / total_comparisons
+        # Accept if average overlap is below simplification threshold
+        return average_overlap <= self.simplification_threshold
+    
+    def _validate_sequence_cut_quality(self, splits, log):
+        """Validate sequence cut quality using simplification threshold."""
+        if len(splits) < 2:
+            return False
+            
+        # Similar to infrequent but using simplification_threshold
+        correct_order_count = 0
+        total_traces = 0
+        
+        for trace, freq in log.items():
+            if len(trace) < 2:
+                continue
+                
+            total_traces += freq
+            
+            # Check if trace follows the expected sequence ordering
+            split_positions = []
+            for i, split in enumerate(splits):
+                split_activities = self.get_log_alphabet(split)
+                for j, activity in enumerate(trace):
+                    if activity in split_activities:
+                        split_positions.append((i, j))
+                        break
+            
+            # Check if positions are in order
+            if len(split_positions) >= 2:
+                is_ordered = all(split_positions[i][0] <= split_positions[i+1][0] 
+                               for i in range(len(split_positions)-1))
+                if is_ordered:
+                    correct_order_count += freq
+        
+        if total_traces == 0:
+            return True
+            
+        order_ratio = correct_order_count / total_traces
+        # Accept if most traces follow the expected order
+        return order_ratio >= (1 - self.simplification_threshold)
+    
+    def _validate_parallel_cut_quality(self, splits, log):
+        """Validate parallel cut quality using simplification threshold."""
+        if len(splits) < 2:
+            return False
+            
+        split_activities = [self.get_log_alphabet(split) for split in splits]
+        
+        # Check for excessive overlap between parallel splits
+        all_activities = set()
+        for activities in split_activities:
+            if all_activities.intersection(activities):
+                overlap_size = len(all_activities.intersection(activities))
+                if overlap_size > len(activities) * self.simplification_threshold:
+                    return False
+            all_activities.update(activities)
+        
+        return True
+    
+    def _validate_loop_cut_quality(self, splits, log):
+        """Validate loop cut quality using simplification threshold."""
+        if len(splits) != 2:
+            return False
+            
+        body, redo = splits
+        redo_activities = self.get_log_alphabet(redo)
+        body_activities = self.get_log_alphabet(body)
+        
+        if not redo_activities or not body_activities:
+            return False
+            
+        # Use simplification threshold to determine acceptable redo size
+        redo_ratio = len(redo_activities) / (len(redo_activities) + len(body_activities))
+        max_redo_ratio = 0.5 + self.simplification_threshold  # More flexible with higher threshold
+        return redo_ratio <= max_redo_ratio
+    
+    def _are_splits_valid(self, original_log, splits, operation):
+        """Check if the splits are valid and making progress."""
+        if not splits or any(not split for split in splits):
+            return False
+            
+        # Special validation for loop cuts
+        if operation == "loop" and len(splits) == 2:
+            return self._is_valid_loop_split(splits[0], splits[1])
+            
+        # General progress check
+        return self._splits_make_progress(original_log, splits)
+    
+    def _splits_make_progress(self, original_log, splits):
+        """Check if splits are making meaningful progress."""
+        original_size = sum(len(trace) * freq for trace, freq in original_log.items())
+        original_activities = self.get_log_alphabet(original_log)
+        
+        for split in splits:
+            split_size = sum(len(trace) * freq for trace, freq in split.items())
+            split_activities = self.get_log_alphabet(split)
+            
+            # If split is too similar to original, it's not making progress
+            if (split_size > original_size * 0.9 and 
+                split_activities == original_activities):
+                return False
+        
+        return True
+        
+    def _is_valid_loop_split(self, body, redo):
+        """Validate loop split to avoid infinite recursion."""
+        redo_activities = self.get_log_alphabet(redo)
+        if not redo_activities:
+            return False
+            
+        body_activities = self.get_log_alphabet(body)
+        overlap = len(body_activities.intersection(redo_activities))
+        
+        # Use simplification threshold for overlap tolerance
+        max_overlap_ratio = 0.7 + self.simplification_threshold * 0.2
+        return overlap <= len(body_activities) * max_overlap_ratio
 
     def create_simplified_dfg(self, log):
         """Create a DFG with noise filtering applied.
