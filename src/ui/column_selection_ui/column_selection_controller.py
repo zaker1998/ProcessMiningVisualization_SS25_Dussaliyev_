@@ -6,6 +6,7 @@ from analysis.predictions_model import PredictionModel
 from transformations.dataframe_styler import DataFrameStyler
 import pandas as pd
 from logger import get_logger
+from ui.column_selection_ui.standard_column_selection_view import StandardColumnSelectionView
 
 
 class ColumnSelectionController(BaseController):
@@ -27,10 +28,6 @@ class ColumnSelectionController(BaseController):
         """
 
         if views is None:
-            from ui.column_selection_ui.standard_column_selection_view import (
-                StandardColumnSelectionView,
-            )
-
             views = [StandardColumnSelectionView()]
 
         if prediction_model is None:

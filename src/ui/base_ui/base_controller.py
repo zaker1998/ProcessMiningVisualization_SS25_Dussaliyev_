@@ -32,19 +32,34 @@ class BaseController(ABC):
 
         # Helper function to check inheritance relationship
         def is_baseview_instance(obj):
-            return isinstance(obj, BaseView) or BaseView in type(obj).__mro__[1:]
+            try:
+                # Check if the object is an instance of BaseView or any of its subclasses
+                if isinstance(obj, BaseView):
+                    return True
+                    
+                # Alternative check using MRO in case isinstance fails due to import timing
+                obj_type = type(obj)
+                return any(
+                    cls.__name__ == 'BaseView' 
+                    for cls in obj_type.__mro__
+                )
+            except Exception as e:
+                # Log the exception for debugging
+                self.logger.warning(f"Type checking failed for {type(obj)}: {e}")
+                # Fall back to name-based checking as last resort
+                return 'BaseView' in [cls.__name__ for cls in type(obj).__mro__]
 
         if isinstance(views, list) or isinstance(views, tuple):
             for view in views:
                 if not is_baseview_instance(view):
                     self.logger.error(
-                        f"Invalid type: {type(view)}, expected: {BaseView}"
+                        f"Invalid type: {type(view)}, MRO: {type(view).__mro__}, expected: {BaseView}"
                     )
                     raise InvalidTypeException(BaseView, type(view))
             self.views = list(views)
         else:
             if not is_baseview_instance(views):
-                self.logger.error(f"Invalid type: {type(views)}, expected: {BaseView}")
+                self.logger.error(f"Invalid type: {type(views)}, MRO: {type(views).__mro__}, expected: {BaseView}")
                 raise InvalidTypeException(BaseView, type(views))
             self.views = [views]
 
