@@ -16,7 +16,7 @@ class InductiveMiningApproximate(InductiveMining):
         self.simplification_threshold = 0.1  # Default threshold for simplifying relations
     
     def generate_graph(self, activity_threshold=0.0, traces_threshold=0.2, 
-                      simplification_threshold=0.1):
+                      simplification_threshold=0.1, min_bin_freq=0.2):
         """Generate a graph using the Approximate Inductive Mining algorithm.
 
         Parameters
@@ -27,8 +27,11 @@ class InductiveMiningApproximate(InductiveMining):
             The traces threshold for filtering of the log.
         simplification_threshold : float
             Threshold for simplifying directly-follows relations.
+        min_bin_freq : float
+            Minimum frequency for binning activities (kept for backward compatibility, not used).
         """
         self.simplification_threshold = simplification_threshold
+        # min_bin_freq parameter kept for backward compatibility but not used
         
         # Apply filtering first (same as standard inductive mining)
         events_to_remove = self.get_events_to_remove(activity_threshold)
