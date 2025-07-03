@@ -96,3 +96,30 @@ class InductiveMinerView(BaseAlgorithmView):
                 help="""Minimum frequency for binning activities with similar behavior.
                 Higher values will group more activities together, resulting in a simpler model.""",
             )
+            
+        # Add Infrequent miner specific controls that only show when the variant is Infrequent
+        if st.session_state.get('inductive_variant') == "Infrequent":
+            st.divider()
+            st.markdown("### Infrequent Miner Settings")
+            
+            # Display help text for the infrequent miner
+            st.info("""
+            The Infrequent Inductive Miner filters infrequent directly-follows relations during cut detection.
+            This helps to:
+            - Handle noisy logs better
+            - Focus on frequent behavior patterns
+            - Reduce overfitting to rare behaviors
+            - Create more generalizable models
+            
+            The noise threshold determines which directly-follows relations are considered noise and should be filtered out.
+            """)
+            
+            number_input_slider(
+                label="Noise Threshold",
+                min_value=sidebar_values["noise_threshold"][0],
+                max_value=sidebar_values["noise_threshold"][1],
+                key="noise_threshold",
+                help="""The noise threshold determines which directly-follows relations are filtered out during cut detection.
+                Relations with frequency lower than threshold * max_relation_frequency will be ignored.
+                Higher values result in more aggressive noise filtering.""",
+            )

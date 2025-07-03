@@ -41,6 +41,10 @@ class InductiveMinerController(BaseAlgorithmController):
         if "min_bin_freq" not in st.session_state:
             st.session_state.min_bin_freq = 0.2
             
+        # Initialize infrequent miner specific parameters
+        if "noise_threshold" not in st.session_state:
+            st.session_state.noise_threshold = 0.2
+            
         # Map of variant names to their class implementations
         self.variant_classes = {
             "Standard": InductiveMining,
@@ -81,6 +85,13 @@ class InductiveMinerController(BaseAlgorithmController):
                 st.session_state.min_bin_freq = getattr(
                     self.mining_model, "min_bin_freq", 0.2
                 )
+                
+        # Handle infrequent miner parameters
+        if isinstance(self.mining_model, InductiveMiningInfrequent):
+            if "noise_threshold" not in st.session_state:
+                st.session_state.noise_threshold = getattr(
+                    self.mining_model, "noise_threshold", 0.2
+                )
 
         # set instance variables from session state
         self.traces_threshold = st.session_state.traces_threshold
@@ -88,6 +99,7 @@ class InductiveMinerController(BaseAlgorithmController):
         self.selected_variant = st.session_state.inductive_variant
         self.simplification_threshold = st.session_state.simplification_threshold
         self.min_bin_freq = st.session_state.min_bin_freq
+        self.noise_threshold = st.session_state.noise_threshold
 
     def perform_mining(self) -> None:
         """Performs the mining of the Inductive Miner algorithm."""
@@ -112,6 +124,15 @@ class InductiveMinerController(BaseAlgorithmController):
                 self.traces_threshold,
                 simplification_threshold=self.simplification_threshold,
                 min_bin_freq=self.min_bin_freq
+            )
+        elif self.selected_variant == "Infrequent":
+            # Validate infrequent miner specific parameters
+            self.noise_threshold = max(0.0, min(0.9, self.noise_threshold))
+            
+            self.mining_model.generate_graph(
+                self.activity_threshold, 
+                self.traces_threshold,
+                noise_threshold=self.noise_threshold
             )
         else:
             self.mining_model.generate_graph(self.activity_threshold, self.traces_threshold)
@@ -139,6 +160,13 @@ class InductiveMinerController(BaseAlgorithmController):
             )
             return basic_params_changed or approx_params_changed
             
+        # Check infrequent miner parameters if applicable
+        if self.selected_variant == "Infrequent" and isinstance(self.mining_model, InductiveMiningInfrequent):
+            infrequent_params_changed = (
+                getattr(self.mining_model, "noise_threshold", 0.2) != self.noise_threshold
+            )
+            return basic_params_changed or infrequent_params_changed
+            
         return basic_params_changed
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
@@ -155,6 +183,7 @@ class InductiveMinerController(BaseAlgorithmController):
             "activity_threshold": (0.0, 1.0),
             "simplification_threshold": (0.0, 0.9),
             "min_bin_freq": (0.0, 0.9),
+            "noise_threshold": (0.0, 0.9),
         }
 
         return sidebar_values
