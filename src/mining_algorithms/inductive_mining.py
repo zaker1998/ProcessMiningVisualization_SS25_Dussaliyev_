@@ -193,7 +193,81 @@ class InductiveMining(BaseMining):
 
         # if there are multiple events in the log
         # return a flower model with all the events
-        return ("loop", "tau", *log_alphabet)
+        return self.create_flower_model(log_alphabet)
+
+    def create_flower_model(self, activities, max_activities=None):
+        """Create a flower model with the given activities.
+        
+        A flower model allows any sequence of activities to be executed,
+        which serves as a fallback when no specific process structure can be identified.
+        
+        Parameters
+        ----------
+        activities : set[str] | list[str]
+            The activities to include in the flower model
+        max_activities : int, optional
+            Maximum number of activities to include. If None, all activities are included.
+            If specified and the number of activities exceeds this limit, only the most
+            frequent activities will be included.
+            
+        Returns
+        -------
+        str | tuple
+            - "tau" if no activities
+            - single activity name if only one activity
+            - ("loop", "tau", *sorted_activities) for multiple activities
+        """
+        if not activities:
+            return "tau"
+        
+        # Convert to set if needed for consistency
+        if isinstance(activities, list):
+            activities = set(activities)
+            
+        # Handle single activity case
+        if len(activities) == 1:
+            return list(activities)[0]
+        
+        # Apply activity limit if specified
+        if max_activities is not None and len(activities) > max_activities:
+            activities = self._limit_activities_by_frequency(activities, max_activities)
+        
+        # Create flower model with sorted activities for consistency
+        return ("loop", "tau", *sorted(activities))
+    
+    def _limit_activities_by_frequency(self, activities, max_count):
+        """Limit activities to the most frequent ones based on the current filtered log.
+        
+        Parameters
+        ----------
+        activities : set[str]
+            The activities to limit
+        max_count : int
+            Maximum number of activities to return
+            
+        Returns
+        -------
+        set[str]
+            The most frequent activities up to max_count
+        """
+        if not hasattr(self, 'filtered_log') or not self.filtered_log:
+            # If no filtered log available, return first max_count activities alphabetically
+            return set(sorted(activities)[:max_count])
+        
+        # Calculate activity frequencies from the filtered log
+        activity_frequencies = {}
+        for trace, freq in self.filtered_log.items():
+            for activity in trace:
+                if activity in activities:
+                    activity_frequencies[activity] = activity_frequencies.get(activity, 0) + freq
+        
+        # Return top max_count most frequent activities
+        if activity_frequencies:
+            top_activities = sorted(activity_frequencies.items(), key=lambda x: x[1], reverse=True)[:max_count]
+            return {activity for activity, _ in top_activities}
+        else:
+            # Fallback to alphabetical selection
+            return set(sorted(activities)[:max_count])
 
     def get_log_alphabet(self, log) -> set[str]:
         """Get the alphabet of the log. The alphabet is the set of all unique events in the log.
