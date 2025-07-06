@@ -211,6 +211,9 @@ class HomeController(BaseController):
         self.selected_view = selected_view
         selected_view.display_intro()
         
+        # Display file converter section
+        selected_view.display_file_converter()
+        
         # Display file upload
         selected_view.display_file_upload(self.supported_file_types)
         
@@ -287,3 +290,172 @@ class HomeController(BaseController):
             self.logger.exception(e)
             st.session_state.error = f"Error loading sample file: {str(e)}"
             st.rerun()
+
+    @timed_execution
+    def convert_csv_to_xes(self, csv_file, delimiter, case_id_col, activity_col, timestamp_col):
+        """Converts a CSV file to XES format and provides download.
+        
+        Parameters
+        ----------
+        csv_file : UploadedFile
+            The uploaded CSV file
+        delimiter : str
+            The delimiter to use for CSV parsing
+        case_id_col : str
+            The column name for case IDs
+        activity_col : str
+            The column name for activities
+        timestamp_col : str
+            The column name for timestamps
+        """
+        try:
+            with st.spinner("Converting CSV to XES..."):
+                # Auto-detect delimiter if needed
+                if delimiter == "auto":
+                    line = self.import_model.read_line(csv_file)
+                    delimiter = self.detection_model.detect_delimiter(line)
+                    csv_file.seek(0)
+                
+                # Read the CSV file
+                df = self.import_model.read_csv(csv_file, delimiter)
+                
+                # Validate required columns exist
+                required_cols = [case_id_col, activity_col, timestamp_col]
+                missing_cols = [col for col in required_cols if col not in df.columns]
+                
+                if missing_cols:
+                    st.error(f"Missing columns in CSV: {', '.join(missing_cols)}")
+                    st.info(f"Available columns: {', '.join(df.columns.tolist())}")
+                    return
+                
+                # Show data preview before conversion
+                st.subheader("📋 Data Preview (First 5 rows)")
+                preview_df = df[[case_id_col, activity_col, timestamp_col]].head()
+                st.dataframe(preview_df, use_container_width=True)
+                
+                # Rename columns to standard XES format
+                df = df.rename(columns={
+                    case_id_col: 'case:concept:name',
+                    activity_col: 'concept:name',
+                    timestamp_col: 'time:timestamp'
+                })
+                
+                # Ensure proper data types for XES format
+                import pandas as pd
+                
+                # Convert case ID to string (required for XES)
+                df['case:concept:name'] = df['case:concept:name'].astype(str)
+                
+                # Convert activity to string (required for XES)
+                df['concept:name'] = df['concept:name'].astype(str)
+                
+                # Convert timestamp column to datetime if it's not already
+                if not pd.api.types.is_datetime64_any_dtype(df['time:timestamp']):
+                    try:
+                        df['time:timestamp'] = pd.to_datetime(df['time:timestamp'])
+                    except Exception as e:
+                        st.error(f"Error converting timestamp column: {str(e)}")
+                        return
+                
+                # Remove any rows with null values in critical columns
+                df = df.dropna(subset=['case:concept:name', 'concept:name', 'time:timestamp'])
+                
+                if len(df) == 0:
+                    st.error("No valid data remaining after processing. Please check your data for missing values.")
+                    return
+                
+                # Export to XES bytes
+                from io_operations.export_operations import ExportOperations
+                export_ops = ExportOperations()
+                xes_bytes = export_ops.export_to_xes_bytes(df)
+                
+                # Generate filename
+                original_filename = csv_file.name.replace('.csv', '')
+                xes_filename = f"{original_filename}_converted.xes"
+                
+                # Display success message with data summary
+                st.success("✅ CSV successfully converted to XES format!")
+                
+                # Show conversion summary
+                st.info(f"📊 Conversion Summary:\n"
+                        f"- Cases: {df['case:concept:name'].nunique()}\n"
+                        f"- Activities: {df['concept:name'].nunique()}\n"
+                        f"- Events: {len(df)}\n"
+                        f"- Date range: {df['time:timestamp'].min()} to {df['time:timestamp'].max()}")
+                
+                st.download_button(
+                    label="📥 Download XES File",
+                    data=xes_bytes,
+                    file_name=xes_filename,
+                    mime="application/xml",
+                    key="download_xes_file"
+                )
+                
+        except Exception as e:
+            self.logger.exception(e)
+            st.error(f"Error converting CSV to XES: {str(e)}")
+
+    @timed_execution
+    def convert_xes_to_csv(self, xes_file, csv_delimiter, include_all_attributes):
+        """Converts an XES file to CSV format and provides download.
+        
+        Parameters
+        ----------
+        xes_file : UploadedFile
+            The uploaded XES file
+        csv_delimiter : str
+            The delimiter to use for CSV output
+        include_all_attributes : bool
+            Whether to include all attributes in the CSV
+        """
+        try:
+            with st.spinner("Converting XES to CSV..."):
+                # Read the XES file
+                event_log = self.import_model.read_xes(xes_file)
+                
+                # Convert to DataFrame
+                df = self.import_model.xes_to_dataframe(event_log)
+                
+                # If not including all attributes, keep only the essential columns
+                if not include_all_attributes:
+                    # Standard columns to keep
+                    standard_cols = ['case:concept:name', 'concept:name', 'time:timestamp']
+                    
+                    # Find which standard columns exist in the DataFrame
+                    existing_standard_cols = [col for col in standard_cols if col in df.columns]
+                    
+                    if existing_standard_cols:
+                        df = df[existing_standard_cols]
+                    
+                    # Rename to more user-friendly names
+                    df = df.rename(columns={
+                        'case:concept:name': 'case_id',
+                        'concept:name': 'activity',
+                        'time:timestamp': 'timestamp'
+                    })
+                
+                # Convert DataFrame to CSV
+                csv_buffer = df.to_csv(sep=csv_delimiter, index=False)
+                
+                # Generate filename
+                original_filename = xes_file.name.replace('.xes', '')
+                csv_filename = f"{original_filename}_converted.csv"
+                
+                # Display success message and download button
+                st.success("✅ XES successfully converted to CSV format!")
+                
+                # Show preview of the data
+                st.subheader("📋 Data Preview:")
+                st.dataframe(df.head(10), use_container_width=True)
+                
+                st.download_button(
+                    label="📥 Download CSV File",
+                    data=csv_buffer,
+                    file_name=csv_filename,
+                    mime="text/csv",
+                    key="download_csv_file"
+                )
+                
+        except Exception as e:
+            self.logger.exception(e)
+            st.error(f"Error converting XES to CSV: {str(e)}")
