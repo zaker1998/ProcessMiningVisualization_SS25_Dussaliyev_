@@ -121,12 +121,7 @@ class InductiveMiningInfrequent(InductiveMining):
             return "tau"
         
         activities = self.get_log_alphabet(log)
-        if not activities:
-            return "tau"
-        elif len(activities) == 1:
-            return list(activities)[0]
-        else:
-            return ("loop", "tau", *sorted(activities))
+        return self.create_flower_model(activities)
     
     def _try_cuts_with_noise_filtering(self, log):
         """Hybrid approach: Try cuts on full DFG first, then fallback to filtered DFG."""
@@ -431,13 +426,4 @@ class InductiveMiningInfrequent(InductiveMining):
             return activity
 
         # Default: flower model
-        return self._create_flower_model(activities)
-    
-    def _create_flower_model(self, activities):
-        """Create a flower model with the given activities."""
-        if not activities:
-            return "tau"
-        elif len(activities) == 1:
-            return list(activities)[0]
-        else:
-            return ("loop", "tau", *sorted(activities)) 
+        return self.create_flower_model(activities) 
