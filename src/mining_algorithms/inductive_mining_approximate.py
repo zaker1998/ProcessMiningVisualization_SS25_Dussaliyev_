@@ -404,17 +404,6 @@ class InductiveMiningApproximate(InductiveMining):
         if len(log_alphabet) == 1:
             return ("loop", list(log_alphabet)[0], "tau")
 
-        # For multiple events, create flower model (same as standard)
-        # But limit complexity for very large alphabets
-        if len(log_alphabet) > 10:
-            # Use only the most frequent activities to avoid overly complex models
-            activity_frequencies = {}
-            for trace, freq in log.items():
-                for activity in trace:
-                    activity_frequencies[activity] = activity_frequencies.get(activity, 0) + freq
-            
-            # Keep top 10 most frequent activities
-            top_activities = sorted(activity_frequencies.items(), key=lambda x: x[1], reverse=True)[:10]
-            log_alphabet = {activity for activity, _ in top_activities}
-
-        return ("loop", "tau", *sorted(log_alphabet)) 
+        # For multiple events, create flower model with complexity limiting
+        # Limit to 10 activities for very large alphabets to avoid overly complex models
+        return self.create_flower_model(log_alphabet, max_activities=10) 
