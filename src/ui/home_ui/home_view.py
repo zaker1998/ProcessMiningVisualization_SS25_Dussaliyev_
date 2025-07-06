@@ -46,6 +46,9 @@ class HomeView(BaseView):
                     <div class="feature-item">
                         <span class="feature-icon">💾</span> Easy data import/export
                     </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔧</span> File format converter
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -218,3 +221,124 @@ class HomeView(BaseView):
                 beforeNavigate=self.controller.set_df,
                 args=(delimiter,),
             )
+
+    def display_file_converter(self):
+        """Displays the file converter component for converting between different formats."""
+        with self.content_column:
+            st.markdown("""
+            <div class="highlight-card">
+                <h3>🔄 File Format Converter</h3>
+                <p>Convert your process log files between different formats (CSV ↔ XES)</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Create tabs for different conversion options
+            tab1, tab2 = st.tabs(["📊 CSV to XES", "📄 XES to CSV"])
+            
+            with tab1:
+                st.markdown("#### Convert CSV to XES Format")
+                st.markdown("Upload a CSV file and convert it to XES format for use with process mining tools.")
+                
+                csv_file = st.file_uploader(
+                    "Choose CSV file",
+                    type=['csv'],
+                    key="csv_to_xes_uploader",
+                    help="Upload a CSV file containing event log data"
+                )
+                
+                if csv_file is not None:
+                    # Delimiter selection for CSV
+                    st.markdown("**Delimiter Settings:**")
+                    delimiter_col1, delimiter_col2 = st.columns(2)
+                    
+                    with delimiter_col1:
+                        delimiter_type = st.radio(
+                            "Delimiter type:",
+                            ["Auto-detect", "Custom"],
+                            key="csv_delimiter_type",
+                            horizontal=True
+                        )
+                    
+                    with delimiter_col2:
+                        if delimiter_type == "Custom":
+                            delimiter = st.text_input(
+                                "Enter delimiter:",
+                                value=",",
+                                key="csv_custom_delimiter"
+                            )
+                        else:
+                            delimiter = "auto"
+                    
+                    # Column mapping section
+                    st.markdown("**Column Mapping:**")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        case_id_col = st.text_input(
+                            "Case ID Column:",
+                            value="case_id",
+                            key="csv_case_id_col",
+                            help="Column name for case/trace identifiers"
+                        )
+                    
+                    with col2:
+                        activity_col = st.text_input(
+                            "Activity Column:",
+                            value="activity",
+                            key="csv_activity_col",
+                            help="Column name for activity names"
+                        )
+                    
+                    with col3:
+                        timestamp_col = st.text_input(
+                            "Timestamp Column:",
+                            value="timestamp",
+                            key="csv_timestamp_col",
+                            help="Column name for timestamps"
+                        )
+                    
+                    # Convert button
+                    if st.button("🔄 Convert to XES", key="convert_csv_to_xes", use_container_width=True):
+                        self.controller.convert_csv_to_xes(
+                            csv_file, delimiter, case_id_col, activity_col, timestamp_col
+                        )
+            
+            with tab2:
+                st.markdown("#### Convert XES to CSV Format")
+                st.markdown("Upload an XES file and convert it to CSV format for easier data manipulation.")
+                
+                xes_file = st.file_uploader(
+                    "Choose XES file",
+                    type=['xes'],
+                    key="xes_to_csv_uploader",
+                    help="Upload an XES file to convert to CSV format"
+                )
+                
+                if xes_file is not None:
+                    # Options for CSV output
+                    st.markdown("**CSV Output Options:**")
+                    csv_col1, csv_col2 = st.columns(2)
+                    
+                    with csv_col1:
+                        csv_delimiter = st.selectbox(
+                            "CSV Delimiter:",
+                            [",", ";", "\t", "|"],
+                            key="xes_csv_delimiter",
+                            format_func=lambda x: {"," : "Comma (,)", ";" : "Semicolon (;)", "\t" : "Tab", "|" : "Pipe (|)"}[x]
+                        )
+                    
+                    with csv_col2:
+                        include_all_attributes = st.checkbox(
+                            "Include all attributes",
+                            value=False,
+                            key="include_all_attrs",
+                            help="Include all event and case attributes in the CSV output"
+                        )
+                    
+                    # Convert button
+                    if st.button("🔄 Convert to CSV", key="convert_xes_to_csv", use_container_width=True):
+                        self.controller.convert_xes_to_csv(
+                            xes_file, csv_delimiter, include_all_attributes
+                        )
+            
+            st.divider()
