@@ -222,32 +222,18 @@ miner.generate_graph(
 
 ## References
 
-### Core Inductive Mining Algorithm
-
 [1] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2013). **Discovering block-structured process models from event logs - a constructive approach**. In *International conference on applications and theory of Petri nets and concurrency* (pp. 311-329). Springer, Berlin, Heidelberg.
 
 [2] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2014). **Discovering block-structured process models from event logs containing infrequent behaviour**. In *International conference on business process management* (pp. 66-78). Springer, Cham.
-
-### Inductive Mining Infrequent (IMf)
 
 [3] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2013). **Discovering block-structured process models from incomplete event logs**. In *International Conference on Applications and Theory of Petri Nets and Concurrency* (pp. 91-110). Springer, Berlin, Heidelberg.
 
 [4] Leemans, S. J. (2017). **Robust process mining with guarantees**. PhD Thesis, Eindhoven University of Technology.
 
-### Inductive Mining Approximate (IMa)
-
 [5] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2018). **Scalable process discovery and conformance checking**. *Software & Systems Modeling*, 17(2), 599-631.
 
 [6] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2016). **Exploring processes and deviations**. In *International Conference on Business Process Management* (pp. 304-316). Springer, Cham.
 
-### General Process Mining References
-
 [7] van der Aalst, W. M. (2016). **Process mining: data science in action**. Springer.
 
 [8] Augusto, A., Conforti, R., Dumas, M., La Rosa, M., Maggi, F. M., Marrella, A., ... & Soo, A. (2019). **Automated discovery of process models from event logs: Review and benchmark**. *IEEE transactions on knowledge and data engineering*, 31(4), 686-705.
-
-### Implementation References
-
-[9] Berti, A., van Zelst, S. J., & van der Aalst, W. (2019). **Process mining for python (PM4Py): bridging the gap between process-and data science**. arXiv preprint arXiv:1905.06169.
-
-[10] Leemans, S. J., & van der Aalst, W. M. (2014). **Process mining in software systems: Discovering real-life business transactions and process models from distributed systems**. In *2014 ACM/IEEE 18th International Conference on Model Driven Engineering Languages and Systems (MODELS)* (pp. 44-53). IEEE.
