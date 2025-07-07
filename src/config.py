@@ -49,9 +49,9 @@ algorithm_mappings = {
 }
 # Maps the algorithm routes to the paths of the documentation files.
 docs_path_mappings = {
-    "heuristic": "../docs/algorithms/heuristic_miner.md",
-    "fuzzy": "../docs/algorithms/fuzzy_miner.md",
-    "inductive": "../docs/algorithms/inductive_miner.md",
+    "heuristic": "docs/algorithms/heuristic_miner.md",
+    "fuzzy": "docs/algorithms/fuzzy_miner.md",
+    "inductive": "docs/algorithms/inductive_miner.md",
 }
 
 # Import UI modules only if they can be found (i.e., not when running tests)
