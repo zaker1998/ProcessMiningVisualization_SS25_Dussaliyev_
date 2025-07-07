@@ -75,3 +75,179 @@ Two metrics are used for filtering, the activity threshold, and the traces thres
 The activity threshold is in the range of 0.0 and 1.0. It will remove activities/events from the log, that have a lower threshold than set.
 
 The traces threshold is in the range of 0.0 and 1.0. It will remove traces from the log, that have a lower threshold than this parameter.
+
+## Inductive Mining Infrequent
+
+The Inductive Mining Infrequent variant is an extension of the basic Inductive Mining algorithm that filters out infrequent behavior directly from the directly-follows graph. This makes the algorithm more robust to noise in event logs, producing cleaner and more representative process models.
+
+### Key Features
+
+- **Noise Filtering**: Filters out infrequent directly-follows relations based on a configurable noise threshold
+- **Hybrid Approach**: First attempts cuts on the full DFG to preserve structural information, then falls back to a filtered DFG if necessary
+- **Adaptive Fallthrough**: Uses different fallthrough strategies based on the noise threshold level
+- **PM4Py Compatibility**: Designed to match PM4Py's implementation behavior
+
+### Noise Filtering Mechanism
+
+The algorithm filters directly-follows relations whose frequency is below a threshold calculated as:
+```
+threshold = max_frequency * noise_threshold
+```
+
+Where:
+- `max_frequency` is the frequency of the most common directly-follows relation
+- `noise_threshold` is a parameter between 0 and 1 (higher values filter more aggressively)
+
+### Cut Detection Strategy
+
+The infrequent variant follows a two-step approach:
+
+1. **Full DFG Analysis**: First attempts to find cuts on the complete directly-follows graph
+2. **Filtered DFG Fallback**: If no good cut is found, creates a filtered DFG by removing infrequent edges and retries
+
+This hybrid approach preserves as much structural information as possible while still handling noise effectively.
+
+### Adaptive Fallthrough Behavior
+
+When no cut can be found, the algorithm adapts its fallthrough strategy based on the noise threshold:
+
+- **Low noise thresholds (≤ 0.3)**: Creates more flexible models with loops, allowing for more behavioral variation
+- **High noise thresholds (> 0.3)**: Creates more structured models, focusing on the most frequent behavior patterns
+
+### Usage
+
+```python
+from mining_algorithms.inductive_mining_infrequent import InductiveMiningInfrequent
+
+miner = InductiveMiningInfrequent(log)
+miner.generate_graph(
+    activity_threshold=0.0,
+    traces_threshold=0.0,
+    noise_threshold=0.2  # Filter out edges with frequency < 20% of max
+)
+```
+
+## Inductive Mining Approximate
+
+The Inductive Mining Approximate variant is designed to handle complex and noisy event logs where the standard algorithm might produce overly complicated models. It uses simplification strategies to create more understandable process models while maintaining the essential behavior.
+
+### Key Features
+
+- **Simplification Threshold**: Uses a configurable threshold to determine when to simplify the directly-follows graph
+- **Cut Quality Validation**: Validates the quality of cuts before accepting them
+- **Complexity Limiting**: Limits model complexity for very large alphabets
+- **Progressive Simplification**: Gradually simplifies the model if initial attempts fail
+
+### Simplification Approach
+
+The approximate variant creates a simplified directly-follows graph by:
+
+1. Calculating edge frequencies from the event log
+2. Removing edges with frequency below `max_frequency * simplification_threshold`
+3. Preserving start and end node information
+
+### Cut Quality Validation
+
+Each cut type has specific quality validation criteria:
+
+- **Exclusive Cut**: Checks for minimal overlap between partitions
+- **Sequence Cut**: Validates that most traces follow the expected ordering
+- **Parallel Cut**: Ensures limited overlap between parallel branches
+- **Loop Cut**: Validates appropriate size ratio between body and redo parts
+
+### Complexity Management
+
+For logs with very large alphabets, the algorithm:
+- Limits flower models to a maximum number of activities (default: 10)
+- Uses the simplification threshold to reduce edge complexity
+- Validates that cuts make meaningful progress in decomposition
+
+### Usage
+
+```python
+from mining_algorithms.inductive_mining_approximate import InductiveMiningApproximate
+
+miner = InductiveMiningApproximate(log)
+miner.generate_graph(
+    activity_threshold=0.0,
+    traces_threshold=0.2,
+    simplification_threshold=0.1,  # Simplify edges with frequency < 10% of max
+    min_bin_freq=0.2  # Legacy parameter (not used)
+)
+```
+
+## Comparison of Inductive Mining Variants
+
+| Feature | Standard | Infrequent | Approximate |
+|---------|----------|------------|-------------|
+| **Primary Goal** | Discover sound process models | Handle noisy logs | Handle complex logs |
+| **Noise Handling** | Pre-filtering only | Direct DFG filtering | Simplification strategy |
+| **Main Parameter** | Activity/trace thresholds | Noise threshold | Simplification threshold |
+| **DFG Approach** | Standard DFG | Filtered DFG (removes infrequent edges) | Simplified DFG (progressive simplification) |
+| **Cut Detection** | Single attempt | Two-phase (full then filtered) | Two-phase with quality validation |
+| **Cut Validation** | Basic validation | Basic validation | Quality-based validation |
+| **Fallthrough** | Standard flower model | Adaptive based on noise level | Complexity-limited flower model |
+| **Best Use Case** | Clean, well-structured logs | Logs with infrequent behavior | Complex logs with many activities |
+| **Model Complexity** | Can be high | Reduced through filtering | Actively limited |
+| **Information Loss** | Minimal (pre-filtering only) | Moderate (edge filtering) | Higher (simplification) |
+| **Soundness** | Always sound | Always sound | Always sound |
+| **PM4Py Compatibility** | N/A | Designed to match PM4Py | Custom implementation |
+
+### Choosing the Right Variant
+
+- **Use Standard Inductive Mining when:**
+  - Your log is relatively clean and well-structured
+  - You want to preserve all behavior in the log
+  - Model complexity is not a major concern
+
+- **Use Inductive Mining Infrequent when:**
+  - Your log contains noise or infrequent exceptional behavior
+  - You want to focus on the main process flow
+  - You need compatibility with PM4Py results
+
+- **Use Inductive Mining Approximate when:**
+  - Your log is very complex with many activities
+  - The standard algorithm produces overly complicated models
+  - You prefer simpler, more understandable models
+  - You can accept some loss of detail for clarity
+
+### Parameter Guidelines
+
+| Variant | Parameter | Range | Recommended Starting Value | Effect of Increasing |
+|---------|-----------|-------|---------------------------|---------------------|
+| All | activity_threshold | 0.0-1.0 | 0.0 | Removes more activities |
+| All | traces_threshold | 0.0-1.0 | 0.2 | Removes more traces |
+| Infrequent | noise_threshold | 0.0-1.0 | 0.2 | Filters more edges |
+| Approximate | simplification_threshold | 0.0-1.0 | 0.1 | Simplifies more aggressively |
+
+## References
+
+### Core Inductive Mining Algorithm
+
+[1] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2013). **Discovering block-structured process models from event logs - a constructive approach**. In *International conference on applications and theory of Petri nets and concurrency* (pp. 311-329). Springer, Berlin, Heidelberg.
+
+[2] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2014). **Discovering block-structured process models from event logs containing infrequent behaviour**. In *International conference on business process management* (pp. 66-78). Springer, Cham.
+
+### Inductive Mining Infrequent (IMf)
+
+[3] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2013). **Discovering block-structured process models from incomplete event logs**. In *International Conference on Applications and Theory of Petri Nets and Concurrency* (pp. 91-110). Springer, Berlin, Heidelberg.
+
+[4] Leemans, S. J. (2017). **Robust process mining with guarantees**. PhD Thesis, Eindhoven University of Technology.
+
+### Inductive Mining Approximate (IMa)
+
+[5] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2018). **Scalable process discovery and conformance checking**. *Software & Systems Modeling*, 17(2), 599-631.
+
+[6] Leemans, S. J., Fahland, D., & van der Aalst, W. M. (2016). **Exploring processes and deviations**. In *International Conference on Business Process Management* (pp. 304-316). Springer, Cham.
+
+### General Process Mining References
+
+[7] van der Aalst, W. M. (2016). **Process mining: data science in action**. Springer.
+
+[8] Augusto, A., Conforti, R., Dumas, M., La Rosa, M., Maggi, F. M., Marrella, A., ... & Soo, A. (2019). **Automated discovery of process models from event logs: Review and benchmark**. *IEEE transactions on knowledge and data engineering*, 31(4), 686-705.
+
+### Implementation References
+
+[9] Berti, A., van Zelst, S. J., & van der Aalst, W. (2019). **Process mining for python (PM4Py): bridging the gap between process-and data science**. arXiv preprint arXiv:1905.06169.
+
+[10] Leemans, S. J., & van der Aalst, W. M. (2014). **Process mining in software systems: Discovering real-life business transactions and process models from distributed systems**. In *2014 ACM/IEEE 18th International Conference on Model Driven Engineering Languages and Systems (MODELS)* (pp. 44-53). IEEE.
