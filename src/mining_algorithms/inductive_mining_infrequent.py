@@ -414,7 +414,10 @@ class InductiveMiningInfrequent(InductiveMining):
             log_copy = log.copy()
             empty_log = {tuple(): log_copy[tuple()]}
             del log_copy[tuple()]
-            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log_copy))
+            return ProcessTreeNode(
+                operator=Operator.XOR,
+                children=[self.inductive_mining(empty_log), self.inductive_mining(log_copy)]
+)
 
         # Handle single activity case
         if len(activities) == 1:
