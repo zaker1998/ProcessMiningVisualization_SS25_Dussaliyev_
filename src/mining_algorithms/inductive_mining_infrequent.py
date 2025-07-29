@@ -3,6 +3,7 @@ from graphs.dfg import DFG
 from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
+from process_tree import ProcessTreeNode, Operator
 
 
 class InductiveMiningInfrequent(InductiveMining):
@@ -118,7 +119,7 @@ class InductiveMiningInfrequent(InductiveMining):
     def _safe_fallthrough(self, log):
         """Safe fallthrough that handles edge cases."""
         if not log:
-            return "tau"
+            return ProcessTreeNode(operator=Operator.TAU)
         
         activities = self.get_log_alphabet(log)
         return self.create_flower_model(activities)
@@ -163,7 +164,18 @@ class InductiveMiningInfrequent(InductiveMining):
                     sub_results = []
                     for split in splits:
                         sub_results.append(self.inductive_mining(split))
-                    return (operation, *sub_results)
+                    op_map = {
+                        "xor": Operator.XOR,
+                        "seq": Operator.SEQUENCE,
+                        "par": Operator.PARALLEL,
+                        "loop": Operator.LOOP
+                    }
+
+                    if operation == "loop" and len(sub_results) == 2:
+                        sub_results.append(ProcessTreeNode(operator=Operator.TAU))
+
+                    return ProcessTreeNode(operator=op_map[operation], children=sub_results)
+
         
         return None
     
@@ -425,8 +437,14 @@ class InductiveMiningInfrequent(InductiveMining):
             # Check if it appears multiple times in any trace
             for trace in log:
                 if trace.count(activity) > 1:
-                    return ("loop", activity, "tau")
-            return activity
+                    return ProcessTreeNode(
+                        operator=Operator.LOOP,
+                        children=[
+                            ProcessTreeNode(operator=Operator.ACTIVITY, label=activity),
+                            ProcessTreeNode(operator=Operator.TAU),
+                            ProcessTreeNode(operator=Operator.TAU)
+                        ]
+                        )
 
         # Default: flower model
         return self.create_flower_model(activities) 
