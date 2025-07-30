@@ -27,3 +27,17 @@ class ProcessTreeNode:
             return "Tau"
         else:
             return f"{self.operator.value.upper()}({', '.join(repr(child) for child in self.children)})"
+
+def to_dict(self):
+    if self.operator == Operator.ACTIVITY:
+        return {"operator": "activity", "label": self.label}
+    elif self.operator == Operator.TAU:
+        return {"operator": "tau"}
+    else:
+        return {
+            "operator": self.operator.value,
+            "children": [child.to_dict() for child in self.children]
+        }
+    
+
+    
