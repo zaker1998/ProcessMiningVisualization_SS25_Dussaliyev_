@@ -3,6 +3,7 @@ from graphs.dfg import DFG
 from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
 from logs.filters import filter_events, filter_traces
 from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
+from process_tree import ProcessTreeNode, Operator
 
 
 class InductiveMiningApproximate(InductiveMining):
@@ -142,7 +143,10 @@ class InductiveMiningApproximate(InductiveMining):
                     sub_results = []
                     for split in splits:
                         sub_results.append(self.inductive_mining(split))
-                    return (operation, *sub_results)
+                    return ProcessTreeNode(
+                         operator=self._map_op_string_to_enum(operation),
+                            children=sub_results
+                    )
         
         return None
     
@@ -398,12 +402,21 @@ class InductiveMiningApproximate(InductiveMining):
         if tuple() in log:
             empty_log = {tuple(): log[tuple()]}
             del log[tuple()]
-            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log))
+            return ProcessTreeNode(operator=Operator.XOR,
+                                   children=[self.inductive_mining(empty_log), suself.inductive_mining(log)btree2]) 
 
         # Handle single event case (same as standard)
         if len(log_alphabet) == 1:
-            return ("loop", list(log_alphabet)[0], "tau")
+            return ("loop", list(log_alphabet)[0], ProcessTreeNode(operator=Operator.TAU))
 
         # For multiple events, create flower model with complexity limiting
         # Limit to 10 activities for very large alphabets to avoid overly complex models
         return self.create_flower_model(log_alphabet, max_activities=10) 
+    
+    def _map_op_string_to_enum(self, operation: str) -> Operator:
+    return {
+        "xor": Operator.XOR,
+        "seq": Operator.SEQUENCE,
+        "par": Operator.PARALLEL,
+        "loop": Operator.LOOP
+    }[operation]
