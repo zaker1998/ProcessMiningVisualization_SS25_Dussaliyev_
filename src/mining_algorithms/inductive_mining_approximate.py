@@ -403,18 +403,27 @@ class InductiveMiningApproximate(InductiveMining):
             empty_log = {tuple(): log[tuple()]}
             del log[tuple()]
             return ProcessTreeNode(operator=Operator.XOR,
-                                   children=[self.inductive_mining(empty_log), suself.inductive_mining(log)btree2]) 
+                       children=[
+                           self.inductive_mining(empty_log),
+                           self.inductive_mining(log)
+                       ])
 
         # Handle single event case (same as standard)
         if len(log_alphabet) == 1:
-            return ("loop", list(log_alphabet)[0], ProcessTreeNode(operator=Operator.TAU))
+            return ProcessTreeNode(
+            operator=Operator.LOOP,
+        children=[
+        ProcessTreeNode(operator=Operator.ACTIVITY, label=list(log_alphabet)[0]),
+        ProcessTreeNode(operator=Operator.TAU)
+    ]
+)
 
         # For multiple events, create flower model with complexity limiting
         # Limit to 10 activities for very large alphabets to avoid overly complex models
         return self.create_flower_model(log_alphabet, max_activities=10) 
     
     def _map_op_string_to_enum(self, operation: str) -> Operator:
-    return {
+        return {
         "xor": Operator.XOR,
         "seq": Operator.SEQUENCE,
         "par": Operator.PARALLEL,
