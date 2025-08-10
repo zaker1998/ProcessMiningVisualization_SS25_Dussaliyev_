@@ -1,305 +1,212 @@
-from mining_algorithms.base_mining import BaseMining
-from logs.splits import (
-    exclusive_split,
-    parallel_split,
-    sequence_split,
-    loop_split,
-)
-from graphs.cuts import exclusive_cut, parallel_cut, sequence_cut, loop_cut
+from typing import Dict, Tuple, List, Optional
 from graphs.dfg import DFG
-from graphs.visualization.inductive_graph import InductiveGraph
+from graphs.cuts import exclusive_cut, sequence_cut, parallel_cut, loop_cut
+from logs.splits import exclusive_split, parallel_split, sequence_split, loop_split
 from logs.filters import filter_events, filter_traces
+from graphs.visualization.inductive_graph import InductiveGraph
 from logger import get_logger
+from process_tree import ProcessTreeNode, Operator
+
+logger = get_logger("InductiveMining")
 
 
-class InductiveMining(BaseMining):
-    """A class to generate a graph from a log using the Inductive Mining algorithm."""
+class InductiveMining:
+    """
+    Standard Inductive Mining implementation.
+    Returns ProcessTreeNode internally, converts to legacy tuple before creating InductiveGraph.
+    """
 
-    def __init__(self, log):
-        """Constructor for the InductiveMining class.
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-        """
-        super().__init__(log)
-        self.logger = get_logger("InductiveMining")
-        self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
+    def __init__(self, log: Dict[Tuple[str, ...], int]):
+        self.log = log
+        self.logger = logger
+        self.node_sizes = {}
         self.activity_threshold = 0.0
         self.traces_threshold = 0.2
-        self.filtered_log = None
+        self.filtered_log: Optional[Dict[Tuple[str, ...], int]] = None
 
+        # recursion safety
+        self.max_recursion_depth = 100
+        self.current_depth = 0
+
+    # Public API
     def generate_graph(self, activity_threshold: float, traces_threshold: float):
-        """Generate a graph from the log using the Inductive Mining algorithm.
-
-        Parameters
-        ----------
-        activity_threshold : float
-            The activity threshold for the filtering of the log.
-            All events with a frequency lower than the threshold * max_event_frequency will be removed.
-        traces_threshold : float
-            The traces threshold for the filtering of the log.
-            All traces with a frequency lower than the threshold * max_trace_frequency will be removed.
+        """
+        Filter log by activity and trace thresholds and produce InductiveGraph.
+        Keeps filtered_log cached to avoid recomputation.
         """
         self.activity_threshold = activity_threshold
         self.traces_threshold = traces_threshold
 
+        # compute events-to-remove and min trace freq
         events_to_remove = self.get_events_to_remove(activity_threshold)
-
-        self.logger.debug(f"Events to remove: {events_to_remove}")
         min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
 
         filtered_log = filter_traces(self.log, min_traces_frequency)
         filtered_log = filter_events(filtered_log, events_to_remove)
 
         if filtered_log == self.filtered_log:
+            self.logger.debug("Filtered log identical to previous, skipping.")
             return
 
         self.filtered_log = filtered_log
+        self.node_sizes = {k: self.calulate_node_size(k) for k in self._get_all_events()}
 
         self.logger.info("Start Inductive Mining")
         process_tree = self.inductive_mining(self.filtered_log)
+
+        # keep internal representation
+        self.process_tree = process_tree
+        # convert to legacy representation for InductiveGraph
+        process_tree_tuple = process_tree.to_tuple()
         self.graph = InductiveGraph(
-            process_tree,
-            frequency=self.appearance_frequency,
+            process_tree_tuple,
+            frequency=self._build_frequency_map(),
             node_sizes=self.node_sizes,
         )
 
-    def inductive_mining(self, log):
-        """Generate a process tree from the log using the Inductive Mining algorithm.
-        This is a recursive function that generates the process tree from the log,
-        by splitting the log into partitions and generating the tree for each partition.
-        This function uses the base cases, the cut methods and the fallthrough method to generate the tree.
-        If the log is a base case, the corresponding tree is returned. Otherwise, the log is split into partitions using the cut methods.
-        If a cut is found, the tree is generated for each partition. If no cut is found, the fallthrough method is used to generate the tree.
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their
-
-        Returns
-        -------
-        tuple
-            A tuple representing the process tree. The first element is the operation of the node, the following elements are the children of the node.
-            The children are either strings representing the events or tuples representing a subtree.
+    # Core recursive miner
+    def inductive_mining(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
         """
-        if tree := self.base_cases(log):
-            self.logger.debug(f"Base case: {tree}")
-            return tree
+        Main recursive function. Always returns a ProcessTreeNode.
+        """
+        # safety checks
+        if not self._is_safe_to_continue(log):
+            return self._safe_fallthrough(log)
+        self.current_depth += 1
 
-        if tuple() not in log:
-            if partitions := self.calulate_cut(log):
-                self.logger.debug(f"Cut: {partitions}")
-                operation = partitions[0]
-                return (operation, *list(map(self.inductive_mining, partitions[1:])))
+        try:
+            if tree := self.base_cases(log):
+                self.logger.debug(f"Base case: {tree}")
+                return tree
 
-        return self.fallthrough(log)
+            # only try cuts if no empty trace present
+            if tuple() not in log:
+                # try cuts in order: xor, seq, par, loop (preserve common priority)
+                if partitions := self.calulate_cut(log):
+                    op_str, splits = partitions
+                    children = [self.inductive_mining(s) for s in splits]
+                    op_map = {
+                        "xor": Operator.XOR,
+                        "seq": Operator.SEQUENCE,
+                        "par": Operator.PARALLEL,
+                        "loop": Operator.LOOP,
+                    }
+                    return ProcessTreeNode(operator=op_map[op_str], children=children)
 
-    def base_cases(self, log) -> str | None:
-        """Check if the log is a base case and return the corresponding tree.
-        The base cases are:
-        - an empty log
-        - a log with a single event
+            # fallthrough (flower/loop/xor with tau)
+            return self.fallthrough(log)
+        finally:
+            self.current_depth -= 1
 
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
-        Returns
-        -------
-        str | None
-            The event in the log if it is a base case, otherwise None.
+    # Base cases
+    def base_cases(self, log: Dict[Tuple[str, ...], int]) -> Optional[ProcessTreeNode]:
+        """
+        If log has single trace with 0 or 1 activities, return tau or activity node.
         """
         if len(log) > 1:
             return None
-
         if len(log) == 1:
             trace = list(log.keys())[0]
             if len(trace) == 0:
-                return "tau"
+                return ProcessTreeNode(operator=Operator.TAU)
             if len(trace) == 1:
-                return trace[0]
-
+                return ProcessTreeNode(operator=Operator.ACTIVITY, label=trace[0])
         return None
 
-    def calulate_cut(self, log) -> tuple | None:
-        """Find a partitioning of the log using the different cut methods.
-        The cut methods are:
-        - exclusive_cut
-        - sequence_cut
-        - parallel_cut
-        - loop_cut
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
-        Returns
-        -------
-        tuple | None
-            A process tree representing the partitioning of the log if a cut was found, otherwise None.
+    # Cut calculation
+    def calulate_cut(self, log: Dict[Tuple[str, ...], int]):
+        """
+        Try all cut types using DFG derived from log and return (operation_str, [splits...]) or None.
         """
         dfg = DFG(log)
-
         if partitions := exclusive_cut(dfg):
-            return ("xor", *exclusive_split(log, partitions))
+            return ("xor", exclusive_split(log, partitions))
         elif partitions := sequence_cut(dfg):
-            return ("seq", *sequence_split(log, partitions))
+            return ("seq", sequence_split(log, partitions))
         elif partitions := parallel_cut(dfg):
-            return ("par", *parallel_split(log, partitions))
+            return ("par", parallel_split(log, partitions))
         elif partitions := loop_cut(dfg):
-            return ("loop", *loop_split(log, partitions))
-
+            return ("loop", loop_split(log, partitions))
         return None
 
-    def fallthrough(self, log):
-        """Generate a process tree for the log using a fallthrough method.
-        The following fallthrough method is used:
-        - if there is a empty trace in the log, make an xor split with tau and the inductive mining of the log without the empty trace
-        - if there is a single event in the log and it occures more than once in a trace, make a loop split with the event and tau
-        - if there are multiple events in the log, return a flower model with all the events
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
-        Returns
-        -------
-        tuple
-            A tuple representing the process tree. The first element is the operation of the node, the following elements are the children of the node.
+    # Fallthrough & flower model
+    def fallthrough(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
         """
-        log_alphabet = self.get_log_alphabet(log)
+        Fallback when no cut is found:
+          - if empty trace exists -> XOR(tau, inductive_mining(rest))
+          - if single activity alphabet -> LOOP(activity, tau)
+          - otherwise -> flower model as LOOP with TAU + all activities
+        """
+        activities = self.get_log_alphabet(log)
 
-        # if there is a empty trace in the log
-        # make an xor split with tau and the inductive mining of the log without the empty trace
         if tuple() in log:
-            empty_log = {tuple(): log[tuple()]}
-            del log[tuple()]
-            return ("xor", self.inductive_mining(empty_log), self.inductive_mining(log))
+            # copy to avoid mutation
+            log_copy = dict(log)
+            empty_log = {tuple(): log_copy[tuple()]}
+            del log_copy[tuple()]
+            return ProcessTreeNode(
+                operator=Operator.XOR,
+                children=[self.inductive_mining(empty_log), self.inductive_mining(log_copy)],
+            )
 
-        # if there is a single event in the log
-        # and it occures more than once in a trace
-        # make a loop split with the event and tau
-        # the event has to occure more than once in a trace,
-        #  otherwise it would be a base case
-        if len(log_alphabet) == 1:
+        if len(activities) == 1:
+            act = next(iter(activities))
+            return ProcessTreeNode(
+                operator=Operator.LOOP,
+                children=[
+                    ProcessTreeNode(operator=Operator.ACTIVITY, label=act),
+                    ProcessTreeNode(operator=Operator.TAU),
+                ],
+            )
 
-            return ("loop", list(log_alphabet)[0], "tau")
+        # flower model -> LOOP with TAU and each activity as ACTIVITY child
+        children = [ProcessTreeNode(operator=Operator.TAU)]
+        for a in sorted(activities):
+            children.append(ProcessTreeNode(operator=Operator.ACTIVITY, label=a))
+        return ProcessTreeNode(operator=Operator.LOOP, children=children)
 
-        # if there are multiple events in the log
-        # return a flower model with all the events
-        return self.create_flower_model(log_alphabet)
-
-    def create_flower_model(self, activities, max_activities=None):
-        """Create a flower model with the given activities.
-        
-        A flower model allows any sequence of activities to be executed,
-        which serves as a fallback when no specific process structure can be identified.
-        
-        Parameters
-        ----------
-        activities : set[str] | list[str]
-            The activities to include in the flower model
-        max_activities : int, optional
-            Maximum number of activities to include. If None, all activities are included.
-            If specified and the number of activities exceeds this limit, only the most
-            frequent activities will be included.
-            
-        Returns
-        -------
-        str | tuple
-            - "tau" if no activities
-            - single activity name if only one activity
-            - ("loop", "tau", *sorted_activities) for multiple activities
+    def create_flower_model(self, activities: set, max_activities: Optional[int] = None):
+        """
+        Convenience factory creating flower model as ProcessTreeNode.
         """
         if not activities:
-            return "tau"
-        
-        # Convert to set if needed for consistency
-        if isinstance(activities, list):
-            activities = set(activities)
-            
-        # Handle single activity case
+            return ProcessTreeNode(operator=Operator.TAU)
         if len(activities) == 1:
-            return list(activities)[0]
-        
-        # Apply activity limit if specified
+            return ProcessTreeNode(operator=Operator.ACTIVITY, label=next(iter(activities)))
         if max_activities is not None and len(activities) > max_activities:
-            activities = self._limit_activities_by_frequency(activities, max_activities)
-        
-        # Create flower model with sorted activities for consistency
-        return ("loop", "tau", *sorted(activities))
-    
-    def _limit_activities_by_frequency(self, activities, max_count):
-        """Limit activities to the most frequent ones based on the current filtered log.
-        
-        Parameters
-        ----------
-        activities : set[str]
-            The activities to limit
-        max_count : int
-            Maximum number of activities to return
-            
-        Returns
-        -------
-        set[str]
-            The most frequent activities up to max_count
-        """
-        if not hasattr(self, 'filtered_log') or not self.filtered_log:
-            # If no filtered log available, return first max_count activities alphabetically
-            return set(sorted(activities)[:max_count])
-        
-        # Calculate activity frequencies from the filtered log
-        activity_frequencies = {}
-        for trace, freq in self.filtered_log.items():
-            for activity in trace:
-                if activity in activities:
-                    activity_frequencies[activity] = activity_frequencies.get(activity, 0) + freq
-        
-        # Return top max_count most frequent activities
-        if activity_frequencies:
-            top_activities = sorted(activity_frequencies.items(), key=lambda x: x[1], reverse=True)[:max_count]
-            return {activity for activity, _ in top_activities}
-        else:
-            # Fallback to alphabetical selection
-            return set(sorted(activities)[:max_count])
+            activities = set(sorted(activities)[:max_activities])
+        children = [ProcessTreeNode(operator=Operator.TAU)]
+        for a in sorted(activities):
+            children.append(ProcessTreeNode(operator=Operator.ACTIVITY, label=a))
+        return ProcessTreeNode(operator=Operator.LOOP, children=children)
 
-    def get_log_alphabet(self, log) -> set[str]:
-        """Get the alphabet of the log. The alphabet is the set of all unique events in the log.
-
-        Parameters
-        ----------
-        log : dict[tuple[str, ...], int]
-            A dictionary containing the traces and their frequencies in the log.
-
-        Returns
-        -------
-        set[str]
-            A set containing all unique events in the log.
-        """
+    # Utility helpers
+    def get_log_alphabet(self, log: Dict[Tuple[str, ...], int]) -> set:
+        """Return set of events in provided log."""
         return set([event for case in log for event in case])
 
-    def get_activity_threshold(self) -> float:
-        """Get the activity threshold used for filtering the log.
+    def _is_safe_to_continue(self, log: Dict[Tuple[str, ...], int]) -> bool:
+        """Basic safety checks to avoid runaway recursion."""
+        if self.current_depth >= self.max_recursion_depth:
+            self.logger.warning("Max recursion depth reached.")
+            return False
+        if not log or all(len(trace) == 0 for trace in log):
+            return False
+        return True
 
-        Returns
-        -------
-        float
-            The activity threshold
-        """
-        return self.activity_threshold
+    def _safe_fallthrough(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
+        """Return a safe fallback process tree."""
+        activities = self.get_log_alphabet(log)
+        return self.create_flower_model(activities)
 
-    def get_traces_threshold(self) -> float:
-        """Get the traces threshold used for filtering the log.
+    def _get_all_events(self) -> set:
+        """Collect all unique events from the original log."""
+        return set([ev for trace in self.log for ev in trace])
 
-        Returns
-        -------
-        float
-            The traces threshold
-        """
-        return self.traces_threshold
+    def _build_frequency_map(self) -> Dict[str, int]:
+        """Build appearance frequency map from initial log (for InductiveGraph usage)."""
+        freq = {}
+        for trace, f in self.log.items():
+            for ev in trace:
+                freq[ev] = freq.get(ev, 0) + f
+        return freq
