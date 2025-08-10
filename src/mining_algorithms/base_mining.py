@@ -1,188 +1,131 @@
+from __future__ import annotations
 import numpy as np
+from typing import Dict, List, Tuple, Set
 from mining_algorithms.mining_interface import MiningInterface
 from logger import get_logger
 
+logger = get_logger("BaseMining")
+
 
 class BaseMining(MiningInterface):
-    """BaseMining is a class that provides the base functionality for the mining algorithms.
-    It contains the basic methods for all the mining algorithms, such as creating a succession matrix, calculating node sizes, and filtering out events.
-    This base class can be extended by other mining algorithms to implement their specific functionality on top of the base functionality.
+    """
+    BaseMining provides shared utilities used by concrete miners.
+
+    Responsibilities:
+      - Extract activities and their frequencies from a trace-frequency log (dict)
+      - Build succession matrix (directly-follows matrix)
+      - Provide helper filters (events / traces)
+      - Provide node sizing helpers used by visualization
     """
 
-    def __init__(self, log: dict[tuple[str, ...], int]):
-        """Constructor for BaseMining.
-
-        Parameters
-        ----------
-        log : dict[tuple[str,...], int]
-            A dictionary containing the traces and their frequencies in the log.
-            The key is a tuple of strings representing the trace, and the value is an integer representing the frequency of the trace in the log.
-        """
+    def __init__(self, log: Dict[Tuple[str, ...], int]):
         super().__init__()
-        self.logger = get_logger("BaseMining")
-        self.log = log
-        # self.events contains all events(unique!), appearance_activities are dictionaries, events:appearances ex. {'a':3, ...}
+        self.log: Dict[Tuple[str, ...], int] = log
+        # extracted values
+        self.events: List[str]
+        self.appearance_frequency: Dict[str, int]
+        self.event_positions: Dict[str, int]
+        self.succession_matrix: np.ndarray
+
+        # initialize
         self.events, self.appearance_frequency = self.__filter_out_all_events()
-        self.logger.debug(f"Events: {self.events}")
-        self.logger.debug(f"Appearance Frequency: {self.appearance_frequency}")
         self.event_positions = {event: i for i, event in enumerate(self.events)}
         self.succession_matrix = self.__create_succession_matrix()
-        self.logger.debug(f"Succession Matrix: {self.succession_matrix}")
 
+        # clustering helpers (kept for API compatibility)
         self.event_freq_sorted, self.event_freq_labels_sorted = self.get_clusters(
             list(self.appearance_frequency.values())
         )
 
+        # start/end nodes
         self.start_nodes = self.__get_start_nodes()
         self.end_nodes = self.__get_end_nodes()
 
-        self.logger.debug(f"Start Nodes: {self.start_nodes}")
-        self.logger.debug(f"End Nodes: {self.end_nodes}")
-
-    def __filter_out_all_events(self) -> tuple[list[str], dict[str, int]]:
-        """create a list of all events and a dictionary of all events with their frequencies
-
-        Returns
-        -------
-        tuple[list[str], dict[str, int]]
-            A tuple containing a list of all unique events and a dictionary of all events with their frequencies
+    # --- core extractors -------------------------------------------------
+    def __filter_out_all_events(self) -> Tuple[List[str], Dict[str, int]]:
         """
-        dic = {}
-        for trace, frequency in self.log.items():
-            for activity in trace:
-                if activity in dic:
-                    dic[activity] = dic[activity] + frequency
-                else:
-                    dic[activity] = frequency
+        Create list of unique events and their total appearance counts.
+        Input log format: dict[tuple(activity names...), frequency]
+        """
+        counts: Dict[str, int] = {}
+        for trace, freq in self.log.items():
+            for act in trace:
+                counts[act] = counts.get(act, 0) + freq
+        activities = list(counts.keys())
+        return activities, counts
 
-        activities = list(dic.keys())
-        return activities, dic
+    def __get_start_nodes(self) -> Set[str]:
+        """Return set of first activities in traces (non-empty traces only)."""
+        return set(trace[0] for trace in self.log.keys() if len(trace) > 0)
 
-    def calulate_node_size(self, node: str) -> tuple[float, float]:
-        """calculate the size of a node based on the frequency of the event.
-        The size is determined by the scale factor and the minimum node size.
+    def __get_end_nodes(self) -> Set[str]:
+        """Return set of last activities in traces (non-empty traces only)."""
+        return set(trace[-1] for trace in self.log.keys() if len(trace) > 0)
 
-        Parameters
-        ----------
-        node : str
-            The event for which the size should be calculated
+    # --- succession matrix -----------------------------------------------
+    def __create_succession_matrix(self) -> np.ndarray:
+        """
+        Build directly-follows matrix of shape (n_events, n_events) where
+        matrix[i,j] counts transitions event_i -> event_j aggregated over the log.
+        """
+        n = len(self.events)
+        matrix = np.zeros((n, n), dtype=int)
+        for trace, freq in self.log.items():
+            if len(trace) < 2:
+                continue
+            indices = [self.event_positions[a] for a in trace]
+            src = indices[:-1]
+            tgt = indices[1:]
+            # accumulate frequencies to matrix at once
+            np.add.at(matrix, (src, tgt), freq)
+        return matrix
 
-        Returns
-        -------
-        tuple[float, float]
-            A tuple containing the width and height of the node
+    # --- filtering helpers -----------------------------------------------
+    def get_events_to_remove(self, threshold: float) -> Set[str]:
+        """
+        Return events whose frequency < threshold * max_frequency.
+        threshold in [0,1]. Values outside are clamped.
+        """
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+        if not self.appearance_frequency:
+            return set()
+        minimum_event_freq = round(max(self.appearance_frequency.values()) * threshold)
+        return {e for e, f in self.appearance_frequency.items() if f < minimum_event_freq}
+
+    def calulate_minimum_traces_frequency(self, threshold: float) -> int:
+        """
+        Compute threshold frequency for traces (round(max_trace_frequency * threshold)).
+        """
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+        if not self.log:
+            return 0
+        return round(max(self.log.values()) * threshold)
+
+    # --- visualization helpers -------------------------------------------
+    def calulate_node_size(self, node: str) -> Tuple[float, float]:
+        """
+        Return (width, height) for a visual node based on cluster scaling.
+        Uses event_freq_labels_sorted produced by clustering to map frequency -> scale.
         """
         scale_factor = self.get_scale_factor(node)
-
         width = (scale_factor / 2) + self.min_node_size
         height = width / 3
         return width, height
 
     def get_scale_factor(self, node: str) -> float:
-        """get the scale factor for a node based on the frequency of the event.
-        The scale factor is computed based on the frequency of the event and the clustering of the frequencies.
-
-        Parameters
-        ----------
-        node : str
-            The event for which the scale factor should be calculated
-
-        Returns
-        -------
-        float
-            The scale factor for the node
         """
-        node_freq = self.appearance_frequency.get(node)
-        scale_factor = self.event_freq_labels_sorted[
-            self.event_freq_sorted.index(node_freq)
-        ]
-        return scale_factor
-
-    def __get_start_nodes(self) -> set[str]:
-        """get all start nodes from the log. A start node is an event that is the first event in a trace.
-
-        Returns
-        -------
-        set[str]
-            A set containing all start nodes
+        Map a node frequency to a scale factor via the clustered labels.
+        If mapping fails, return 1.0 as default.
         """
-        return set([trace[0] for trace in self.log.keys() if len(trace) > 0])
-
-    def __get_end_nodes(self) -> set[str]:
-        """get all end nodes from the log. An end node is an event that is the last event in a trace.
-
-        Returns
-        -------
-        set[str]
-            A set containing all end nodes
-        """
-        return set([trace[-1] for trace in self.log.keys() if len(trace) > 0])
-
-    def __create_succession_matrix(self) -> np.ndarray:
-        """create a succession matrix from the log. The matrix contains the frequencies of the transitions between events.
-        Connections from the start node to an event and from an event to the end node are not included in the matrix.
-
-        Returns
-        -------
-        np.ndarray
-            The succession matrix
-        """
-        succession_matrix = np.zeros((len(self.events), len(self.events)))
-        for trace, frequency in self.log.items():
-            indices = [self.event_positions[event] for event in trace]
-            source_indices = indices[:-1]
-            target_indices = indices[1:]
-            # https://numpy.org/doc/stable/reference/generated/numpy.ufunc.at.html
-            np.add.at(succession_matrix, (source_indices, target_indices), frequency)
-
-        return succession_matrix
-
-    def get_events_to_remove(self, threshold: float) -> set[str]:
-        """get all events that have a frequency below a certain threshold. The threshold is a percentage of the maximum frequency of an event.
-
-        Parameters
-        ----------
-        threshold : float
-            The threshold for the frequency of an event. The threshold is a percentage of the maximum frequency of an event.
-
-        Returns
-        -------
-        set[str]
-            A set containing all events that have a frequency below the threshold
-        """
-        if threshold > 1.0:
-            threshold = 1.0
-        elif threshold < 0.0:
-            threshold = 0.0
-
-        minimum_event_freq = round(max(self.appearance_frequency.values()) * threshold)
-
-        return set(
-            [
-                event
-                for event, freq in self.appearance_frequency.items()
-                if freq < minimum_event_freq
-            ]
-        )
-
-    def calulate_minimum_traces_frequency(self, threshold: float) -> int:
-        """calculate the minimum frequency of a trace based on a threshold. The threshold is a percentage of the maximum frequency of a trace.
-
-        Parameters
-        ----------
-        threshold : float
-            The threshold for the frequency of a trace. The threshold is a percentage of the maximum frequency of a trace.
-
-        Returns
-        -------
-        int
-            The minimum frequency of a trace, based on the threshold.
-        """
-        if threshold > 1.0:
-            threshold = 1.0
-        elif threshold < 0.0:
-            threshold = 0.0
-
-        minimum_trace_freq = round(max(self.log.values()) * threshold)
-
-        return minimum_trace_freq
+        node_freq = self.appearance_frequency.get(node, 0)
+        try:
+            idx = self.event_freq_sorted.index(node_freq)
+            return self.event_freq_labels_sorted[idx]
+        except Exception:
+            return 1.0
