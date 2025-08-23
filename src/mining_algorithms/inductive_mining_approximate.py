@@ -24,9 +24,16 @@ class InductiveMiningApproximate(InductiveMining):
         self.simplification_threshold = simplification_threshold
         super().generate_graph(activity_threshold, traces_threshold)
 
-    def calculate_approximate_cut(self, log):
+
+    def calulate_cut(self, log):
+    
+    # Override calulate_cut with approximate strategy:
+    # 1. Try full DFG with validators
+    # 2. Fallback to simplified DFG without validators
+    
         full_dfg = DFG(log)
 
+        # full DFG with validators
         if partitions := exclusive_cut(full_dfg):
             splits = exclusive_split(log, partitions)
             if self._validate_exclusive_cut_quality(splits, log):
@@ -34,39 +41,32 @@ class InductiveMiningApproximate(InductiveMining):
 
         if partitions := sequence_cut(full_dfg):
             splits = sequence_split(log, partitions)
-            if self._validate_sequence_cut_quality(splits, log):
-                return (Operator.SEQUENCE, splits)
+        if self._validate_sequence_cut_quality(splits, log):
+            return (Operator.SEQUENCE, splits)
 
         if partitions := parallel_cut(full_dfg):
             splits = parallel_split(log, partitions)
-            if self._validate_parallel_cut_quality(splits, log):
-                return (Operator.PARALLEL, splits)
+        if self._validate_parallel_cut_quality(splits, log):
+            return (Operator.PARALLEL, splits)
 
         if partitions := loop_cut(full_dfg):
             splits = loop_split(log, partitions)
-            if self._validate_loop_cut_quality(splits, log):
-                return (Operator.LOOP, splits)
+        if self._validate_loop_cut_quality(splits, log):
+            return (Operator.LOOP, splits)
 
-        # simplified dfg
+        # simplified DFG (fallback, no validators)
         simp = self.create_simplified_dfg(log)
 
         if partitions := exclusive_cut(simp):
             return (Operator.XOR, exclusive_split(log, partitions))
-
         if partitions := sequence_cut(simp):
             return (Operator.SEQUENCE, sequence_split(log, partitions))
-
         if partitions := parallel_cut(simp):
             return (Operator.PARALLEL, parallel_split(log, partitions))
-
         if partitions := loop_cut(simp):
             return (Operator.LOOP, loop_split(log, partitions))
 
         return None
-
-    def calulate_cut(self, log):
-        """Override calulate_cut used by base class to plug in approximation logic."""
-        return self.calculate_approximate_cut(log)
 
     def create_simplified_dfg(self, log):
         """
