@@ -98,67 +98,7 @@ class InductiveMining:
         finally:
             self.current_depth -= 1
 
-    # Base cases
-    def base_cases(self, log: Dict[Tuple[str, ...], int]) -> Optional[ProcessTreeNode]:
-        """
-        If log has single trace with 0 or 1 activities, return tau or activity node.
-        """
-        if len(log) > 1:
-            return None
-        if len(log) == 1:
-            trace = list(log.keys())[0]
-            if len(trace) == 0:
-                return ProcessTreeNode(operator=Operator.TAU)
-            if len(trace) == 1:
-                return ProcessTreeNode(operator=Operator.ACTIVITY, label=trace[0])
-        return None
-
-    # Cut calculation
-    def calulate_cut(self, log: Dict[Tuple[str, ...], int]):
-        """
-        Try all cut types using DFG derived from log and return (operation_str, [splits...]) or None.
-        """
-        dfg = DFG(log)
-        if partitions := exclusive_cut(dfg):
-            return ("xor", exclusive_split(log, partitions))
-        elif partitions := sequence_cut(dfg):
-            return ("seq", sequence_split(log, partitions))
-        elif partitions := parallel_cut(dfg):
-            return ("par", parallel_split(log, partitions))
-        elif partitions := loop_cut(dfg):
-            return ("loop", loop_split(log, partitions))
-        return None
-
-    # Fallthrough & flower model
-    def fallthrough(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
-        """
-        Fallback when no cut is found:
-          - if empty trace exists -> XOR(tau, inductive_mining(rest))
-          - if single activity alphabet -> LOOP(activity, tau)
-          - otherwise -> flower model as LOOP with TAU + all activities
-        """
-        activities = self.get_log_alphabet(log)
-
-        if tuple() in log:
-            # copy to avoid mutation
-            log_copy = dict(log)
-            empty_log = {tuple(): log_copy[tuple()]}
-            del log_copy[tuple()]
-            return ProcessTreeNode(
-                operator=Operator.XOR,
-                children=[self.inductive_mining(empty_log), self.inductive_mining(log_copy)],
-            )
-
-        if len(activities) == 1:
-            act = next(iter(activities))
-            return ProcessTreeNode(
-                operator=Operator.LOOP,
-                children=[
-                    ProcessTreeNode(operator=Operator.ACTIVITY, label=act),
-                    ProcessTreeNode(operator=Operator.TAU),
-                ],
-            )
-
+    
         # flower model -> LOOP with TAU and each activity as ACTIVITY child
         children = [ProcessTreeNode(operator=Operator.TAU)]
         for a in sorted(activities):
