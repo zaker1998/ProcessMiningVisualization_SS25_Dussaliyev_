@@ -50,5 +50,16 @@ class ProcessTreeNode:
         if self.operator == Operator.ACTIVITY:
             return self.label
         op = self.operator.value  # 'seq', 'xor', 'par', 'loop'
-        children_tuple = [c.to_tuple() for c in self.children]
+        
+        # Validate that all children are ProcessTreeNode objects
+        children_tuple = []
+        for i, c in enumerate(self.children):
+            if not isinstance(c, ProcessTreeNode):
+                raise TypeError(
+                    f"Child {i} of {self.operator.name} node is not a ProcessTreeNode: "
+                    f"got {type(c).__name__} with value {c}. "
+                    f"All children must be ProcessTreeNode objects."
+                )
+            children_tuple.append(c.to_tuple())
+        
         return tuple([op, *children_tuple])
