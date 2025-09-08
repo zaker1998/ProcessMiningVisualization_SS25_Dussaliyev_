@@ -5,19 +5,20 @@ from logs.splits import exclusive_split, parallel_split, sequence_split, loop_sp
 from logs.filters import filter_events, filter_traces
 from graphs.visualization.inductive_graph import InductiveGraph
 from logger import get_logger
-from process_tree import ProcessTreeNode, Operator
+from mining_algorithms.process_tree import ProcessTreeNode, Operator
+from mining_algorithms.base_mining import BaseMining
 
 logger = get_logger("InductiveMining")
 
 
-class InductiveMining:
+class InductiveMining(BaseMining):
     """
     Standard Inductive Mining implementation.
     Returns ProcessTreeNode internally, converts to legacy tuple before creating InductiveGraph.
     """
 
     def __init__(self, log: Dict[Tuple[str, ...], int]):
-        self.log = log
+        super().__init__(log)
         self.logger = logger
         self.node_sizes = {}
         self.activity_threshold = 0.0
@@ -27,6 +28,28 @@ class InductiveMining:
         # recursion safety
         self.max_recursion_depth = 100
         self.current_depth = 0
+
+    def get_traces_threshold(self) -> float:
+        """
+        Get the current traces threshold value.
+        
+        Returns
+        -------
+        float
+            The traces threshold value.
+        """
+        return self.traces_threshold
+    
+    def get_activity_threshold(self) -> float:
+        """
+        Get the current activity threshold value.
+        
+        Returns
+        -------
+        float
+            The activity threshold value.
+        """
+        return self.activity_threshold
 
     # Public API
     def generate_graph(self, activity_threshold: float, traces_threshold: float):
@@ -52,7 +75,7 @@ class InductiveMining:
         self.node_sizes = {k: self.calulate_node_size(k) for k in self._get_all_events()}
 
         self.logger.info("Start Inductive Mining")
-        process_tree = self.inductive_mining(self.filtered_log)
+        process_tree = self._inductive_mining_internal(self.filtered_log)
 
         # keep internal representation
         self.process_tree = process_tree
@@ -65,9 +88,15 @@ class InductiveMining:
         )
 
     # Core recursive miner
-    def inductive_mining(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
+    def inductive_mining(self, log: Dict[Tuple[str, ...], int]):
         """
-        Main recursive function. Always returns a ProcessTreeNode.
+        Main recursive function. Returns legacy tuple format for compatibility with tests.
+        """
+        return self._inductive_mining_internal(log).to_tuple()
+
+    def _inductive_mining_internal(self, log: Dict[Tuple[str, ...], int]) -> ProcessTreeNode:
+        """
+        Internal recursive function. Always returns a ProcessTreeNode.
         """
         # safety checks
         if not self._is_safe_to_continue(log):
@@ -82,9 +111,9 @@ class InductiveMining:
             # only try cuts if no empty trace present
             if tuple() not in log:
                 # try cuts in order: xor, seq, par, loop (preserve common priority)
-                if partitions := self.calulate_cut(log):
+                if partitions := self.calculate_cut(log):
                     op_str, splits = partitions
-                    children = [self.inductive_mining(s) for s in splits]
+                    children = [self._inductive_mining_internal(s) for s in splits]
                     op_map = {
                         "xor": Operator.XOR,
                         "seq": Operator.SEQUENCE,
@@ -114,7 +143,7 @@ class InductiveMining:
         return None
 
     # Cut calculation
-    def calulate_cut(self, log: Dict[Tuple[str, ...], int]):
+    def calculate_cut(self, log: Dict[Tuple[str, ...], int]):
         """
         Try all cut types using DFG derived from log and return (operation_str, [splits...]) or None.
         """
@@ -146,7 +175,7 @@ class InductiveMining:
             del log_copy[tuple()]
             return ProcessTreeNode(
                 operator=Operator.XOR,
-                children=[self.inductive_mining(empty_log), self.inductive_mining(log_copy)],
+                children=[self._inductive_mining_internal(empty_log), self._inductive_mining_internal(log_copy)],
             )
 
         if len(activities) == 1:
@@ -183,6 +212,8 @@ class InductiveMining:
     # Utility helpers
     def get_log_alphabet(self, log: Dict[Tuple[str, ...], int]) -> set:
         """Return set of events in provided log."""
+        if log is None:
+            return set()
         return set([event for case in log for event in case])
 
     def _is_safe_to_continue(self, log: Dict[Tuple[str, ...], int]) -> bool:
@@ -210,3 +241,24 @@ class InductiveMining:
             for ev in trace:
                 freq[ev] = freq.get(ev, 0) + f
         return freq
+
+    def _create_tree_node(self, operator_str: str, children) -> ProcessTreeNode:
+        """Create a ProcessTreeNode from operator string and children."""
+        op_map = {
+            "seq": Operator.SEQUENCE,
+            "xor": Operator.XOR,
+            "par": Operator.PARALLEL,
+            "loop": Operator.LOOP,
+        }
+        
+        child_nodes = []
+        for child in children:
+            if isinstance(child, str):
+                if child == "tau":
+                    child_nodes.append(ProcessTreeNode(operator=Operator.TAU))
+                else:
+                    child_nodes.append(ProcessTreeNode(operator=Operator.ACTIVITY, label=child))
+            else:
+                child_nodes.append(child)
+        
+        return ProcessTreeNode(operator=op_map[operator_str], children=child_nodes)
