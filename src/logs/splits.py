@@ -115,7 +115,8 @@ def sequence_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
 
 
 def loop_split(log: dict[tuple[str, ...], int], partitions: list[set[str]]):
-    """Split the log into multiple logs based on the partitions. The trace is split into subtraces.
+    """Split the log for loop structures. The first partition contains the body of the loop,
+    and the remaining partitions contain the redo parts.
     A subtrace is a sequence of events that are in the same partition. The found subtraces are added to the corresponding partition.
 
     Parameters
