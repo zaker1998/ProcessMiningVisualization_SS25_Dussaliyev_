@@ -30,6 +30,8 @@ class InductiveMiningInfrequent(InductiveMining):
         # Use hash-based caching instead of storing full log as key
         self._edge_freq_cache: Dict[str, Dict[Tuple[str, str], int]] = {}
         self._log_stats_cache: Dict[str, Dict] = {}
+        # Soft bounds
+        self._max_cache_size = 256
 
     def generate_graph(
         self,
@@ -71,7 +73,21 @@ class InductiveMiningInfrequent(InductiveMining):
             logger.debug("Empty log provided to calculate_cut")
             return None
             
-        # Try with full DFG first
+        # Heuristic: if noise filtering is active, try filtered DFG first so noise affects results
+        if self.noise_threshold > 0.0:
+            try:
+                filtered_dfg = self._create_filtered_dfg(log)
+                cut = self._try_cuts_on_dfg(filtered_dfg, log)
+                if cut:
+                    logger.debug(f"Found cut on filtered DFG: {cut[0]}")
+                    return cut
+                else:
+                    logger.debug("No cuts found on filtered DFG, falling back to full DFG")
+            except Exception as e:
+                logger.error(f"Error in filtered DFG processing: {e}")
+                # fall back to full DFG
+        
+        # Try with full DFG
         try:
             full_dfg = DFG(log)
             cut = self._try_cuts_on_dfg(full_dfg, log)
@@ -80,19 +96,20 @@ class InductiveMiningInfrequent(InductiveMining):
                 return cut
         except Exception as e:
             logger.warning(f"Error creating full DFG: {e}")
-
-        # Try with filtered DFG
-        try:
-            filtered_dfg = self._create_filtered_dfg(log)
-            cut = self._try_cuts_on_dfg(filtered_dfg, log)
-            if cut:
-                logger.debug(f"Found cut on filtered DFG: {cut[0]}")
-            else:
-                logger.debug("No cuts found on filtered DFG")
-            return cut
-        except Exception as e:
-            logger.error(f"Error in filtered DFG processing: {e}")
-            return None
+        
+        # As a last attempt, if noise_threshold == 0.0 and no cut found on full DFG, try filtered anyway
+        if self.noise_threshold == 0.0:
+            try:
+                filtered_dfg = self._create_filtered_dfg(log)
+                cut = self._try_cuts_on_dfg(filtered_dfg, log)
+                if cut:
+                    logger.debug(f"Found cut on filtered DFG: {cut[0]}")
+                else:
+                    logger.debug("No cuts found on filtered DFG")
+                return cut
+            except Exception as e:
+                logger.error(f"Error in filtered DFG processing: {e}")
+        return None
 
     def _try_cuts_on_dfg(self, dfg: DFG, log: Dict[Tuple[str, ...], int]) -> Optional[Tuple[str, List[Dict[Tuple[str, ...], int]]]]:
         """
@@ -196,6 +213,9 @@ class InductiveMiningInfrequent(InductiveMining):
         else:
             # Compute edge frequencies
             edge_freq = self._compute_edge_frequencies(log)
+            # Bound cache size
+            if len(self._edge_freq_cache) >= self._max_cache_size:
+                self._edge_freq_cache.pop(next(iter(self._edge_freq_cache)))
             self._edge_freq_cache[log_hash] = edge_freq
             
         # Build filtered DFG
@@ -254,7 +274,7 @@ class InductiveMiningInfrequent(InductiveMining):
         """
         # Create a stable string representation of the log
         log_str = str(sorted(log.items()))
-        return hashlib.md5(log_str.encode()).hexdigest()
+        return hashlib.sha1(log_str.encode()).hexdigest()
 
     def _compute_edge_frequencies(self, log: Dict[Tuple[str, ...], int]) -> Dict[Tuple[str, str], int]:
         """
