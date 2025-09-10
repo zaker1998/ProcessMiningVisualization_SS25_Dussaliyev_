@@ -60,22 +60,27 @@ class InductiveMining(BaseMining):
         self.activity_threshold = activity_threshold
         self.traces_threshold = traces_threshold
 
-        # compute events-to-remove and min trace freq
-        events_to_remove = self.get_events_to_remove(activity_threshold)
-        min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
-
-        filtered_log = filter_traces(self.log, min_traces_frequency)
-        filtered_log = filter_events(filtered_log, events_to_remove)
+        # 1) Filter traces first
+        min_traces_frequency = self.calculate_minimum_traces_frequency(traces_threshold)
+        trace_filtered_log = filter_traces(self.log, min_traces_frequency)
+        # 2) Compute event removals using frequencies from the trace-filtered log
+        events_to_remove = self.get_events_to_remove_for_log(trace_filtered_log, activity_threshold)
+        # 3) Apply event filtering
+        filtered_log = filter_events(trace_filtered_log, events_to_remove)
 
         if filtered_log == self.filtered_log:
             self.logger.debug("Filtered log identical to previous, skipping.")
             return
 
         self.filtered_log = filtered_log
-        self.node_sizes = {k: self.calulate_node_size(k) for k in self._get_all_events()}
+        # Compute node sizes only for events present in the filtered log
+        filtered_events = self.get_log_alphabet(self.filtered_log)
+        self.node_sizes = {k: self.calulate_node_size(k) for k in filtered_events}
 
         self.logger.info("Start Inductive Mining")
         process_tree = self._inductive_mining_internal(self.filtered_log)
+        # Normalize the tree for readability and minimality
+        process_tree = self._normalize_tree(process_tree)
 
         # keep internal representation
         self.process_tree = process_tree
@@ -113,14 +118,18 @@ class InductiveMining(BaseMining):
                 # try cuts in order: xor, seq, par, loop (preserve common priority)
                 if partitions := self.calculate_cut(log):
                     op_str, splits = partitions
-                    children = [self._inductive_mining_internal(s) for s in splits]
-                    op_map = {
-                        "xor": Operator.XOR,
-                        "seq": Operator.SEQUENCE,
-                        "par": Operator.PARALLEL,
-                        "loop": Operator.LOOP,
-                    }
-                    return ProcessTreeNode(operator=op_map[op_str], children=children)
+                    # basic split validation to avoid degenerate splits
+                    if not self._basic_split_validation(splits, log):
+                        self.logger.debug("Rejected cut due to poor split quality")
+                    else:
+                        children = [self._inductive_mining_internal(s) for s in splits]
+                        op_map = {
+                            "xor": Operator.XOR,
+                            "seq": Operator.SEQUENCE,
+                            "par": Operator.PARALLEL,
+                            "loop": Operator.LOOP,
+                        }
+                        return ProcessTreeNode(operator=op_map[op_str], children=children)
 
             # fallthrough (flower/loop/xor with tau)
             return self.fallthrough(log)
@@ -146,16 +155,25 @@ class InductiveMining(BaseMining):
     def calculate_cut(self, log: Dict[Tuple[str, ...], int]):
         """
         Try all cut types using DFG derived from log and return (operation_str, [splits...]) or None.
+        Applies a light-weight split validation to avoid degenerate partitions.
         """
         dfg = DFG(log)
         if partitions := exclusive_cut(dfg):
-            return ("xor", exclusive_split(log, partitions))
-        elif partitions := sequence_cut(dfg):
-            return ("seq", sequence_split(log, partitions))
-        elif partitions := parallel_cut(dfg):
-            return ("par", parallel_split(log, partitions))
-        elif partitions := loop_cut(dfg):
-            return ("loop", loop_split(log, partitions))
+            splits = exclusive_split(log, partitions)
+            if self._basic_split_validation(splits, log):
+                return ("xor", splits)
+        if partitions := sequence_cut(dfg):
+            splits = sequence_split(log, partitions)
+            if self._basic_split_validation(splits, log):
+                return ("seq", splits)
+        if partitions := parallel_cut(dfg):
+            splits = parallel_split(log, partitions)
+            if self._basic_split_validation(splits, log):
+                return ("par", splits)
+        if partitions := loop_cut(dfg):
+            splits = loop_split(log, partitions)
+            if self._basic_split_validation(splits, log):
+                return ("loop", splits)
         return None
 
     # Fallthrough & flower model
@@ -262,3 +280,45 @@ class InductiveMining(BaseMining):
                 child_nodes.append(child)
         
         return ProcessTreeNode(operator=op_map[operator_str], children=child_nodes)
+
+    def _basic_split_validation(self, splits: List[Dict[Tuple[str, ...], int]], original_log: Dict[Tuple[str, ...], int]) -> bool:
+        """Light-weight validation to avoid degenerate splits."""
+        if not splits or len(splits) < 2:
+            return False
+        total = 0
+        for s in splits:
+            if not s:
+                return False
+            total += sum(s.values())
+        # Reject if more than 40% of frequency disappears due to splitting issues
+        original = sum(original_log.values()) if original_log else 0
+        if original and total < original * 0.6:
+            return False
+        return True
+
+    def _normalize_tree(self, node: ProcessTreeNode) -> ProcessTreeNode:
+        """Normalize the process tree by flattening same operators and removing redundant structures."""
+        if node is None:
+            return node
+        if node.operator in {Operator.ACTIVITY, Operator.TAU}:
+            return node
+        # Normalize children first
+        normalized_children: List[ProcessTreeNode] = [self._normalize_tree(c) for c in node.children]
+        # Flatten nested same operators
+        flattened: List[ProcessTreeNode] = []
+        for c in normalized_children:
+            if c.operator == node.operator and c.operator in {Operator.SEQUENCE, Operator.XOR, Operator.PARALLEL}:
+                flattened.extend(c.children)
+            else:
+                flattened.append(c)
+        # Remove single-child wrappers
+        if len(flattened) == 1:
+            return flattened[0]
+        # Drop tau children for XOR if others exist
+        if node.operator == Operator.XOR:
+            non_tau = [c for c in flattened if c.operator != Operator.TAU]
+            if non_tau:
+                flattened = non_tau
+                if len(flattened) == 1:
+                    return flattened[0]
+        return ProcessTreeNode(operator=node.operator, children=flattened)
