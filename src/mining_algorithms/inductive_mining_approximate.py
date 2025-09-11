@@ -7,6 +7,7 @@ from mining_algorithms.process_tree import ProcessTreeNode, Operator
 from mining_algorithms.inductive_mining import InductiveMining
 import hashlib
 import time
+from collections import OrderedDict
 
 logger = get_logger("InductiveMiningApproximate")
 
@@ -29,10 +30,10 @@ class InductiveMiningApproximate(InductiveMining):
         self.simplification_threshold = 0.1
         self.min_bin_freq = 0.2
         
-        # Performance optimization caches
-        self._dfg_cache: Dict[str, DFG] = {}
-        self._binning_cache: Dict[str, Dict[Tuple[str, ...], int]] = {}
-        self._quality_cache: Dict[str, bool] = {}
+        # Performance optimization caches - using OrderedDict for LRU behavior
+        self._dfg_cache: OrderedDict[str, DFG] = OrderedDict()
+        self._binning_cache: OrderedDict[str, Dict[Tuple[str, ...], int]] = OrderedDict()
+        self._max_cache_size = 128
 
     def generate_graph(self, activity_threshold=0.0, traces_threshold=0.2, simplification_threshold=0.1, min_bin_freq=0.2):
         """
@@ -58,6 +59,9 @@ class InductiveMiningApproximate(InductiveMining):
         
         logger.info(f"Starting approximate mining with simplification_threshold={simplification_threshold}, min_bin_freq={min_bin_freq}")
         
+        # Store original frequency map before any binning
+        original_frequency_map = self._build_frequency_map()
+        
         # Apply activity binning if min_bin_freq is set
         if self.min_bin_freq > 0.0:
             try:
@@ -72,6 +76,9 @@ class InductiveMiningApproximate(InductiveMining):
                 self.log = binned_log
                 try:
                     super().generate_graph(activity_threshold, traces_threshold)
+                    # Restore original frequency map for visualization
+                    if hasattr(self, 'graph') and self.graph:
+                        self.graph.frequency = original_frequency_map
                 finally:
                     # Restore original log
                     self.log = original_log
@@ -110,9 +117,11 @@ class InductiveMiningApproximate(InductiveMining):
         # Create cache key
         cache_key = hashlib.md5(f"{sorted(log.items())}_{min_bin_freq}".encode()).hexdigest()
         
-        # Check cache first
+        # Check cache first (LRU behavior)
         if cache_key in self._binning_cache:
             logger.debug("Using cached binning result")
+            # Move to end for LRU
+            self._binning_cache.move_to_end(cache_key)
             return self._binning_cache[cache_key]
             
         start_time = time.time()
@@ -130,14 +139,14 @@ class InductiveMiningApproximate(InductiveMining):
             
             if unique_representatives >= total_activities * 0.9:
                 logger.debug("Minimal binning benefit detected, skipping")
-                self._binning_cache[cache_key] = log
+                self._cache_binning_result(cache_key, log)
                 return log
             
             # Create binned log
             binned_log = self._create_binned_log(log, activity_bins)
             
             # Cache the result
-            self._binning_cache[cache_key] = binned_log
+            self._cache_binning_result(cache_key, binned_log)
             
             elapsed_time = time.time() - start_time
             logger.info(f"Activity binning completed in {elapsed_time:.3f}s: {total_activities} -> {unique_representatives} activities")
@@ -147,6 +156,13 @@ class InductiveMiningApproximate(InductiveMining):
         except Exception as e:
             logger.error(f"Error in activity binning: {e}")
             return log
+
+    def _cache_binning_result(self, cache_key: str, result: Dict[Tuple[str, ...], int]):
+        """Cache binning result with LRU eviction."""
+        # Bound cache size with LRU eviction
+        if len(self._binning_cache) >= self._max_cache_size:
+            self._binning_cache.popitem(last=False)  # Remove oldest
+        self._binning_cache[cache_key] = result
 
     def _compute_activity_statistics(self, log: Dict[Tuple[str, ...], int]) -> Dict[str, Dict]:
         """
@@ -166,14 +182,17 @@ class InductiveMiningApproximate(InductiveMining):
                         'frequency': 0,
                         'predecessors': {},
                         'successors': {},
-                        'positions': [],  # Track relative positions in traces
-                        'trace_count': 0
+                        'weighted_positions': [],  # Store (position, frequency) pairs
+                        'trace_count': set()  # Use set to count unique traces
                     }
                 
                 stats = activity_stats[activity]
                 stats['frequency'] += freq
-                stats['trace_count'] += 1
-                stats['positions'].append(i / len(trace) if len(trace) > 1 else 0.5)
+                stats['trace_count'].add(trace)  # Count unique traces
+                
+                # Store weighted position
+                relative_pos = i / len(trace) if len(trace) > 1 else 0.5
+                stats['weighted_positions'].append((relative_pos, freq))
                 
                 # Update predecessors
                 if i > 0:
@@ -187,8 +206,17 @@ class InductiveMiningApproximate(InductiveMining):
         
         # Compute derived statistics
         for activity, stats in activity_stats.items():
-            # Average position in traces (0=start, 1=end)
-            stats['avg_position'] = sum(stats['positions']) / len(stats['positions']) if stats['positions'] else 0.5
+            # Weighted average position in traces (0=start, 1=end)
+            if stats['weighted_positions']:
+                total_weight = sum(freq for _, freq in stats['weighted_positions'])
+                weighted_sum = sum(pos * freq for pos, freq in stats['weighted_positions'])
+                stats['avg_position'] = weighted_sum / total_weight if total_weight > 0 else 0.5
+            else:
+                stats['avg_position'] = 0.5
+                
+            # Convert trace_count set to actual count
+            stats['trace_count'] = len(stats['trace_count'])
+            
             # Variety of contexts (unique predecessors + successors)
             stats['context_variety'] = len(set(stats['predecessors'].keys()) | set(stats['successors'].keys()))
             
@@ -206,9 +234,9 @@ class InductiveMiningApproximate(InductiveMining):
         if len(activities) <= 1:
             return {act: act for act in activities}
         
-        # Calculate frequency threshold
+        # Calculate frequency threshold for minimum activity frequency
         max_freq = max(stats['frequency'] for stats in activity_stats.values()) if activity_stats else 1
-        freq_threshold = max_freq * min_bin_freq
+        min_activity_freq = max_freq * min_bin_freq * 0.1  # Separate threshold for minimum activity frequency
         
         # Group activities by similarity
         processed = set()
@@ -225,7 +253,7 @@ class InductiveMiningApproximate(InductiveMining):
                     continue
                 
                 if self._activities_similar_enhanced(
-                    activity, other_activity, activity_stats, freq_threshold, min_bin_freq
+                    activity, other_activity, activity_stats, min_activity_freq, min_bin_freq
                 ):
                     similar_group.append(other_activity)
             
@@ -243,7 +271,7 @@ class InductiveMiningApproximate(InductiveMining):
         return bins
 
     def _activities_similar_enhanced(self, act1: str, act2: str, activity_stats: Dict[str, Dict], 
-                                   freq_threshold: float, min_bin_freq: float) -> bool:
+                                   min_activity_freq: float, similarity_threshold: float) -> bool:
         """
         Enhanced similarity check using multiple metrics.
         
@@ -253,10 +281,10 @@ class InductiveMiningApproximate(InductiveMining):
             Activities to compare
         activity_stats : Dict[str, Dict]
             Precomputed activity statistics
-        freq_threshold : float
-            Minimum frequency threshold
-        min_bin_freq : float
-            Minimum binning frequency threshold
+        min_activity_freq : float
+            Minimum activity frequency threshold
+        similarity_threshold : float
+            Overall similarity threshold for binning
             
         Returns:
         --------
@@ -269,13 +297,13 @@ class InductiveMiningApproximate(InductiveMining):
         freq1 = stats1['frequency']
         freq2 = stats2['frequency']
         
-        # Skip if either activity is below frequency threshold
-        if freq1 < freq_threshold or freq2 < freq_threshold:
+        # Skip if either activity is below minimum frequency threshold
+        if freq1 < min_activity_freq or freq2 < min_activity_freq:
             return False
         
         # Enhanced frequency similarity check
         freq_ratio = min(freq1, freq2) / max(freq1, freq2) if max(freq1, freq2) > 0 else 0
-        if freq_ratio < min_bin_freq:
+        if freq_ratio < similarity_threshold * 0.5:  # More lenient frequency ratio
             return False
         
         # Position similarity (activities that appear in similar positions)
@@ -304,7 +332,7 @@ class InductiveMiningApproximate(InductiveMining):
             0.1 * variety_similarity
         )
         
-        return overall_similarity >= min_bin_freq
+        return overall_similarity >= similarity_threshold
 
     def _create_binned_log(self, log: Dict[Tuple[str, ...], int], activity_bins: Dict[str, str]) -> Dict[Tuple[str, ...], int]:
         """
@@ -360,6 +388,7 @@ class InductiveMiningApproximate(InductiveMining):
         Override calculate_cut with approximate strategy:
         1. Try full DFG with quality validators
         2. Fallback to simplified DFG without strict validators
+        3. Auto-tune small parameter grid (min_bin_freq, simplification_threshold) to emulate AIM's parameter suggestion
         
         Enhanced with better caching and error handling.
         """
@@ -390,22 +419,61 @@ class InductiveMiningApproximate(InductiveMining):
                     logger.debug(f"Error trying {cut_name} cut: {e}")
                     continue
             
-            # Try simplified DFG (fallback, no strict quality validation)
+            # Try simplified DFG (fallback, with strengthened validation)
             simplified_dfg = self._get_cached_dfg(log, "simplified")
             
             for cut_name, cut_func, split_func, _ in cuts_to_try:
                 try:
                     if partitions := cut_func(simplified_dfg):
                         splits = split_func(log, partitions)
-                        # Basic validation only for simplified DFG
-                        if self._basic_split_validation(splits):
+                        # Strengthened validation for simplified DFG
+                        if self._strengthened_split_validation(splits, log):
                             logger.debug(f"Found {cut_name} cut on simplified DFG")
                             return (cut_name, splits)
                 except Exception as e:
                     logger.debug(f"Error trying {cut_name} cut on simplified DFG: {e}")
                     continue
             
-            logger.debug("No cuts found on either full or simplified DFG")
+            # Auto-tune a small parameter grid to emulate AIM's integrated suggestion
+            logger.debug("Attempting auto-parameter suggestion (AIM-inspired)")
+            candidate_min_bin = [0.0, 0.1, 0.2, 0.3]
+            candidate_simpl = [0.0, 0.05, 0.1, 0.2]
+            
+            for mb in candidate_min_bin:
+                try:
+                    binned_log = self._apply_activity_binning(log, mb) if mb > 0.0 else log
+                    # Log binning effect
+                    if binned_log is not log:
+                        uniq_acts = len({a for t in log for a in t})
+                        uniq_acts_b = len({a for t in binned_log for a in t})
+                        logger.debug(f"Auto binning: min_bin_freq={mb} activities {uniq_acts}->{uniq_acts_b}")
+                    # Build full dfg on binned log first
+                    dfg_full_b = DFG(binned_log)
+                    for cut_name, cut_func, split_func, validator in cuts_to_try:
+                        if partitions := cut_func(dfg_full_b):
+                            splits = split_func(binned_log, partitions)
+                            if self._strengthened_split_validation(splits, binned_log):
+                                logger.debug(f"Auto found {cut_name} cut on full DFG (min_bin_freq={mb})")
+                                return (cut_name, splits)
+                    # Try simplified grids
+                    for st in candidate_simpl:
+                        prev = self.simplification_threshold
+                        try:
+                            self.simplification_threshold = st
+                            dfg_s = self.create_simplified_dfg(binned_log)
+                            for cut_name, cut_func, split_func, validator in cuts_to_try:
+                                if partitions := cut_func(dfg_s):
+                                    splits = split_func(binned_log, partitions)
+                                    if self._strengthened_split_validation(splits, binned_log):
+                                        logger.debug(f"Auto found {cut_name} cut on simplified DFG (min_bin_freq={mb}, simpl={st})")
+                                        return (cut_name, splits)
+                        finally:
+                            self.simplification_threshold = prev
+                except Exception as e:
+                    logger.debug(f"Auto-tune iteration error (min_bin_freq={mb}): {e}")
+                    continue
+            
+            logger.debug("No cuts found on either full/simplified DFG or auto-parameter sweep")
             return None
             
         except Exception as e:
@@ -428,10 +496,16 @@ class InductiveMiningApproximate(InductiveMining):
         DFG
             Cached or newly created DFG
         """
-        cache_key = f"{dfg_type}_{hashlib.md5(str(sorted(log.items())).encode()).hexdigest()}"
+        # Include simplification_threshold in cache key for simplified DFGs
+        if dfg_type == "simplified":
+            cache_key = f"{dfg_type}_{self.simplification_threshold}_{hashlib.sha1(str(sorted(log.items())).encode()).hexdigest()}"
+        else:
+            cache_key = f"{dfg_type}_{hashlib.sha1(str(sorted(log.items())).encode()).hexdigest()}"
         
         if cache_key in self._dfg_cache:
             logger.debug(f"Using cached {dfg_type} DFG")
+            # Move to end for LRU
+            self._dfg_cache.move_to_end(cache_key)
             return self._dfg_cache[cache_key]
         
         if dfg_type == "full":
@@ -441,29 +515,45 @@ class InductiveMiningApproximate(InductiveMining):
         else:
             raise ValueError(f"Unknown DFG type: {dfg_type}")
         
+        # Bound cache size with LRU eviction
+        if len(self._dfg_cache) >= self._max_cache_size:
+            self._dfg_cache.popitem(last=False)  # Remove oldest
         self._dfg_cache[cache_key] = dfg
         return dfg
 
-    def _basic_split_validation(self, splits: List[Dict]) -> bool:
+    def _strengthened_split_validation(self, splits: List[Dict], original_log: Dict[Tuple[str, ...], int]) -> bool:
         """
-        Basic validation for splits (used with simplified DFG).
+        Strengthened validation for splits that includes frequency preservation.
         
         Parameters:
         -----------
         splits : List[Dict]
-            The splits to validate
+            The splits produced by the cut
+        original_log : Dict[Tuple[str, ...], int]
+            Original log for frequency comparison
             
         Returns:
         --------
         bool
-            True if splits pass basic validation
+            True if splits pass strengthened validation
         """
         if not splits or len(splits) < 2:
             return False
         
         # Check that all splits are non-empty
+        total_split_freq = 0
         for split in splits:
             if not split or sum(split.values()) == 0:
+                return False
+            total_split_freq += sum(split.values())
+        
+        # Check frequency preservation (should roughly match original)
+        original_freq = sum(original_log.values()) if original_log else 0
+        if original_freq > 0:
+            preservation_ratio = total_split_freq / original_freq
+            # More lenient threshold for approximate miner
+            if preservation_ratio < 0.7:  # Allow 30% loss due to simplification
+                logger.debug(f"Split frequency preservation too low: {preservation_ratio:.2%}")
                 return False
         
         return True
@@ -664,7 +754,6 @@ class InductiveMiningApproximate(InductiveMining):
         """Clear all internal caches to free memory."""
         self._dfg_cache.clear()
         self._binning_cache.clear()
-        self._quality_cache.clear()
         logger.debug("All caches cleared")
 
     def get_cache_stats(self) -> Dict[str, int]:
@@ -679,5 +768,4 @@ class InductiveMiningApproximate(InductiveMining):
         return {
             'dfg_cache_size': len(self._dfg_cache),
             'binning_cache_size': len(self._binning_cache),
-            'quality_cache_size': len(self._quality_cache),
         }
