@@ -195,7 +195,7 @@ class BaseGraph:
         graphviz_id = self.substitiute_colons(node.get_id())
         self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
-    def add_start_node(self, id: str = "Start") -> None:
+    def add_start_node(self, id: str = "__START__") -> None:
         """Adds a start node to the graph.
 
         Parameters
@@ -203,9 +203,10 @@ class BaseGraph:
         id : str, optional
             The id of the start node, by default "Start".
         """
-        self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
+        if not self.contains_node(id):
+            self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
 
-    def add_end_node(self, id: str = "End") -> None:
+    def add_end_node(self, id: str = "__END__") -> None:
         """Adds an end node to the graph.
 
         Parameters
@@ -213,12 +214,13 @@ class BaseGraph:
         id : str, optional
             The id of the end node, by default "End".
         """
-        self.add_node(id, shape="doublecircle", style="filled, bold", fillcolor="red")
+        if not self.contains_node(id):
+            self.add_node(id, shape="doublecircle", style="filled, bold", fillcolor="red")
 
     def add_starting_edges(
         self,
         nodes: list[str | int],
-        starting_node: str = "Start",
+        starting_node: str = "__START__",
         weights: list[int] = None,
         **edge_attributes,
     ) -> None:
@@ -253,7 +255,7 @@ class BaseGraph:
     def add_ending_edges(
         self,
         nodes: list[str | int],
-        ending_node: str = "End",
+        ending_node: str = "__END__",
         weights: list[int] = None,
         **edge_attributes,
     ) -> None:
