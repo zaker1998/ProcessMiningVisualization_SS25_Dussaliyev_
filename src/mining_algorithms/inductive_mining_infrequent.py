@@ -5,6 +5,7 @@ from logs.splits import exclusive_split, parallel_split, sequence_split, loop_sp
 from logger import get_logger
 from mining_algorithms.inductive_mining import InductiveMining
 import hashlib
+from collections import OrderedDict
 
 logger = get_logger("InductiveMiningInfrequent")
 
@@ -17,19 +18,20 @@ class InductiveMiningInfrequent(InductiveMining):
       directly-follows relations are removed.
     
     Improvements:
-    - Better caching mechanism using content hashes
+    - Better caching mechanism using content hashes with LRU eviction
     - Improved edge filtering with adaptive thresholds
     - Enhanced error handling and validation
     - Better logging for debugging
+    - Adaptive split quality validation based on noise level
     """
 
     def __init__(self, log: Dict[Tuple[str, ...], int]):
         super().__init__(log)
         self.noise_threshold: float = 0.2
-        self.max_recursion_depth: int = 100
-        # Use hash-based caching instead of storing full log as key
-        self._edge_freq_cache: Dict[str, Dict[Tuple[str, str], int]] = {}
-        self._log_stats_cache: Dict[str, Dict] = {}
+        # Use hash-based caching with LRU eviction
+        self._edge_freq_cache: OrderedDict[str, Dict[Tuple[str, str], int]] = OrderedDict()
+        self._dfg_cache: OrderedDict[str, DFG] = OrderedDict()
+        self._log_stats_cache: OrderedDict[str, Dict] = OrderedDict()
         # Soft bounds
         self._max_cache_size = 256
 
@@ -76,7 +78,7 @@ class InductiveMiningInfrequent(InductiveMining):
         # Heuristic: if noise filtering is active, try filtered DFG first so noise affects results
         if self.noise_threshold > 0.0:
             try:
-                filtered_dfg = self._create_filtered_dfg(log)
+                filtered_dfg = self._get_cached_filtered_dfg(log)
                 cut = self._try_cuts_on_dfg(filtered_dfg, log)
                 if cut:
                     logger.debug(f"Found cut on filtered DFG: {cut[0]}")
@@ -100,7 +102,7 @@ class InductiveMiningInfrequent(InductiveMining):
         # As a last attempt, if noise_threshold == 0.0 and no cut found on full DFG, try filtered anyway
         if self.noise_threshold == 0.0:
             try:
-                filtered_dfg = self._create_filtered_dfg(log)
+                filtered_dfg = self._get_cached_filtered_dfg(log)
                 cut = self._try_cuts_on_dfg(filtered_dfg, log)
                 if cut:
                     logger.debug(f"Found cut on filtered DFG: {cut[0]}")
@@ -110,6 +112,26 @@ class InductiveMiningInfrequent(InductiveMining):
             except Exception as e:
                 logger.error(f"Error in filtered DFG processing: {e}")
         return None
+
+    def _get_cached_filtered_dfg(self, log: Dict[Tuple[str, ...], int]) -> DFG:
+        """Get cached filtered DFG or create and cache a new one."""
+        log_hash = self._create_log_hash(log)
+        cache_key = f"filtered_{self.noise_threshold}_{log_hash}"
+        
+        if cache_key in self._dfg_cache:
+            logger.debug("Using cached filtered DFG")
+            # Move to end for LRU
+            self._dfg_cache.move_to_end(cache_key)
+            return self._dfg_cache[cache_key]
+        
+        # Create filtered DFG
+        dfg = self._create_filtered_dfg(log)
+        
+        # Bound cache size with LRU eviction
+        if len(self._dfg_cache) >= self._max_cache_size:
+            self._dfg_cache.popitem(last=False)  # Remove oldest
+        self._dfg_cache[cache_key] = dfg
+        return dfg
 
     def _try_cuts_on_dfg(self, dfg: DFG, log: Dict[Tuple[str, ...], int]) -> Optional[Tuple[str, List[Dict[Tuple[str, ...], int]]]]:
         """
@@ -125,22 +147,22 @@ class InductiveMiningInfrequent(InductiveMining):
             # Try cuts in standard order: exclusive, sequence, parallel, loop
             if partitions := exclusive_cut(dfg):
                 splits = exclusive_split(log, partitions)
-                if self._validate_split_quality(splits, log, "xor"):
+                if self._validate_split_quality_adaptive(splits, log, "xor"):
                     return "xor", splits
                     
             if partitions := sequence_cut(dfg):
                 splits = sequence_split(log, partitions)
-                if self._validate_split_quality(splits, log, "seq"):
+                if self._validate_split_quality_adaptive(splits, log, "seq"):
                     return "seq", splits
                     
             if partitions := parallel_cut(dfg):
                 splits = parallel_split(log, partitions)
-                if self._validate_split_quality(splits, log, "par"):
+                if self._validate_split_quality_adaptive(splits, log, "par"):
                     return "par", splits
                     
             if partitions := loop_cut(dfg):
                 splits = loop_split(log, partitions)
-                if self._validate_split_quality(splits, log, "loop"):
+                if self._validate_split_quality_adaptive(splits, log, "loop"):
                     return "loop", splits
                     
         except Exception as e:
@@ -148,9 +170,9 @@ class InductiveMiningInfrequent(InductiveMining):
             
         return None
 
-    def _validate_split_quality(self, splits: List[Dict], log: Dict[Tuple[str, ...], int], cut_type: str) -> bool:
+    def _validate_split_quality_adaptive(self, splits: List[Dict], log: Dict[Tuple[str, ...], int], cut_type: str) -> bool:
         """
-        Validate the quality of a split to ensure it makes sense.
+        Adaptive validation that adjusts thresholds based on noise level and log characteristics.
         
         Parameters:
         -----------
@@ -171,6 +193,7 @@ class InductiveMiningInfrequent(InductiveMining):
             
         # Check that splits are non-empty and contain valid traces
         total_split_freq = 0
+        split_sizes = []
         for split in splits:
             if not split:
                 logger.debug(f"Empty split found in {cut_type} cut")
@@ -180,12 +203,48 @@ class InductiveMiningInfrequent(InductiveMining):
                 logger.debug(f"Zero frequency split found in {cut_type} cut")
                 return False
             total_split_freq += split_freq
+            split_sizes.append(split_freq)
             
-        # Check frequency preservation (should roughly match original)
+        # Adaptive frequency preservation threshold based on noise level and log size
         original_freq = sum(log.values())
-        if total_split_freq < original_freq * 0.8:  # Allow some tolerance
-            logger.debug(f"Split frequency too low: {total_split_freq} vs {original_freq}")
+        log_size = len(log)
+        
+        # Base preservation threshold starts at 0.8, but adapts based on conditions
+        base_threshold = 0.8
+        
+        # Adjust for noise level: higher noise allows more loss
+        noise_adjustment = -self.noise_threshold * 0.3  # Up to 30% reduction for high noise
+        
+        # Adjust for log complexity: more complex logs allow more loss
+        complexity_factor = min(log_size / 100, 0.2)  # Up to 20% reduction for complex logs
+        complexity_adjustment = -complexity_factor
+        
+        # Adjust for cut type: some cuts naturally lose more frequency
+        cut_adjustments = {
+            "xor": 0.0,    # Exclusive choice should preserve well
+            "seq": -0.05,  # Sequence may lose some due to ordering
+            "par": -0.1,   # Parallel may lose more due to interleaving
+            "loop": -0.15  # Loop cuts often lose the most frequency
+        }
+        cut_adjustment = cut_adjustments.get(cut_type, 0.0)
+        
+        # Calculate adaptive threshold
+        adaptive_threshold = base_threshold + noise_adjustment + complexity_adjustment + cut_adjustment
+        adaptive_threshold = max(0.5, min(0.9, adaptive_threshold))  # Clamp to reasonable range
+        
+        if total_split_freq < original_freq * adaptive_threshold:
+            logger.debug(f"Split frequency preservation below adaptive threshold: "
+                        f"{total_split_freq/original_freq:.2%} < {adaptive_threshold:.2%} "
+                        f"(noise={self.noise_threshold}, cut={cut_type})")
             return False
+        
+        # Check for balanced splits (avoid highly imbalanced decompositions)
+        if len(split_sizes) > 1:
+            max_split = max(split_sizes)
+            min_split = min(split_sizes)
+            if max_split > 0 and min_split / max_split < 0.05:  # One split has <5% of the largest
+                logger.debug(f"Highly imbalanced split detected in {cut_type} cut")
+                return False
             
         return True
 
@@ -198,6 +257,7 @@ class InductiveMiningInfrequent(InductiveMining):
         - Uses content-based caching for better performance
         - Adaptive threshold calculation for better results
         - Enhanced logging for debugging
+        - Connectivity-aware filtering
         """
         if not log:
             logger.debug("Empty log provided to _create_filtered_dfg")
@@ -206,16 +266,18 @@ class InductiveMiningInfrequent(InductiveMining):
         # Create hash-based cache key for better performance
         log_hash = self._create_log_hash(log)
         
-        # Check cache first
+        # Check cache first (LRU behavior)
         if log_hash in self._edge_freq_cache:
             edge_freq = self._edge_freq_cache[log_hash]
             logger.debug("Using cached edge frequencies")
+            # Move to end for LRU
+            self._edge_freq_cache.move_to_end(log_hash)
         else:
             # Compute edge frequencies
             edge_freq = self._compute_edge_frequencies(log)
-            # Bound cache size
+            # Bound cache size with LRU eviction
             if len(self._edge_freq_cache) >= self._max_cache_size:
-                self._edge_freq_cache.pop(next(iter(self._edge_freq_cache)))
+                self._edge_freq_cache.popitem(last=False)  # Remove oldest
             self._edge_freq_cache[log_hash] = edge_freq
             
         # Build filtered DFG
@@ -230,8 +292,8 @@ class InductiveMiningInfrequent(InductiveMining):
             logger.debug("No edges found in log")
             return dfg
         
-        # Calculate adaptive threshold
-        threshold = self._calculate_adaptive_threshold(edge_freq)
+        # Calculate adaptive threshold with connectivity awareness
+        threshold = self._calculate_adaptive_threshold_with_connectivity(edge_freq, activities)
         logger.debug(f"Using edge frequency threshold: {threshold}")
         
         # Add edges above threshold
@@ -243,11 +305,23 @@ class InductiveMiningInfrequent(InductiveMining):
                 dfg.add_edge(src, tgt)
                 retained_edges += 1
         
+        # Ensure connectivity: if filtering is too aggressive, relax threshold
+        if retained_edges < len(activities) - 1:  # Less than minimum spanning tree
+            logger.warning("Filtering too aggressive, ensuring basic connectivity")
+            # Add back the strongest edges to ensure connectivity
+            sorted_edges = sorted(edge_freq.items(), key=lambda x: x[1], reverse=True)
+            for (src, tgt), freq in sorted_edges:
+                if not dfg.has_edge(src, tgt):
+                    dfg.add_edge(src, tgt)
+                    retained_edges += 1
+                    if retained_edges >= len(activities):  # Reasonable connectivity
+                        break
+        
         # Log filtering statistics
         retention_rate = retained_edges / total_edges if total_edges > 0 else 0
         logger.info(f"Edge filtering: {retained_edges}/{total_edges} retained ({retention_rate:.2%})")
         
-        # Warning if filtering is too aggressive
+        # Warning if filtering is too aggressive or too lenient
         if retention_rate < 0.1 and total_edges > 5:
             logger.warning(f"Very aggressive filtering (only {retention_rate:.1%} edges retained). Consider lowering noise_threshold.")
         elif retention_rate > 0.9 and self.noise_threshold > 0.05:
@@ -303,14 +377,16 @@ class InductiveMiningInfrequent(InductiveMining):
                 
         return edge_freq
 
-    def _calculate_adaptive_threshold(self, edge_freq: Dict[Tuple[str, str], int]) -> float:
+    def _calculate_adaptive_threshold_with_connectivity(self, edge_freq: Dict[Tuple[str, str], int], activities: Set[str]) -> float:
         """
-        Calculate an adaptive threshold for edge filtering based on frequency distribution.
+        Calculate an adaptive threshold that considers both frequency distribution and connectivity.
         
         Parameters:
         -----------
         edge_freq : Dict[Tuple[str, str], int]
             Edge frequencies
+        activities : Set[str]
+            Set of activities in the log
             
         Returns:
         --------
@@ -324,14 +400,26 @@ class InductiveMiningInfrequent(InductiveMining):
         max_freq = max(frequencies)
         min_freq = min(frequencies)
         
+        # Standard threshold calculation
+        base_threshold = max_freq * self.noise_threshold
+        
         # If frequencies are very similar, be more conservative
         freq_range = max_freq - min_freq
         if freq_range < max_freq * 0.2:  # Less than 20% variation
             threshold = min_freq * (1.0 - self.noise_threshold * 0.5)
             logger.debug("Low frequency variation detected, using conservative threshold")
         else:
-            # Standard threshold calculation
-            threshold = max_freq * self.noise_threshold
+            threshold = base_threshold
+        
+        # Connectivity awareness: ensure we don't filter too aggressively
+        num_activities = len(activities)
+        if num_activities > 1:
+            # Sort edges by frequency and ensure we keep at least n-1 strongest edges for connectivity
+            sorted_freqs = sorted(frequencies, reverse=True)
+            min_connectivity_freq = sorted_freqs[min(num_activities - 1, len(sorted_freqs) - 1)]
+            
+            # Don't filter below the frequency needed for basic connectivity
+            threshold = min(threshold, min_connectivity_freq)
             
         # Ensure threshold is reasonable
         threshold = max(threshold, 1.0)  # At least frequency of 1
@@ -392,6 +480,7 @@ class InductiveMiningInfrequent(InductiveMining):
     def clear_cache(self):
         """Clear the internal caches to free memory."""
         self._edge_freq_cache.clear()
+        self._dfg_cache.clear()
         self._log_stats_cache.clear()
         logger.debug("Caches cleared")
 
@@ -402,9 +491,10 @@ class InductiveMiningInfrequent(InductiveMining):
         Returns:
         --------
         Dict[str, int]
-            Cache statistics including size and hit rates
+            Cache statistics including all cache types
         """
         return {
             'edge_freq_cache_size': len(self._edge_freq_cache),
+            'dfg_cache_size': len(self._dfg_cache),
             'log_stats_cache_size': len(self._log_stats_cache),
         }
