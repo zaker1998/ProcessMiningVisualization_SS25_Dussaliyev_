@@ -95,7 +95,24 @@ class BaseMining(MiningInterface):
         minimum_event_freq = round(max(self.appearance_frequency.values()) * threshold)
         return {e for e, f in self.appearance_frequency.items() if f < minimum_event_freq}
 
-    def calulate_minimum_traces_frequency(self, threshold: float) -> int:
+    def get_events_to_remove_for_log(self, log: Dict[Tuple[str, ...], int], threshold: float) -> Set[str]:
+        """Compute events to remove based on frequencies within the provided log."""
+        if threshold > 1.0:
+            threshold = 1.0
+        elif threshold < 0.0:
+            threshold = 0.0
+        if not log:
+            return set()
+        freq: Dict[str, int] = {}
+        for trace, f in log.items():
+            for ev in trace:
+                freq[ev] = freq.get(ev, 0) + f
+        if not freq:
+            return set()
+        minimum_event_freq = round(max(freq.values()) * threshold)
+        return {e for e, v in freq.items() if v < minimum_event_freq}
+
+    def calculate_minimum_traces_frequency(self, threshold: float) -> int:
         """
         Compute threshold frequency for traces (round(max_trace_frequency * threshold)).
         """
@@ -107,8 +124,12 @@ class BaseMining(MiningInterface):
             return 0
         return round(max(self.log.values()) * threshold)
 
+    # Backward-compatible method name (typo kept for external callers)
+    def calulate_minimum_traces_frequency(self, threshold: float) -> int:  # noqa: N802
+        return self.calculate_minimum_traces_frequency(threshold)
+
     # --- visualization helpers -------------------------------------------
-    def calulate_node_size(self, node: str) -> Tuple[float, float]:
+    def calulate_node_size(self, node: str) -> Tuple[float, float]:  # keep name for compatibility
         """
         Return (width, height) for a visual node based on cluster scaling.
         Uses event_freq_labels_sorted produced by clustering to map frequency -> scale.
