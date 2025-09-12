@@ -20,6 +20,8 @@ class DFG:
         self.end_nodes: set[str | int] = set()
         self.successor_list: dict[str | int, set[str | int]] = dict()
         self.predecessor_list: dict[str | int, set[str | int]] = dict()
+        # Reachability cache: node -> set(reachable nodes)
+        self._reachable_cache: dict[str | int, set[str | int]] = {}
         if log:
             self.__build_graph_from_log(log)
 
@@ -61,6 +63,9 @@ class DFG:
             destination node of the edge
         """
 
+        # Graph mutation invalidates reachability cache
+        self._reachable_cache.clear()
+
         if not self.contains_node(source):
             self.add_node(source)
 
@@ -84,6 +89,9 @@ class DFG:
         node : str | int
             The node to add to the DFG
         """
+        # Graph mutation invalidates reachability cache
+        self._reachable_cache.clear()
+
         if node not in self.successor_list:
             self.successor_list[node] = set()
 
@@ -171,6 +179,23 @@ class DFG:
             A set of predecessors of the node
         """
         return self.predecessor_list.get(node, set())
+
+    def has_edge(self, source: str | int, destination: str | int) -> bool:
+        """Check if an edge exists between two nodes.
+
+        Parameters
+        ----------
+        source : str | int
+            Source node of the edge
+        destination : str | int
+            Destination node of the edge
+
+        Returns
+        -------
+        bool
+            True if the edge exists, False otherwise
+        """
+        return destination in self.successor_list.get(source, set())
 
     def get_nodes(self) -> set[str | int]:
         """Get all nodes in the DFG.
@@ -292,8 +317,13 @@ class DFG:
         set[str | int]
             A set of reachable nodes
         """
-        visited = self.__bfs(node)
+        # Use cached result if available
+        cached = self._reachable_cache.get(node)
+        if cached is not None:
+            return cached
 
+        visited = self.__bfs(node)
+        self._reachable_cache[node] = visited
         return visited
 
     def invert(self):
