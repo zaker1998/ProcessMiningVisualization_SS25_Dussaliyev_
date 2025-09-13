@@ -64,9 +64,9 @@ class InductiveMiningInfrequent(InductiveMining):
 
     def calculate_cut(self, log: Dict[Tuple[str, ...], int]) -> Optional[Tuple[str, List[Dict[Tuple[str, ...], int]]]]:
         """
-        Attempt to discover a cut:
-        1. Try cuts on the full DFG.
-        2. If no cut found, try cuts on the filtered DFG.
+        Infrequent cut detection with proper log filtering:
+        1. If noise_threshold > 0, filter the log to remove traces with noisy edges
+        2. Run standard inductive mining on the filtered log
         
         Returns:
             (operator, [sublogs...]) if a cut is found, otherwise None.
@@ -75,42 +75,39 @@ class InductiveMiningInfrequent(InductiveMining):
             logger.debug("Empty log provided to calculate_cut")
             return None
             
-        # Heuristic: if noise filtering is active, try filtered DFG first so noise affects results
+        # Step 1: If noise filtering enabled, filter the log itself
         if self.noise_threshold > 0.0:
             try:
-                filtered_dfg = self._get_cached_filtered_dfg(log)
-                cut = self._try_cuts_on_dfg(filtered_dfg, log)
-                if cut:
-                    logger.debug(f"Found cut on filtered DFG: {cut[0]}")
-                    return cut
+                logger.debug(f"Filtering log with noise_threshold={self.noise_threshold}")
+                filtered_log = self._create_filtered_log(log)
+                
+                if filtered_log and filtered_log != log:
+                    logger.debug(f"Log filtered: {len(log)} -> {len(filtered_log)} traces")
+                    # Try cuts on the filtered log using standard approach
+                    filtered_dfg = DFG(filtered_log)
+                    cut = self._try_cuts_on_dfg_simple(filtered_dfg, filtered_log)
+                    if cut:
+                        logger.debug(f"Found cut on filtered log: {cut[0]}")
+                        return cut
+                    else:
+                        logger.debug("No cuts found on filtered log, falling back to full log")
                 else:
-                    logger.debug("No cuts found on filtered DFG, falling back to full DFG")
+                    logger.debug("Log filtering produced no changes, using full log")
             except Exception as e:
-                logger.error(f"Error in filtered DFG processing: {e}")
-                # fall back to full DFG
+                logger.error(f"Error in log filtering: {e}")
         
-        # Try with full DFG
+        # Step 2: Try full log (standard approach or fallback)
         try:
+            logger.debug("Using full log for cut detection")
             full_dfg = DFG(log)
-            cut = self._try_cuts_on_dfg(full_dfg, log)
+            cut = self._try_cuts_on_dfg_simple(full_dfg, log)
             if cut:
-                logger.debug(f"Found cut on full DFG: {cut[0]}")
+                logger.debug(f"Found cut on full log: {cut[0]}")
                 return cut
         except Exception as e:
-            logger.warning(f"Error creating full DFG: {e}")
+            logger.warning(f"Error with full log: {e}")
         
-        # As a last attempt, if noise_threshold == 0.0 and no cut found on full DFG, try filtered anyway
-        if self.noise_threshold == 0.0:
-            try:
-                filtered_dfg = self._get_cached_filtered_dfg(log)
-                cut = self._try_cuts_on_dfg(filtered_dfg, log)
-                if cut:
-                    logger.debug(f"Found cut on filtered DFG: {cut[0]}")
-                else:
-                    logger.debug("No cuts found on filtered DFG")
-                return cut
-            except Exception as e:
-                logger.error(f"Error in filtered DFG processing: {e}")
+        # No cuts found with either approach
         return None
 
     def _get_cached_filtered_dfg(self, log: Dict[Tuple[str, ...], int]) -> DFG:
@@ -133,6 +130,43 @@ class InductiveMiningInfrequent(InductiveMining):
         self._dfg_cache[cache_key] = dfg
         return dfg
 
+    def _try_cuts_on_dfg_simple(self, dfg: DFG, log: Dict[Tuple[str, ...], int]) -> Optional[Tuple[str, List[Dict[Tuple[str, ...], int]]]]:
+        """
+        Simple cut detection using basic validation (like standard inductive mining).
+        
+        Returns:
+            (operator, [sublogs...]) if successful, otherwise None.
+        """
+        if not dfg or not log:
+            return None
+            
+        try:
+            # Try cuts in standard order: exclusive, sequence, parallel, loop
+            if partitions := exclusive_cut(dfg):
+                splits = exclusive_split(log, partitions)
+                if self._basic_split_validation(splits, log):
+                    return "xor", splits
+                    
+            if partitions := sequence_cut(dfg):
+                splits = sequence_split(log, partitions)
+                if self._basic_split_validation(splits, log):
+                    return "seq", splits
+                    
+            if partitions := parallel_cut(dfg):
+                splits = parallel_split(log, partitions)
+                if self._basic_split_validation(splits, log):
+                    return "par", splits
+                    
+            if partitions := loop_cut(dfg):
+                splits = loop_split(log, partitions)
+                if self._basic_split_validation(splits, log):
+                    return "loop", splits
+                    
+        except Exception as e:
+            logger.error(f"Error trying cuts on DFG: {e}")
+            
+        return None
+        
     def _try_cuts_on_dfg(self, dfg: DFG, log: Dict[Tuple[str, ...], int]) -> Optional[Tuple[str, List[Dict[Tuple[str, ...], int]]]]:
         """
         Try to detect a cut using all available cut functions on the given DFG.
@@ -305,17 +339,13 @@ class InductiveMiningInfrequent(InductiveMining):
                 dfg.add_edge(src, tgt)
                 retained_edges += 1
         
-        # Ensure connectivity: if filtering is too aggressive, relax threshold
-        if retained_edges < len(activities) - 1:  # Less than minimum spanning tree
-            logger.warning("Filtering too aggressive, ensuring basic connectivity")
-            # Add back the strongest edges to ensure connectivity
-            sorted_edges = sorted(edge_freq.items(), key=lambda x: x[1], reverse=True)
-            for (src, tgt), freq in sorted_edges:
-                if not dfg.has_edge(src, tgt):
-                    dfg.add_edge(src, tgt)
-                    retained_edges += 1
-                    if retained_edges >= len(activities):  # Reasonable connectivity
-                        break
+        # Only ensure minimal connectivity if we filtered out ALL edges (extreme case)
+        if retained_edges == 0 and edge_freq:
+            logger.warning("All edges filtered out, adding back strongest edge for minimal connectivity")
+            # Add back just the strongest edge to avoid completely empty graph
+            strongest_edge = max(edge_freq.items(), key=lambda x: x[1])
+            dfg.add_edge(strongest_edge[0][0], strongest_edge[0][1])
+            retained_edges = 1
         
         # Log filtering statistics
         retention_rate = retained_edges / total_edges if total_edges > 0 else 0
@@ -331,6 +361,65 @@ class InductiveMiningInfrequent(InductiveMining):
         self._preserve_start_end_nodes(dfg, log)
         
         return dfg
+
+    def _create_filtered_log(self, log: Dict[Tuple[str, ...], int]) -> Dict[Tuple[str, ...], int]:
+        """
+        Create a filtered log by removing traces that contain edges filtered out by noise threshold.
+        
+        Parameters:
+        -----------
+        log : Dict[Tuple[str, ...], int]
+            Original log
+            
+        Returns:
+        --------
+        Dict[Tuple[str, ...], int]
+            Log with noisy traces filtered out
+        """
+        if not log or self.noise_threshold <= 0.0:
+            return log
+            
+        # Get edge frequencies and determine which edges to filter
+        edge_freq = self._compute_edge_frequencies(log)
+        if not edge_freq:
+            return log
+            
+        activities = self.get_log_alphabet(log)
+        threshold = self._calculate_adaptive_threshold_with_connectivity(edge_freq, activities)
+        
+        logger.debug(f"Edge frequencies: {edge_freq}")
+        logger.debug(f"Calculated threshold: {threshold}")
+        
+        # Get set of edges that should be filtered out (below threshold)
+        filtered_edges = set()
+        for edge, freq in edge_freq.items():
+            if freq < threshold:
+                filtered_edges.add(edge)
+        
+        if not filtered_edges:
+            logger.debug("No edges to filter, returning original log")
+            return log
+            
+        logger.debug(f"Filtering out edges: {filtered_edges}")
+        
+        # Filter traces that contain any filtered edges
+        filtered_log = {}
+        for trace, freq in log.items():
+            # Check if this trace contains any filtered edges
+            contains_filtered_edge = False
+            for i in range(len(trace) - 1):
+                edge = (trace[i], trace[i + 1])
+                if edge in filtered_edges:
+                    contains_filtered_edge = True
+                    break
+            
+            # Keep trace only if it doesn't contain filtered edges
+            if not contains_filtered_edge:
+                filtered_log[trace] = freq
+            else:
+                logger.debug(f"Filtered out trace: {' -> '.join(trace)} (freq: {freq})")
+        
+        return filtered_log
 
     def _create_log_hash(self, log: Dict[Tuple[str, ...], int]) -> str:
         """
@@ -379,7 +468,7 @@ class InductiveMiningInfrequent(InductiveMining):
 
     def _calculate_adaptive_threshold_with_connectivity(self, edge_freq: Dict[Tuple[str, str], int], activities: Set[str]) -> float:
         """
-        Calculate an adaptive threshold that considers both frequency distribution and connectivity.
+        Calculate threshold that respects user's noise_threshold setting.
         
         Parameters:
         -----------
@@ -398,32 +487,25 @@ class InductiveMiningInfrequent(InductiveMining):
             
         frequencies = list(edge_freq.values())
         max_freq = max(frequencies)
-        min_freq = min(frequencies)
         
-        # Standard threshold calculation
+        # PM4Py-style threshold: more aggressive filtering at higher thresholds
+        if self.noise_threshold == 0.0:
+            return 0.0  # No filtering
+        
+        # Calculate base threshold
         base_threshold = max_freq * self.noise_threshold
         
-        # If frequencies are very similar, be more conservative
-        freq_range = max_freq - min_freq
-        if freq_range < max_freq * 0.2:  # Less than 20% variation
-            threshold = min_freq * (1.0 - self.noise_threshold * 0.5)
-            logger.debug("Low frequency variation detected, using conservative threshold")
+        # For very low thresholds (< 0.05), use a minimum of 1 to filter only single occurrences
+        if self.noise_threshold < 0.05:
+            threshold = max(base_threshold, 1.0)
         else:
             threshold = base_threshold
         
-        # Connectivity awareness: ensure we don't filter too aggressively
-        num_activities = len(activities)
-        if num_activities > 1:
-            # Sort edges by frequency and ensure we keep at least n-1 strongest edges for connectivity
-            sorted_freqs = sorted(frequencies, reverse=True)
-            min_connectivity_freq = sorted_freqs[min(num_activities - 1, len(sorted_freqs) - 1)]
-            
-            # Don't filter below the frequency needed for basic connectivity
-            threshold = min(threshold, min_connectivity_freq)
-            
-        # Ensure threshold is reasonable
-        threshold = max(threshold, 1.0)  # At least frequency of 1
-        threshold = min(threshold, max_freq)  # Not higher than max frequency
+        # Ensure reasonable bounds
+        threshold = max(threshold, 0.0)
+        threshold = min(threshold, max_freq - 1)  # Always keep at least the strongest edge
+        
+        logger.debug(f"Noise threshold {self.noise_threshold} -> frequency threshold {threshold} (max_freq: {max_freq})")
         
         return threshold
 
