@@ -1,8 +1,7 @@
 from ui.base_algorithm_ui.base_algorithm_view import BaseAlgorithmView
 import streamlit as st
-from ui.utils.streamlit_utils import (
-    number_input_slider
-)
+from components.number_input_slider import number_input_slider
+from components.interactiveGraph import interactiveGraph
 
 
 class InductiveMinerView(BaseAlgorithmView):
@@ -35,6 +34,7 @@ class InductiveMinerView(BaseAlgorithmView):
             min_value=sidebar_values["activity_threshold"][0],
             max_value=sidebar_values["activity_threshold"][1],
             key="activity_threshold",
+            use_columns=False,
             help="""Minimum frequency threshold for activities. Activities below this threshold will be filtered out.
             
             **Guidance:**
@@ -48,6 +48,7 @@ class InductiveMinerView(BaseAlgorithmView):
             min_value=sidebar_values["traces_threshold"][0],
             max_value=sidebar_values["traces_threshold"][1],
             key="traces_threshold",
+            use_columns=False,
             help="""Minimum frequency threshold for traces. Traces below this threshold will be filtered out.
             
             **Guidance:**
@@ -84,56 +85,54 @@ class InductiveMinerView(BaseAlgorithmView):
             current_bin = st.session_state.get("min_bin_freq", 0.2)
             
             # Simplification threshold with dynamic guidance
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                number_input_slider(
-                    label="Simplification Threshold",
-                    min_value=sidebar_values["simplification_threshold"][0],
-                    max_value=sidebar_values["simplification_threshold"][1],
-                    key="simplification_threshold",
-                    help="""Controls how aggressively the directly-follows graph is simplified by removing weak edges.
-                    
-                    **Guidance:**
-                    - 0.0: No simplification (use full graph)
-                    - 0.05-0.1: Light simplification (recommended start)
-                    - 0.1-0.2: Moderate simplification
-                    - >0.3: Aggressive simplification (may lose important structure)""",
-                )
-            with col2:
-                if current_simpl == 0.0:
-                    st.info("🔧 No simplification")
-                elif current_simpl <= 0.1:
-                    st.success("✅ Light simplification")
-                elif current_simpl <= 0.2:
-                    st.warning("⚠️ Moderate simplification")
-                else:
-                    st.error("🚨 Aggressive simplification")
+            number_input_slider(
+                label="Simplification Threshold",
+                min_value=sidebar_values["simplification_threshold"][0],
+                max_value=sidebar_values["simplification_threshold"][1],
+                key="simplification_threshold",
+                use_columns=False,
+                help="""Controls how aggressively the directly-follows graph is simplified by removing weak edges.
+                
+                **Guidance:**
+                - 0.0: No simplification (use full graph)
+                - 0.05-0.1: Light simplification (recommended start)
+                - 0.1-0.2: Moderate simplification
+                - >0.3: Aggressive simplification (may lose important structure)""",
+            )
+            # Status indicator
+            if current_simpl == 0.0:
+                st.info("🔧 No simplification")
+            elif current_simpl <= 0.1:
+                st.success("✅ Light simplification")
+            elif current_simpl <= 0.2:
+                st.warning("⚠️ Moderate simplification")
+            else:
+                st.error("🚨 Aggressive simplification")
             
             # Min behavior frequency with dynamic guidance
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                number_input_slider(
-                    label="Min. Behavior Frequency",
-                    min_value=sidebar_values["min_bin_freq"][0],
-                    max_value=sidebar_values["min_bin_freq"][1],
-                    key="min_bin_freq",
-                    help="""Minimum frequency for grouping activities with similar behavior patterns.
-                    
-                    **Guidance:**
-                    - 0.0: No activity binning
-                    - 0.1-0.2: Light binning (group very similar activities)
-                    - 0.2-0.4: Moderate binning (recommended for noisy logs)
-                    - >0.5: Aggressive binning (may over-generalize)""",
-                )
-            with col2:
-                if current_bin == 0.0:
-                    st.info("🔧 No binning")
-                elif current_bin <= 0.2:
-                    st.success("✅ Light binning")
-                elif current_bin <= 0.4:
-                    st.warning("⚠️ Moderate binning")
-                else:
-                    st.error("🚨 Aggressive binning")
+            number_input_slider(
+                label="Min. Behavior Frequency",
+                min_value=sidebar_values["min_bin_freq"][0],
+                max_value=sidebar_values["min_bin_freq"][1],
+                key="min_bin_freq",
+                use_columns=False,
+                help="""Minimum frequency for grouping activities with similar behavior patterns.
+                
+                **Guidance:**
+                - 0.0: No activity binning
+                - 0.1-0.2: Light binning (group very similar activities)
+                - 0.2-0.4: Moderate binning (recommended for noisy logs)
+                - >0.5: Aggressive binning (may over-generalize)""",
+            )
+            # Status indicator
+            if current_bin == 0.0:
+                st.info("🔧 No binning")
+            elif current_bin <= 0.2:
+                st.success("✅ Light binning")
+            elif current_bin <= 0.4:
+                st.warning("⚠️ Moderate binning")
+            else:
+                st.error("🚨 Aggressive binning")
             
             # Parameter combination guidance
             if current_simpl > 0.0 or current_bin > 0.0:
@@ -172,31 +171,30 @@ class InductiveMinerView(BaseAlgorithmView):
             current_noise = st.session_state.get("noise_threshold", 0.2)
             
             # Noise threshold with dynamic guidance
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                number_input_slider(
-                    label="Noise Threshold",
-                    min_value=sidebar_values["noise_threshold"][0],
-                    max_value=sidebar_values["noise_threshold"][1],
-                    key="noise_threshold",
-                    help="""Determines which directly-follows relations are considered noise and filtered out.
-                    Relations with frequency < threshold × max_relation_frequency will be ignored.
-                    
-                    **Guidance:**
-                    - 0.0: No noise filtering (equivalent to standard miner)
-                    - 0.1-0.2: Light noise filtering (recommended start)
-                    - 0.2-0.4: Moderate noise filtering (good for noisy logs)
-                    - >0.5: Aggressive noise filtering (may lose important behavior)""",
-                )
-            with col2:
-                if current_noise == 0.0:
-                    st.info("🔧 No filtering")
-                elif current_noise <= 0.2:
-                    st.success("✅ Light filtering")
-                elif current_noise <= 0.4:
-                    st.warning("⚠️ Moderate filtering")
-                else:
-                    st.error("🚨 Aggressive filtering")
+            number_input_slider(
+                label="Noise Threshold",
+                min_value=sidebar_values["noise_threshold"][0],
+                max_value=sidebar_values["noise_threshold"][1],
+                key="noise_threshold",
+                use_columns=False,
+                help="""Determines which directly-follows relations are considered noise and filtered out.
+                Relations with frequency < threshold × max_relation_frequency will be ignored.
+                
+                **Guidance:**
+                - 0.0: No noise filtering (equivalent to standard miner)
+                - 0.1-0.2: Light noise filtering (recommended start)
+                - 0.2-0.4: Moderate noise filtering (good for noisy logs)
+                - >0.5: Aggressive noise filtering (may lose important behavior)""",
+            )
+            # Status indicator
+            if current_noise == 0.0:
+                st.info("🔧 No filtering")
+            elif current_noise <= 0.2:
+                st.success("✅ Light filtering")
+            elif current_noise <= 0.4:
+                st.warning("⚠️ Moderate filtering")
+            else:
+                st.error("🚨 Aggressive filtering")
             
             # Noise threshold guidance
             st.markdown("**💡 Noise Threshold Tips:**")
@@ -264,3 +262,18 @@ class InductiveMinerView(BaseAlgorithmView):
         
         # Call parent implementation for the rest
         super().render_main_panel()
+
+    def display_graph(self, graph) -> None:
+        """Override display_graph to include variant-specific key for proper refresh."""
+        with self.graph_container:
+            if graph is not None:
+                # Use variant-specific key to force React component refresh when switching variants
+                variant = st.session_state.get('inductive_variant', 'Standard')
+                graph_key = f"inductiveGraph_{variant}"
+                
+                interactiveGraph(
+                    graph,
+                    onNodeClick=self.display_node_info,
+                    height=self.graph_height,
+                    key=graph_key
+                )
