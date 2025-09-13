@@ -108,6 +108,27 @@ class InductiveMinerController(BaseAlgorithmController):
         if not isinstance(self.mining_model, variant_class):
             # Create a new instance of the selected variant class
             self.mining_model = variant_class(self.mining_model.log)
+            
+            # Clear any cached results when switching variants to prevent stale visualizations
+            if hasattr(self.mining_model, '_dfg_cache'):
+                self.mining_model._dfg_cache.clear()
+            if hasattr(self.mining_model, '_binning_cache'):
+                self.mining_model._binning_cache.clear()
+            if hasattr(self.mining_model, '_edge_freq_cache'):
+                self.mining_model._edge_freq_cache.clear()
+                
+            # Force a fresh computation by clearing any existing graph and results
+            self.mining_model.graph = None
+            if hasattr(self.mining_model, 'process_tree'):
+                self.mining_model.process_tree = None
+            if hasattr(self.mining_model, 'filtered_log'):
+                self.mining_model.filtered_log = None
+                
+            # Also clear any cached node sizes or frequency maps that might affect visualization
+            if hasattr(self.mining_model, 'node_sizes'):
+                self.mining_model.node_sizes = {}
+            if hasattr(self.mining_model, '_frequency_map'):
+                self.mining_model._frequency_map = None
         
         # Validate parameters
         self.activity_threshold = max(0.0, min(1.0, self.activity_threshold))
@@ -119,6 +140,12 @@ class InductiveMinerController(BaseAlgorithmController):
             self.simplification_threshold = max(0.0, min(0.9, self.simplification_threshold))
             self.min_bin_freq = max(0.0, min(0.9, self.min_bin_freq))
             
+            # Ensure the mining model has the correct parameters before generation
+            if hasattr(self.mining_model, 'simplification_threshold'):
+                self.mining_model.simplification_threshold = self.simplification_threshold
+            if hasattr(self.mining_model, 'min_bin_freq'):
+                self.mining_model.min_bin_freq = self.min_bin_freq
+            
             self.mining_model.generate_graph(
                 self.activity_threshold, 
                 self.traces_threshold,
@@ -128,6 +155,10 @@ class InductiveMinerController(BaseAlgorithmController):
         elif self.selected_variant == "Infrequent":
             # Validate infrequent miner specific parameters
             self.noise_threshold = max(0.0, min(0.9, self.noise_threshold))
+            
+            # Ensure the mining model has the correct parameters before generation
+            if hasattr(self.mining_model, 'noise_threshold'):
+                self.mining_model.noise_threshold = self.noise_threshold
             
             self.mining_model.generate_graph(
                 self.activity_threshold, 
@@ -145,29 +176,47 @@ class InductiveMinerController(BaseAlgorithmController):
         bool
             True if the algorithm parameters have changed, False otherwise.
         """
-        # Check basic parameters
+        # Always check for variant mismatch first - this forces re-computation when switching
+        variant_mismatch = not isinstance(self.mining_model, self.variant_classes[self.selected_variant])
+        
+        # Log variant switching for debugging if needed
+        # if variant_mismatch:
+        #     current_type = type(self.mining_model).__name__
+        #     expected_type = self.variant_classes[self.selected_variant].__name__
+        #     self.logger.debug(f"Variant switch detected: {current_type} → {expected_type}")
+        
+        # Check basic parameters (always apply to all variants)
         basic_params_changed = (
             self.mining_model.get_activity_threshold() != self.activity_threshold
             or self.mining_model.get_traces_threshold() != self.traces_threshold
-            or not isinstance(self.mining_model, self.variant_classes[self.selected_variant])
+            or variant_mismatch
         )
         
-        # Check approximate miner parameters if applicable
-        if self.selected_variant == "Approximate" and isinstance(self.mining_model, InductiveMiningApproximate):
-            approx_params_changed = (
-                getattr(self.mining_model, "simplification_threshold", 0.1) != self.simplification_threshold
-                or getattr(self.mining_model, "min_bin_freq", 0.2) != self.min_bin_freq
-            )
-            return basic_params_changed or approx_params_changed
+        # Check variant-specific parameters
+        variant_params_changed = False
+        
+        # Check approximate miner parameters if selected (regardless of current model type)
+        if self.selected_variant == "Approximate":
+            if isinstance(self.mining_model, InductiveMiningApproximate):
+                variant_params_changed = (
+                    getattr(self.mining_model, "simplification_threshold", 0.1) != self.simplification_threshold
+                    or getattr(self.mining_model, "min_bin_freq", 0.2) != self.min_bin_freq
+                )
+            else:
+                # Model type doesn't match selected variant - force change
+                variant_params_changed = True
+                
+        # Check infrequent miner parameters if selected (regardless of current model type) 
+        elif self.selected_variant == "Infrequent":
+            if isinstance(self.mining_model, InductiveMiningInfrequent):
+                variant_params_changed = (
+                    getattr(self.mining_model, "noise_threshold", 0.2) != self.noise_threshold
+                )
+            else:
+                # Model type doesn't match selected variant - force change
+                variant_params_changed = True
             
-        # Check infrequent miner parameters if applicable
-        if self.selected_variant == "Infrequent" and isinstance(self.mining_model, InductiveMiningInfrequent):
-            infrequent_params_changed = (
-                getattr(self.mining_model, "noise_threshold", 0.2) != self.noise_threshold
-            )
-            return basic_params_changed or infrequent_params_changed
-            
-        return basic_params_changed
+        return basic_params_changed or variant_params_changed
 
     def get_sidebar_values(self) -> dict[str, tuple[int | float, int | float]]:
         """Returns the sidebar values for the Inductive Miner algorithm.
