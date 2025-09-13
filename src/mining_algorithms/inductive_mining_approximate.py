@@ -236,7 +236,8 @@ class InductiveMiningApproximate(InductiveMining):
         
         # Calculate frequency threshold for minimum activity frequency
         max_freq = max(stats['frequency'] for stats in activity_stats.values()) if activity_stats else 1
-        min_activity_freq = max_freq * min_bin_freq * 0.1  # Separate threshold for minimum activity frequency
+        # Higher min_bin_freq should allow MORE activities to be considered (lower threshold)
+        min_activity_freq = max_freq * (1.0 - min_bin_freq) * 0.1
         
         # Group activities by similarity
         processed = set()
@@ -284,7 +285,7 @@ class InductiveMiningApproximate(InductiveMining):
         min_activity_freq : float
             Minimum activity frequency threshold
         similarity_threshold : float
-            Overall similarity threshold for binning
+            Overall similarity threshold for binning (higher values = more aggressive binning)
             
         Returns:
         --------
@@ -301,9 +302,13 @@ class InductiveMiningApproximate(InductiveMining):
         if freq1 < min_activity_freq or freq2 < min_activity_freq:
             return False
         
-        # Enhanced frequency similarity check
+        # Convert similarity_threshold to actual threshold (invert for proper behavior)
+        # Higher similarity_threshold (min_bin_freq) should mean MORE aggressive binning
+        actual_threshold = 1.0 - similarity_threshold
+        
+        # Enhanced frequency similarity check with inverted threshold
         freq_ratio = min(freq1, freq2) / max(freq1, freq2) if max(freq1, freq2) > 0 else 0
-        if freq_ratio < similarity_threshold * 0.5:  # More lenient frequency ratio
+        if freq_ratio < actual_threshold * 0.3:  # More aggressive frequency ratio check
             return False
         
         # Position similarity (activities that appear in similar positions)
@@ -332,7 +337,8 @@ class InductiveMiningApproximate(InductiveMining):
             0.1 * variety_similarity
         )
         
-        return overall_similarity >= similarity_threshold
+        # Use inverted threshold for proper behavior (higher min_bin_freq = more aggressive binning)
+        return overall_similarity >= actual_threshold
 
     def _create_binned_log(self, log: Dict[Tuple[str, ...], int], activity_bins: Dict[str, str]) -> Dict[Tuple[str, ...], int]:
         """
@@ -357,6 +363,78 @@ class InductiveMiningApproximate(InductiveMining):
             binned_log[binned_trace] = binned_log.get(binned_trace, 0) + freq
         
         return binned_log
+
+    def _create_filtered_log_for_dfg(self, log: Dict[Tuple[str, ...], int], dfg) -> Dict[Tuple[str, ...], int]:
+        """
+        Create a filtered log that only contains traces with edges present in the given DFG.
+        
+        Parameters:
+        -----------
+        log : Dict[Tuple[str, ...], int]
+            Original log
+        dfg : DFG
+            The DFG to use for filtering
+            
+        Returns:
+        --------
+        Dict[Tuple[str, ...], int]
+            Filtered log matching the DFG structure
+        """
+        if not log or not dfg:
+            return log
+            
+        # Get valid edges from DFG using the correct method
+        try:
+            valid_edges = dfg.get_edges()
+            if not valid_edges:
+                logger.warning("DFG has no edges, returning original log")
+                return log
+        except Exception as e:
+            logger.warning(f"Could not get edges from DFG: {e}, returning original log")
+            return log
+            
+        logger.debug(f"Filtering log based on {len(valid_edges)} valid edges: {valid_edges}")
+        
+        filtered_log = {}
+        filtered_traces = 0
+        
+        for trace, freq in log.items():
+            if len(trace) <= 1:
+                # Single activity traces are always valid
+                filtered_log[trace] = freq
+                continue
+                
+            # Check if all edges in this trace exist in the DFG
+            trace_valid = True
+            for i in range(len(trace) - 1):
+                edge = (trace[i], trace[i + 1])
+                if edge not in valid_edges:
+                    trace_valid = False
+                    logger.debug(f"Trace {trace} filtered out due to missing edge: {edge}")
+                    break
+                    
+            if trace_valid:
+                filtered_log[trace] = freq
+                logger.debug(f"Trace {trace} retained (all edges present)")
+            else:
+                filtered_traces += freq
+                
+        logger.info(f"Log filtering: {len(log)} -> {len(filtered_log)} trace variants, {filtered_traces} traces filtered out")
+        
+        # Don't be too aggressive with fallback - allow significant filtering
+        total_freq_original = sum(log.values())
+        total_freq_filtered = sum(filtered_log.values())
+        retention_rate = total_freq_filtered / total_freq_original if total_freq_original > 0 else 0
+        
+        if retention_rate < 0.05:  # Only fallback if less than 5% of traces remain
+            logger.warning(f"Filtering extremely aggressive ({retention_rate:.1%} retention), using original log")
+            return log
+        
+        if not filtered_log:  # If no traces remain, use original
+            logger.warning("No traces remain after filtering, using original log")
+            return log
+            
+        return filtered_log
 
     def get_min_bin_freq(self) -> float:
         """
@@ -386,9 +464,9 @@ class InductiveMiningApproximate(InductiveMining):
     def calculate_cut(self, log):
         """
         Override calculate_cut with approximate strategy:
-        1. Try full DFG with quality validators
-        2. Fallback to simplified DFG without strict validators
-        3. Auto-tune small parameter grid (min_bin_freq, simplification_threshold) to emulate AIM's parameter suggestion
+        1. Try user's specified simplification_threshold first (if > 0)
+        2. Fallback to full DFG with quality validators
+        3. Auto-tune small parameter grid as last resort
         
         Enhanced with better caching and error handling.
         """
@@ -397,16 +475,83 @@ class InductiveMiningApproximate(InductiveMining):
             return None
             
         try:
-            # Try full DFG with quality validation first
-            full_dfg = self._get_cached_dfg(log, "full")
-            
-            # Try cuts with quality validation
+            # Define cuts to try
             cuts_to_try = [
                 ("xor", exclusive_cut, exclusive_split, self._validate_exclusive_cut_quality),
                 ("seq", sequence_cut, sequence_split, self._validate_sequence_cut_quality),
                 ("par", parallel_cut, parallel_split, self._validate_parallel_cut_quality),
                 ("loop", loop_cut, loop_split, self._validate_loop_cut_quality)
             ]
+            
+            # FIRST: Try user's specified simplification_threshold if > 0 (SMART MODE)
+            if self.simplification_threshold > 0:
+                logger.debug(f"Using smart simplified mode with simplification_threshold={self.simplification_threshold}")
+                simplified_dfg = self._get_cached_dfg(log, "simplified")
+                
+                # Check if simplified DFG is too sparse (would create flower model)
+                original_edges = len(self._get_cached_dfg(log, "full").get_edges())
+                simplified_edges = len(simplified_dfg.get_edges())
+                retention_ratio = simplified_edges / original_edges if original_edges > 0 else 0
+                
+                if retention_ratio < 0.3:  # If less than 30% of edges remain
+                    logger.warning(f"Simplified DFG too sparse ({retention_ratio:.1%} edges retained), using hybrid approach")
+                    # Use a less aggressive threshold to avoid flower models
+                    original_threshold = self.simplification_threshold
+                    self.simplification_threshold = self.simplification_threshold * 0.5  # Halve the aggressiveness
+                    simplified_dfg = self.create_simplified_dfg(log)  # Recreate with less aggressive threshold
+                    self.simplification_threshold = original_threshold  # Restore original
+                
+                # Create filtered log that matches the simplified DFG
+                filtered_log = self._create_filtered_log_for_dfg(log, simplified_dfg)
+                
+                # Try with quality validation first
+                for cut_name, cut_func, split_func, validator in cuts_to_try:
+                    try:
+                        if partitions := cut_func(simplified_dfg):
+                            # Use filtered log for splits to preserve simplification effect
+                            splits = split_func(filtered_log, partitions)
+                            # Use quality validator for user-specified threshold
+                            if validator(splits, filtered_log):
+                                logger.debug(f"Found quality {cut_name} cut with simplification_threshold={self.simplification_threshold}")
+                                return (cut_name, splits)
+                    except Exception as e:
+                        logger.debug(f"Error trying {cut_name} cut on simplified DFG: {e}")
+                        continue
+                
+                # If quality validation fails, try with relaxed validation (still on simplified DFG)
+                for cut_name, cut_func, split_func, _ in cuts_to_try:
+                    try:
+                        if partitions := cut_func(simplified_dfg):
+                            splits = split_func(filtered_log, partitions)
+                            # Relaxed validation for simplified DFG
+                            if self._strengthened_split_validation(splits, filtered_log):
+                                logger.debug(f"Found {cut_name} cut on simplified DFG (relaxed validation)")
+                                return (cut_name, splits)
+                    except Exception as e:
+                        logger.debug(f"Error trying {cut_name} cut on simplified DFG (relaxed): {e}")
+                        continue
+                
+                # If simplified approach completely fails, try full DFG as fallback
+                logger.warning("Simplified DFG failed to find cuts, trying full DFG as fallback")
+                full_dfg = self._get_cached_dfg(log, "full")
+                
+                for cut_name, cut_func, split_func, validator in cuts_to_try:
+                    try:
+                        if partitions := cut_func(full_dfg):
+                            splits = split_func(log, partitions)
+                            if validator(splits, log):
+                                logger.debug(f"Found {cut_name} cut on full DFG (fallback from failed simplification)")
+                                return (cut_name, splits)
+                    except Exception as e:
+                        logger.debug(f"Error trying {cut_name} cut on full DFG (fallback): {e}")
+                        continue
+                
+                logger.debug("No cuts found even with full DFG fallback")
+                return None
+            
+            # SECOND: Standard full DFG mode (only when simplification_threshold = 0)
+            logger.debug("Using full DFG mode (simplification_threshold = 0)")
+            full_dfg = self._get_cached_dfg(log, "full")
             
             for cut_name, cut_func, split_func, validator in cuts_to_try:
                 try:
@@ -419,61 +564,47 @@ class InductiveMiningApproximate(InductiveMining):
                     logger.debug(f"Error trying {cut_name} cut: {e}")
                     continue
             
-            # Try simplified DFG (fallback, with strengthened validation)
-            simplified_dfg = self._get_cached_dfg(log, "simplified")
+            # THIRD: Auto-tune as last resort (only if user hasn't set any parameters)
+            if self.simplification_threshold <= 0 and self.min_bin_freq <= 0:
+                logger.debug("Attempting auto-parameter suggestion as last resort")
+                candidate_min_bin = [0.0, 0.1, 0.2, 0.3]
+                candidate_simpl = [0.0, 0.05, 0.1, 0.2]
+                
+                for mb in candidate_min_bin:
+                    try:
+                        binned_log = self._apply_activity_binning(log, mb) if mb > 0.0 else log
+                        # Log binning effect
+                        if binned_log is not log:
+                            uniq_acts = len({a for t in log for a in t})
+                            uniq_acts_b = len({a for t in binned_log for a in t})
+                            logger.debug(f"Auto binning: min_bin_freq={mb} activities {uniq_acts}->{uniq_acts_b}")
+                        # Build full dfg on binned log first
+                        dfg_full_b = DFG(binned_log)
+                        for cut_name, cut_func, split_func, validator in cuts_to_try:
+                            if partitions := cut_func(dfg_full_b):
+                                splits = split_func(binned_log, partitions)
+                                if self._strengthened_split_validation(splits, binned_log):
+                                    logger.debug(f"Auto found {cut_name} cut on full DFG (min_bin_freq={mb})")
+                                    return (cut_name, splits)
+                        # Try simplified grids
+                        for st in candidate_simpl:
+                            prev = self.simplification_threshold
+                            try:
+                                self.simplification_threshold = st
+                                dfg_s = self.create_simplified_dfg(binned_log)
+                                for cut_name, cut_func, split_func, validator in cuts_to_try:
+                                    if partitions := cut_func(dfg_s):
+                                        splits = split_func(binned_log, partitions)
+                                        if self._strengthened_split_validation(splits, binned_log):
+                                            logger.debug(f"Auto found {cut_name} cut on simplified DFG (min_bin_freq={mb}, simpl={st})")
+                                            return (cut_name, splits)
+                            finally:
+                                self.simplification_threshold = prev
+                    except Exception as e:
+                        logger.debug(f"Auto-tune iteration error (min_bin_freq={mb}): {e}")
+                        continue
             
-            for cut_name, cut_func, split_func, _ in cuts_to_try:
-                try:
-                    if partitions := cut_func(simplified_dfg):
-                        splits = split_func(log, partitions)
-                        # Strengthened validation for simplified DFG
-                        if self._strengthened_split_validation(splits, log):
-                            logger.debug(f"Found {cut_name} cut on simplified DFG")
-                            return (cut_name, splits)
-                except Exception as e:
-                    logger.debug(f"Error trying {cut_name} cut on simplified DFG: {e}")
-                    continue
-            
-            # Auto-tune a small parameter grid to emulate AIM's integrated suggestion
-            logger.debug("Attempting auto-parameter suggestion (AIM-inspired)")
-            candidate_min_bin = [0.0, 0.1, 0.2, 0.3]
-            candidate_simpl = [0.0, 0.05, 0.1, 0.2]
-            
-            for mb in candidate_min_bin:
-                try:
-                    binned_log = self._apply_activity_binning(log, mb) if mb > 0.0 else log
-                    # Log binning effect
-                    if binned_log is not log:
-                        uniq_acts = len({a for t in log for a in t})
-                        uniq_acts_b = len({a for t in binned_log for a in t})
-                        logger.debug(f"Auto binning: min_bin_freq={mb} activities {uniq_acts}->{uniq_acts_b}")
-                    # Build full dfg on binned log first
-                    dfg_full_b = DFG(binned_log)
-                    for cut_name, cut_func, split_func, validator in cuts_to_try:
-                        if partitions := cut_func(dfg_full_b):
-                            splits = split_func(binned_log, partitions)
-                            if self._strengthened_split_validation(splits, binned_log):
-                                logger.debug(f"Auto found {cut_name} cut on full DFG (min_bin_freq={mb})")
-                                return (cut_name, splits)
-                    # Try simplified grids
-                    for st in candidate_simpl:
-                        prev = self.simplification_threshold
-                        try:
-                            self.simplification_threshold = st
-                            dfg_s = self.create_simplified_dfg(binned_log)
-                            for cut_name, cut_func, split_func, validator in cuts_to_try:
-                                if partitions := cut_func(dfg_s):
-                                    splits = split_func(binned_log, partitions)
-                                    if self._strengthened_split_validation(splits, binned_log):
-                                        logger.debug(f"Auto found {cut_name} cut on simplified DFG (min_bin_freq={mb}, simpl={st})")
-                                        return (cut_name, splits)
-                        finally:
-                            self.simplification_threshold = prev
-                except Exception as e:
-                    logger.debug(f"Auto-tune iteration error (min_bin_freq={mb}): {e}")
-                    continue
-            
-            logger.debug("No cuts found on either full/simplified DFG or auto-parameter sweep")
+            logger.debug("No cuts found with current parameters - returning None")
             return None
             
         except Exception as e:
@@ -589,8 +720,19 @@ class InductiveMiningApproximate(InductiveMining):
                 return dfg
 
             max_f = max(edge_freq.values())
-            threshold = max_f * self.simplification_threshold
-            logger.debug(f"Simplification threshold: {threshold} (max_freq: {max_f})")
+            
+            # Smart threshold calculation - be less aggressive at lower settings
+            if self.simplification_threshold <= 0.1:
+                # For low thresholds, only filter very weak edges
+                threshold = max(1.0, max_f * self.simplification_threshold)
+            else:
+                # For higher thresholds, use standard calculation
+                threshold = max_f * self.simplification_threshold
+                
+            logger.debug(f"Simplification: threshold={threshold} (max_freq={max_f}, simpl={self.simplification_threshold})")
+            
+            # Log edge frequencies for debugging
+            logger.debug(f"Edge frequencies: {sorted(edge_freq.items(), key=lambda x: x[1], reverse=True)}")
 
             # Create simplified DFG
             simplified = DFG()
@@ -602,24 +744,66 @@ class InductiveMiningApproximate(InductiveMining):
             # Add edges above threshold
             retained_edges = 0
             total_edges = len(edge_freq)
+            filtered_edges = []
             
             for edge in dfg.get_edges():
-                if edge_freq.get(edge, 0) >= threshold:
+                freq = edge_freq.get(edge, 0)
+                if freq >= threshold:
                     simplified.add_edge(edge[0], edge[1])
                     retained_edges += 1
+                    logger.debug(f"Retained edge {edge} (freq={freq} >= {threshold})")
+                else:
+                    filtered_edges.append((edge, freq))
 
             # Log simplification statistics
             retention_rate = retained_edges / total_edges if total_edges > 0 else 0
             logger.info(f"DFG simplification: {retained_edges}/{total_edges} edges retained ({retention_rate:.2%})")
+            if filtered_edges:
+                logger.debug(f"Filtered edges: {filtered_edges}")
+            
+            # Ensure we have enough structure left for meaningful process discovery
+            if retention_rate < 0.2:  # Less than 20% edges retained
+                logger.warning(f"Very sparse simplification ({retention_rate:.1%}), might produce flower model")
+            
+            # Ensure we maintain connectivity for main process paths
+            start_nodes = simplified.get_start_nodes() if hasattr(simplified, 'get_start_nodes') else set()
+            end_nodes = simplified.get_end_nodes() if hasattr(simplified, 'get_end_nodes') else set()
+            
+            if len(start_nodes) == 0 or len(end_nodes) == 0:
+                logger.warning("Simplified DFG has no start/end nodes, might cause issues")
 
-            # Preserve start/end nodes if present
+            # Ensure we preserve start/end nodes properly
             try:
                 if hasattr(dfg, 'start_nodes') and hasattr(dfg, 'end_nodes'):
                     simplified.start_nodes = dfg.start_nodes.copy()
                     simplified.end_nodes = dfg.end_nodes.copy()
+                    
+                # Verify connectivity after simplification
+                if simplified.start_nodes and simplified.end_nodes:
+                    logger.debug(f"Preserved start nodes: {simplified.start_nodes}")
+                    logger.debug(f"Preserved end nodes: {simplified.end_nodes}")
+                else:
+                    # Reconstruct start/end nodes from remaining edges
+                    all_sources = {edge[0] for edge in simplified.get_edges()}
+                    all_targets = {edge[1] for edge in simplified.get_edges()}
+                    
+                    # Start nodes are those that appear as sources but not as targets
+                    potential_starts = all_sources - all_targets
+                    # End nodes are those that appear as targets but not as sources  
+                    potential_ends = all_targets - all_sources
+                    
+                    if potential_starts:
+                        simplified.start_nodes = potential_starts
+                        logger.debug(f"Reconstructed start nodes: {potential_starts}")
+                    if potential_ends:
+                        simplified.end_nodes = potential_ends
+                        logger.debug(f"Reconstructed end nodes: {potential_ends}")
+                        
             except Exception as e:
-                logger.debug(f"Could not preserve start/end nodes: {e}")
-
+                logger.debug(f"Error preserving start/end nodes: {e}")
+                # Continue without failing
+                pass
+                
             return simplified
             
         except Exception as e:
