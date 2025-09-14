@@ -88,19 +88,19 @@ class TestHeuristic(unittest.TestCase):
         self.__check_graph_integrity(heuristicMining.get_graph())
 
     def __check_graph_integrity(self, graph: BaseGraph):
-        self.assertTrue(graph.contains_node("Start"), "Start node not found.")
-        self.assertTrue(graph.contains_node("End"), "End node not found.")
+        self.assertTrue(graph.contains_node("__START__"), "Start node not found.")
+        self.assertTrue(graph.contains_node("__END__"), "End node not found.")
 
         # Check there is a 'start' node that connects to at least 1 other node
         self.assertTrue(
-            len(list(filter(lambda edge: edge.source == "Start", graph.get_edges())))
+            len(list(filter(lambda edge: edge.source == "__START__", graph.get_edges())))
             >= 1,
             "Start node does not connect to any other nodes.",
         )
 
         # Check if all nodes are reachable from the 'start' node
         reachable_nodes = set()
-        queue = deque(["Start"])
+        queue = deque(["__START__"])
         while queue:
             node = queue.popleft()
             reachable_nodes.add(node)
