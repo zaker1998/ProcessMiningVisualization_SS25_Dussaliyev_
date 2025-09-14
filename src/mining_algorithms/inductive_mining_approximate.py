@@ -421,19 +421,17 @@ class InductiveMiningApproximate(InductiveMining):
                 
         logger.info(f"Log filtering: {len(log)} -> {len(filtered_log)} trace variants, {filtered_traces} traces filtered out")
         
-        # Don't be too aggressive with fallback - allow significant filtering
+        # Be more permissive with trace filtering to maintain cut feasibility
         total_freq_original = sum(log.values())
         total_freq_filtered = sum(filtered_log.values())
         retention_rate = total_freq_filtered / total_freq_original if total_freq_original > 0 else 0
         
-        if retention_rate < 0.05:  # Only fallback if less than 5% of traces remain
-            logger.warning(f"Filtering extremely aggressive ({retention_rate:.1%} retention), using original log")
+        # Allow more aggressive filtering, but ensure we don't lose all structure
+        if not filtered_log or retention_rate < 0.01:  # Less than 1% is too extreme
+            logger.warning(f"Filtering too extreme ({retention_rate:.1%} retention), using original log")
             return log
         
-        if not filtered_log:  # If no traces remain, use original
-            logger.warning("No traces remain after filtering, using original log")
-            return log
-            
+        logger.debug(f"Log filtering successful: {retention_rate:.1%} traces retained")
         return filtered_log
 
     def get_min_bin_freq(self) -> float:
@@ -488,18 +486,22 @@ class InductiveMiningApproximate(InductiveMining):
                 logger.debug(f"Using smart simplified mode with simplification_threshold={self.simplification_threshold}")
                 simplified_dfg = self._get_cached_dfg(log, "simplified")
                 
-                # Check if simplified DFG is too sparse (would create flower model)
+                # Check if simplified DFG is too sparse (but be less aggressive about fallbacks)
                 original_edges = len(self._get_cached_dfg(log, "full").get_edges())
                 simplified_edges = len(simplified_dfg.get_edges())
                 retention_ratio = simplified_edges / original_edges if original_edges > 0 else 0
                 
-                if retention_ratio < 0.3:  # If less than 30% of edges remain
-                    logger.warning(f"Simplified DFG too sparse ({retention_ratio:.1%} edges retained), using hybrid approach")
-                    # Use a less aggressive threshold to avoid flower models
+                logger.debug(f"Simplified DFG: {simplified_edges}/{original_edges} edges ({retention_ratio:.1%} retention)")
+                
+                # Only intervene if extremely sparse (< 15% edges) to allow more aggressive simplification
+                if retention_ratio < 0.15 and simplified_edges < 3:
+                    logger.warning(f"Simplified DFG extremely sparse ({retention_ratio:.1%}), adjusting threshold")
+                    # Use a less aggressive threshold to maintain some structure
                     original_threshold = self.simplification_threshold
-                    self.simplification_threshold = self.simplification_threshold * 0.5  # Halve the aggressiveness
+                    self.simplification_threshold = self.simplification_threshold * 0.7  # Less aggressive reduction
                     simplified_dfg = self.create_simplified_dfg(log)  # Recreate with less aggressive threshold
                     self.simplification_threshold = original_threshold  # Restore original
+                    logger.debug(f"Adjusted DFG: {len(simplified_dfg.get_edges())} edges")
                 
                 # Create filtered log that matches the simplified DFG
                 filtered_log = self._create_filtered_log_for_dfg(log, simplified_dfg)
@@ -531,22 +533,38 @@ class InductiveMiningApproximate(InductiveMining):
                         logger.debug(f"Error trying {cut_name} cut on simplified DFG (relaxed): {e}")
                         continue
                 
-                # If simplified approach completely fails, try full DFG as fallback
-                logger.warning("Simplified DFG failed to find cuts, trying full DFG as fallback")
-                full_dfg = self._get_cached_dfg(log, "full")
+                # If simplified approach fails, try a more lenient approach before full fallback
+                logger.debug("Simplified DFG with strict validation failed, trying with original log")
                 
+                # Try simplified DFG with original log (less aggressive filtering)
                 for cut_name, cut_func, split_func, validator in cuts_to_try:
                     try:
-                        if partitions := cut_func(full_dfg):
-                            splits = split_func(log, partitions)
-                            if validator(splits, log):
-                                logger.debug(f"Found {cut_name} cut on full DFG (fallback from failed simplification)")
+                        if partitions := cut_func(simplified_dfg):
+                            splits = split_func(log, partitions)  # Use original log, not filtered
+                            if self._strengthened_split_validation(splits, log):
+                                logger.debug(f"Found {cut_name} cut on simplified DFG with original log")
                                 return (cut_name, splits)
                     except Exception as e:
-                        logger.debug(f"Error trying {cut_name} cut on full DFG (fallback): {e}")
+                        logger.debug(f"Error trying {cut_name} cut on simplified DFG with original log: {e}")
                         continue
                 
-                logger.debug("No cuts found even with full DFG fallback")
+                # Final fallback: try full DFG only if user threshold is very high (>0.5)
+                if self.simplification_threshold > 0.5:
+                    logger.debug("High threshold failed, trying full DFG as last resort")
+                    full_dfg = self._get_cached_dfg(log, "full")
+                    
+                    for cut_name, cut_func, split_func, validator in cuts_to_try:
+                        try:
+                            if partitions := cut_func(full_dfg):
+                                splits = split_func(log, partitions)
+                                if validator(splits, log):
+                                    logger.debug(f"Found {cut_name} cut on full DFG (high threshold fallback)")
+                                    return (cut_name, splits)
+                        except Exception as e:
+                            logger.debug(f"Error trying {cut_name} cut on full DFG (fallback): {e}")
+                            continue
+                
+                logger.debug("No cuts found with simplified approach")
                 return None
             
             # SECOND: Standard full DFG mode (only when simplification_threshold = 0)
@@ -721,13 +739,13 @@ class InductiveMiningApproximate(InductiveMining):
 
             max_f = max(edge_freq.values())
             
-            # Smart threshold calculation - be less aggressive at lower settings
-            if self.simplification_threshold <= 0.1:
-                # For low thresholds, only filter very weak edges
-                threshold = max(1.0, max_f * self.simplification_threshold)
-            else:
-                # For higher thresholds, use standard calculation
-                threshold = max_f * self.simplification_threshold
+            # Progressive threshold calculation for better control
+            # Use a more gradual approach that actually filters edges progressively
+            threshold = max_f * self.simplification_threshold
+            
+            # Ensure minimum threshold is reasonable but still allows filtering
+            min_threshold = 0.5  # Allow filtering of very low frequency edges
+            threshold = max(min_threshold, threshold)
                 
             logger.debug(f"Simplification: threshold={threshold} (max_freq={max_f}, simpl={self.simplification_threshold})")
             
