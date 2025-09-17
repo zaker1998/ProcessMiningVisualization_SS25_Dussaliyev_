@@ -744,7 +744,8 @@ class InductiveMiningApproximate(InductiveMining):
             threshold = max_f * self.simplification_threshold
             
             # Ensure minimum threshold is reasonable but still allows filtering
-            min_threshold = 0.5  # Allow filtering of very low frequency edges
+            # Use dynamic minimum threshold based on data instead of hardcoded 0.5
+            min_threshold = max(1, max_f * 0.01)  # At least 1, or 1% of max frequency
             threshold = max(min_threshold, threshold)
                 
             logger.debug(f"Simplification: threshold={threshold} (max_freq={max_f}, simpl={self.simplification_threshold})")
@@ -784,43 +785,82 @@ class InductiveMiningApproximate(InductiveMining):
                 logger.warning(f"Very sparse simplification ({retention_rate:.1%}), might produce flower model")
             
             # Ensure we maintain connectivity for main process paths
-            start_nodes = simplified.get_start_nodes() if hasattr(simplified, 'get_start_nodes') else set()
-            end_nodes = simplified.get_end_nodes() if hasattr(simplified, 'get_end_nodes') else set()
-            
-            if len(start_nodes) == 0 or len(end_nodes) == 0:
-                logger.warning("Simplified DFG has no start/end nodes, might cause issues")
-
-            # Ensure we preserve start/end nodes properly
+            # First, try to preserve original start/end nodes
             try:
                 if hasattr(dfg, 'start_nodes') and hasattr(dfg, 'end_nodes'):
                     simplified.start_nodes = dfg.start_nodes.copy()
                     simplified.end_nodes = dfg.end_nodes.copy()
-                    
-                # Verify connectivity after simplification
-                if simplified.start_nodes and simplified.end_nodes:
-                    logger.debug(f"Preserved start nodes: {simplified.start_nodes}")
-                    logger.debug(f"Preserved end nodes: {simplified.end_nodes}")
-                else:
-                    # Reconstruct start/end nodes from remaining edges
-                    all_sources = {edge[0] for edge in simplified.get_edges()}
-                    all_targets = {edge[1] for edge in simplified.get_edges()}
-                    
-                    # Start nodes are those that appear as sources but not as targets
-                    potential_starts = all_sources - all_targets
-                    # End nodes are those that appear as targets but not as sources  
-                    potential_ends = all_targets - all_sources
-                    
-                    if potential_starts:
-                        simplified.start_nodes = potential_starts
-                        logger.debug(f"Reconstructed start nodes: {potential_starts}")
-                    if potential_ends:
-                        simplified.end_nodes = potential_ends
-                        logger.debug(f"Reconstructed end nodes: {potential_ends}")
-                        
+                    logger.debug(f"Preserved original start nodes: {simplified.start_nodes}")
+                    logger.debug(f"Preserved original end nodes: {simplified.end_nodes}")
             except Exception as e:
-                logger.debug(f"Error preserving start/end nodes: {e}")
-                # Continue without failing
-                pass
+                logger.debug(f"Error preserving original start/end nodes: {e}")
+            
+            # If no start/end nodes, reconstruct from remaining edges
+            if not hasattr(simplified, 'start_nodes') or not simplified.start_nodes:
+                all_sources = {edge[0] for edge in simplified.get_edges()}
+                all_targets = {edge[1] for edge in simplified.get_edges()}
+                
+                # Start nodes are those that appear as sources but not as targets
+                potential_starts = all_sources - all_targets
+                if potential_starts:
+                    simplified.start_nodes = potential_starts
+                    logger.debug(f"Reconstructed start nodes: {potential_starts}")
+                else:
+                    # If no clear starts, find nodes that are only sources in the simplified DFG
+                    # and also appear as first activities in the original log
+                    first_activities = set()
+                    for trace in log.keys():
+                        if trace and trace[0] in all_sources:
+                            first_activities.add(trace[0])
+                    if first_activities:
+                        simplified.start_nodes = first_activities
+                        logger.debug(f"Using first activities as start nodes: {first_activities}")
+                    else:
+                        # Fallback: use the most frequent first activity
+                        first_freq = {}
+                        for trace, freq in log.items():
+                            if trace:
+                                first_freq[trace[0]] = first_freq.get(trace[0], 0) + freq
+                        if first_freq:
+                            most_frequent_first = max(first_freq.items(), key=lambda x: x[1])[0]
+                            simplified.start_nodes = {most_frequent_first}
+                            logger.debug(f"Using most frequent first activity: {most_frequent_first}")
+            
+            if not hasattr(simplified, 'end_nodes') or not simplified.end_nodes:
+                all_sources = {edge[0] for edge in simplified.get_edges()}
+                all_targets = {edge[1] for edge in simplified.get_edges()}
+                
+                # End nodes are those that appear as targets but not as sources  
+                potential_ends = all_targets - all_sources
+                if potential_ends:
+                    simplified.end_nodes = potential_ends
+                    logger.debug(f"Reconstructed end nodes: {potential_ends}")
+                else:
+                    # If no clear ends, find nodes that are only targets in the simplified DFG
+                    # and also appear as last activities in the original log
+                    last_activities = set()
+                    for trace in log.keys():
+                        if trace and trace[-1] in all_targets:
+                            last_activities.add(trace[-1])
+                    if last_activities:
+                        simplified.end_nodes = last_activities
+                        logger.debug(f"Using last activities as end nodes: {last_activities}")
+                    else:
+                        # Fallback: use the most frequent last activity
+                        last_freq = {}
+                        for trace, freq in log.items():
+                            if trace:
+                                last_freq[trace[-1]] = last_freq.get(trace[-1], 0) + freq
+                        if last_freq:
+                            most_frequent_last = max(last_freq.items(), key=lambda x: x[1])[0]
+                            simplified.end_nodes = {most_frequent_last}
+                            logger.debug(f"Using most frequent last activity: {most_frequent_last}")
+            
+            # Final check
+            if not hasattr(simplified, 'start_nodes') or not simplified.start_nodes:
+                logger.warning("Still no start nodes after reconstruction")
+            if not hasattr(simplified, 'end_nodes') or not simplified.end_nodes:
+                logger.warning("Still no end nodes after reconstruction")
                 
             return simplified
             
