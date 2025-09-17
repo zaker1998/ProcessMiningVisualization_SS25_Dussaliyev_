@@ -3,7 +3,5 @@ pandas
 graphviz
 ddcal
 streamlit==1.36.0
-pm4py==2.6.0
-
 # for testing
 parameterized
