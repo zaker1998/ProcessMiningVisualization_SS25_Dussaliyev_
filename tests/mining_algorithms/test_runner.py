@@ -168,7 +168,6 @@ def print_test_modules_info():
         ("test_process_tree.py", "Tests for ProcessTreeNode - tree structures"),
         ("test_inductive_mining_enhanced.py", "Enhanced tests for main InductiveMining"),
         ("test_inductive_mining_infrequent.py", "Tests for InductiveMiningInfrequent"),
-        ("test_inductive_mining_approximate.py", "Tests for InductiveMiningApproximate"),
         ("inductive_mining_test.py", "Original basic tests for InductiveMining"),
     ]
     
