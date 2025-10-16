@@ -7,8 +7,9 @@ from pm4py.objects.log.obj import EventLog
 import tempfile
 import os
 import xml.etree.ElementTree as ET
-from src.exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
+from exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
 import logging
+from typing import cast
 
 
 class ImportOperations:
@@ -158,7 +159,7 @@ class ImportOperations:
                 
                 # Read the XES file using PM4Py's xes importer directly
                 from pm4py.objects.log.importer.xes import importer as xes_importer
-                event_log = xes_importer.apply(temp_path)
+                event_log = cast(EventLog, xes_importer.apply(temp_path))
                 
                 # Clean up the temporary file
                 os.unlink(temp_path)
@@ -166,7 +167,7 @@ class ImportOperations:
             else:
                 # Read directly from the file path using xes importer
                 from pm4py.objects.log.importer.xes import importer as xes_importer
-                return xes_importer.apply(file_path)
+                return cast(EventLog, xes_importer.apply(file_path))
         except Exception as e:
             logging.error(f"Error reading XES file: {str(e)}")
             raise UnsupportedFileTypeException(f"XES file format error: {str(e)}")

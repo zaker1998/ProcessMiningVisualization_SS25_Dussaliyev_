@@ -146,7 +146,15 @@ class BaseMining(MiningInterface):
         """
         node_freq = self.appearance_frequency.get(node, 0)
         try:
-            idx = self.event_freq_sorted.index(node_freq)
-            return self.event_freq_labels_sorted[idx]
+            # Handle both list and numpy array cases
+            if isinstance(self.event_freq_sorted, np.ndarray):
+                idx_arr = np.where(self.event_freq_sorted == node_freq)[0]
+                if len(idx_arr) > 0:
+                    return self.event_freq_labels_sorted[idx_arr[0]]
+                else:
+                    return 1.0
+            else:
+                idx = self.event_freq_sorted.index(node_freq)
+                return self.event_freq_labels_sorted[idx]
         except Exception:
             return 1.0

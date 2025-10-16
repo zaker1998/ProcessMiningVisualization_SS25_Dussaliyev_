@@ -21,7 +21,7 @@ class HeuristicMining(BaseMining):
         self.edge_freq = np.unique(self.edge_freq[self.edge_freq >= 0.0])
 
         self.edge_freq_sorted, self.edge_freq_labels_sorted = self.get_clusters(
-            self.edge_freq
+            self.edge_freq.tolist()
         )
 
     def create_dependency_graph_with_graphviz(
@@ -44,9 +44,9 @@ class HeuristicMining(BaseMining):
 
         # add frequent nodes to graph
         for node in frequent_nodes:
-            node_freq = self.appearance_frequency.get(node)
+            node_freq = self.appearance_frequency.get(node, 0)
             w, h = self.calulate_node_size(node)
-            self.graph.add_event(node, node_freq, (w, h))
+            self.graph.add_event(node, node_freq, (int(w), int(h)))
 
         # add edges to graph
         sources, targets = np.nonzero(dependency_graph)
@@ -72,8 +72,8 @@ class HeuristicMining(BaseMining):
         self.graph.add_end_node()
 
         # add starting and ending edges from the log to the graph. Only if they are frequent
-        self.graph.add_starting_edges(self.start_nodes.intersection(frequent_nodes))
-        self.graph.add_ending_edges(self.end_nodes.intersection(frequent_nodes))
+        self.graph.add_starting_edges(list(self.start_nodes.intersection(frequent_nodes)))
+        self.graph.add_ending_edges(list(self.end_nodes.intersection(frequent_nodes)))
 
         # get frequent sources and sinks from the dependency graph
         source_nodes = self.__get_sources_from_dependency_graph(
@@ -84,8 +84,8 @@ class HeuristicMining(BaseMining):
         ).intersection(frequent_nodes)
 
         # add starting and ending edges from the dependency graph to the graph
-        self.graph.add_starting_edges(source_nodes - self.start_nodes)
-        self.graph.add_ending_edges(sink_nodes - self.end_nodes)
+        self.graph.add_starting_edges(list(source_nodes - self.start_nodes))
+        self.graph.add_ending_edges(list(sink_nodes - self.end_nodes))
 
     def get_max_frequency(self):
         return self.max_frequency
@@ -101,7 +101,13 @@ class HeuristicMining(BaseMining):
         np.fill_diagonal(dependency_matrix, 1.0)
 
         non_diagonal_indices = np.where(dependency_matrix == 0)
-        diagonal_indices = np.diag_indices(dependency_matrix.shape[0])
+        # Get the number of events (first dimension of the matrix)
+        matrix_shape = dependency_matrix.shape
+        if len(matrix_shape) > 0:
+            n_events = matrix_shape[0]
+        else:
+            n_events = 0
+        diagonal_indices = np.diag_indices(n_events)
 
         dependency_matrix[diagonal_indices] = self.succession_matrix[
             diagonal_indices
@@ -140,7 +146,22 @@ class HeuristicMining(BaseMining):
         return np.where(filter_matrix.all(axis=axis))[0]
 
     def get_edge_scale_factor(self, source, target):
-        scale_factor = self.edge_freq_labels_sorted[
-            self.edge_freq_sorted.index(self.succession_matrix[source][target])
-        ]
-        return scale_factor
+        edge_value = self.succession_matrix[source][target]
+        # Extract scalar value if it's a numpy array
+        if isinstance(edge_value, np.ndarray):
+            edge_value = edge_value.item()
+        
+        try:
+            # Handle both list and numpy array cases
+            if isinstance(self.edge_freq_sorted, np.ndarray):
+                idx = np.where(self.edge_freq_sorted == edge_value)[0]
+                if len(idx) > 0:
+                    scale_factor = self.edge_freq_labels_sorted[idx[0]]
+                else:
+                    scale_factor = 1.0
+            else:
+                idx = self.edge_freq_sorted.index(edge_value)
+                scale_factor = self.edge_freq_labels_sorted[idx]
+            return scale_factor
+        except Exception:
+            return 1.0
