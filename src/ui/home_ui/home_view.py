@@ -147,12 +147,17 @@ class HomeView(BaseView):
 
             with button_column:
                 st.write("")
+                controller = self.controller
+                if controller is None:
+                    return
+                # Ensure a valid algorithm mapping key
+                selected_key = selection if isinstance(selection, str) and selection in algorithm_mappings else next(iter(algorithm_mappings.keys()))
                 navigation_button(
                     label="Import Model",
                     route="Algorithm",
                     use_container_width=True,
-                    beforeNavigate=self.controller.set_model_and_algorithm,
-                    args=(model, algorithm_mappings[selection]),
+                    beforeNavigate=controller.set_model_and_algorithm,
+                    args=(model, algorithm_mappings[selected_key]),
                 )
 
     def display_df_import(self, detected_delimiter):
@@ -184,7 +189,9 @@ class HomeView(BaseView):
             }
             
             # If detected delimiter is in common list, use it as default
-            default_index = list(common_delimiters.keys()).index(detected_delimiter) if detected_delimiter in common_delimiters else 0
+            default_index = 0
+            if isinstance(detected_delimiter, str) and detected_delimiter in common_delimiters:
+                default_index = list(common_delimiters.keys()).index(detected_delimiter)
             
             # Use radio buttons for common delimiters and text input for custom
             delimiter_type = st.radio(
@@ -194,17 +201,21 @@ class HomeView(BaseView):
             )
             
             if delimiter_type == "Common delimiter":
+                # Ensure detected_delimiter is a string for indexing
+                detected = detected_delimiter if isinstance(detected_delimiter, str) else ","
                 delimiter = st.selectbox(
                     "Choose delimiter:",
                     options=list(common_delimiters.values()),
                     index=default_index
                 )
-                # Extract the actual delimiter character from the selection
-                delimiter = list(common_delimiters.keys())[list(common_delimiters.values()).index(delimiter)]
+                # Extract the actual delimiter character from the selection using a safe reverse lookup
+                selected_label = str(delimiter or ",")
+                reverse_lookup = {v: k for k, v in common_delimiters.items()}
+                delimiter = reverse_lookup.get(selected_label, ",")
             else:
                 delimiter = st.text_input(
                     "Enter custom delimiter:",
-                    value=detected_delimiter,
+                    value=str(detected_delimiter or ","),
                     help=f"Detected delimiter: '{detected_delimiter}'. Enter your custom delimiter here."
                 )
             
@@ -214,11 +225,14 @@ class HomeView(BaseView):
             
             # Proceed button with more descriptive text
             st.markdown("#### Continue to Column Selection")
+            controller = self.controller
+            if controller is None:
+                return
             navigation_button(
                 label="Proceed to Column Selection ➡️",
                 route="ColumnSelection",
                 use_container_width=True,
-                beforeNavigate=self.controller.set_df,
+                beforeNavigate=controller.set_df,
                 args=(delimiter,),
             )
 
@@ -247,6 +261,9 @@ class HomeView(BaseView):
                 )
                 
                 if csv_file is not None:
+                    controller = self.controller
+                    if controller is None:
+                        return
                     # Delimiter selection for CSV
                     st.markdown("**Delimiter Settings:**")
                     delimiter_col1, delimiter_col2 = st.columns(2)
@@ -269,37 +286,68 @@ class HomeView(BaseView):
                         else:
                             delimiter = "auto"
                     
+                    # Determine effective delimiter for preview/mapping
+                    effective_delimiter = delimiter
+                    if delimiter == "auto":
+                        try:
+                            # Use controller's detection to infer delimiter
+                            line = controller.import_model.read_line(csv_file)
+                            effective_delimiter = controller.detection_model.detect_delimiter(line)
+                            csv_file.seek(0)
+                        except Exception:
+                            # Fallback to comma if detection fails
+                            effective_delimiter = ","
+
+                    # Read CSV to get available columns
+                    available_columns = []
+                    try:
+                        df_preview = controller.import_model.read_csv(csv_file, effective_delimiter)
+                        available_columns = df_preview.columns.tolist()
+                        csv_file.seek(0)
+                    except Exception:
+                        available_columns = []
+
                     # Column mapping section
                     st.markdown("**Column Mapping:**")
                     col1, col2, col3 = st.columns(3)
-                    
+
+                    # Suggest sensible defaults if present
+                    def _default_index(options: list[str], preferred: list[str]) -> int | None:
+                        for name in preferred:
+                            if name in options:
+                                return options.index(name)
+                        return None
+
                     with col1:
-                        case_id_col = st.text_input(
+                        case_id_col = st.selectbox(
                             "Case ID Column:",
-                            value="case_id",
+                            options=available_columns if available_columns else [""],
+                            index=_default_index(available_columns, ["case_id", "case", "case:concept:name"]) if available_columns else 0,
                             key="csv_case_id_col",
-                            help="Column name for case/trace identifiers"
+                            help="Column with case/trace identifiers"
                         )
-                    
+
                     with col2:
-                        activity_col = st.text_input(
+                        activity_col = st.selectbox(
                             "Activity Column:",
-                            value="activity",
+                            options=available_columns if available_columns else [""],
+                            index=_default_index(available_columns, ["activity", "concept:name"]) if available_columns else 0,
                             key="csv_activity_col",
-                            help="Column name for activity names"
+                            help="Column with activity names"
                         )
-                    
+
                     with col3:
-                        timestamp_col = st.text_input(
+                        timestamp_col = st.selectbox(
                             "Timestamp Column:",
-                            value="timestamp",
+                            options=available_columns if available_columns else [""],
+                            index=_default_index(available_columns, ["timestamp", "time:timestamp", "time", "date"]) if available_columns else 0,
                             key="csv_timestamp_col",
-                            help="Column name for timestamps"
+                            help="Column with event timestamps"
                         )
                     
                     # Convert button
                     if st.button("🔄 Convert to XES", key="convert_csv_to_xes", use_container_width=True):
-                        self.controller.convert_csv_to_xes(
+                        controller.convert_csv_to_xes(
                             csv_file, delimiter, case_id_col, activity_col, timestamp_col
                         )
             
@@ -315,6 +363,9 @@ class HomeView(BaseView):
                 )
                 
                 if xes_file is not None:
+                    controller = self.controller
+                    if controller is None:
+                        return
                     # Options for CSV output
                     st.markdown("**CSV Output Options:**")
                     csv_col1, csv_col2 = st.columns(2)
@@ -337,7 +388,7 @@ class HomeView(BaseView):
                     
                     # Convert button
                     if st.button("🔄 Convert to CSV", key="convert_xes_to_csv", use_container_width=True):
-                        self.controller.convert_xes_to_csv(
+                        controller.convert_xes_to_csv(
                             xes_file, csv_delimiter, include_all_attributes
                         )
             
