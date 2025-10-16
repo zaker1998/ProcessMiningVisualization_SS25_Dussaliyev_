@@ -127,71 +127,79 @@ miner.generate_graph(
 )
 ```
 
-## Inductive Mining Approximate
+## Inductive Mining Directly-Follows (IMd)
 
-The Inductive Mining Approximate variant is designed to handle complex and noisy event logs where the standard algorithm might produce overly complicated models. It uses simplification strategies to create more understandable process models while maintaining the essential behavior.
+The Inductive Mining Directly-Follows (IMd) variant is a simple and effective approach for handling noisy event logs. It filters weak directly-follows edges from the DFG to produce cleaner, more understandable process models.
 
 ### Key Features
 
-- **Simplification Threshold**: Uses a configurable threshold to determine when to simplify the directly-follows graph
-- **Cut Quality Validation**: Validates the quality of cuts before accepting them
-- **Complexity Limiting**: Limits model complexity for very large alphabets
-- **Progressive Simplification**: Gradually simplifies the model if initial attempts fail
+- **Simple Edge Filtering**: Removes weak directly-follows edges based on frequency threshold
+- **Easy to Configure**: Only one parameter to tune (`edge_threshold`)
+- **Well-Documented**: Clear guidance and predictable behavior
+- **Good Balance**: Filters noise while preserving important process structure
+- **Two-Phase Approach**: Tries filtered DFG first, then falls back to full DFG if needed
 
-### Simplification Approach
+### Edge Filtering Approach
 
-The approximate variant creates a simplified directly-follows graph by:
+The IMd variant filters edges from the directly-follows graph using:
 
-1. Calculating edge frequencies from the event log
-2. Removing edges with frequency below `max_frequency * simplification_threshold`
-3. Preserving start and end node information
+1. Compute all edge frequencies from the event log
+2. Calculate threshold: `threshold_frequency = max_edge_frequency × edge_threshold`
+3. Keep only edges with `frequency ≥ threshold_frequency`
+4. Preserve all nodes and start/end node information
 
-### Cut Quality Validation
+### Cut Detection Strategy
 
-Each cut type has specific quality validation criteria:
+IMd uses a two-phase cut detection strategy:
 
-- **Exclusive Cut**: Checks for minimal overlap between partitions
-- **Sequence Cut**: Validates that most traces follow the expected ordering
-- **Parallel Cut**: Ensures limited overlap between parallel branches
-- **Loop Cut**: Validates appropriate size ratio between body and redo parts
+1. **Phase 1**: If `edge_threshold > 0`, try filtered DFG first (recommended)
+2. **Phase 2**: If no cut found, fallback to full DFG
 
-### Complexity Management
-
-For logs with very large alphabets, the algorithm:
-- Limits flower models to a maximum number of activities (default: 10)
-- Uses the simplification threshold to reduce edge complexity
-- Validates that cuts make meaningful progress in decomposition
+This approach balances noise filtering with completeness.
 
 ### Usage
 
 ```python
-from mining_algorithms.inductive_mining_approximate import InductiveMiningApproximate
+from mining_algorithms.inductive_mining_df import InductiveMiningDF
 
-miner = InductiveMiningApproximate(log)
+miner = InductiveMiningDF(log)
 miner.generate_graph(
     activity_threshold=0.0,
     traces_threshold=0.2,
-    simplification_threshold=0.1,  # Simplify edges with frequency < 10% of max
-    min_bin_freq=0.2  # Legacy parameter (not used)
+    edge_threshold=0.1  # Filter edges with frequency < 10% of max
 )
 ```
 
+### Parameter Guidance
+
+| `edge_threshold` Value | Behavior | When to Use |
+|------------------------|----------|-------------|
+| 0.0 | No filtering (equivalent to standard miner) | Clean logs with no noise |
+| 0.05-0.1 | Light filtering (recommended) | Most logs with minor noise |
+| 0.1-0.3 | Moderate filtering | Noisy logs with infrequent behavior |
+| >0.3 | Aggressive filtering | Very noisy logs (may lose important behavior) |
+
+### Example
+
+If your log has a maximum edge frequency of 100 and you set `edge_threshold=0.1`, then only edges with frequency ≥ 10 will be kept in the filtered DFG.
+
 ## Comparison of Inductive Mining Variants
 
-| Feature | Standard | Infrequent | Approximate |
-|---------|----------|------------|-------------|
-| **Primary Goal** | Discover sound process models | Handle noisy logs | Handle complex logs |
-| **Noise Handling** | Pre-filtering only | Direct DFG filtering | Simplification strategy |
-| **Main Parameter** | Activity/trace thresholds | Noise threshold | Simplification threshold |
-| **DFG Approach** | Standard DFG | Filtered DFG (removes infrequent edges) | Simplified DFG (progressive simplification) |
-| **Cut Detection** | Single attempt | Two-phase (full then filtered) | Two-phase with quality validation |
-| **Cut Validation** | Basic validation | Basic validation | Quality-based validation |
-| **Fallthrough** | Standard flower model | Adaptive based on noise level | Complexity-limited flower model |
-| **Best Use Case** | Clean, well-structured logs | Logs with infrequent behavior | Complex logs with many activities |
-| **Model Complexity** | Can be high | Reduced through filtering | Actively limited |
-| **Information Loss** | Minimal (pre-filtering only) | Moderate (edge filtering) | Higher (simplification) |
+| Feature | Standard | Infrequent | Directly-Follows (IMd) |
+|---------|----------|------------|------------------------|
+| **Primary Goal** | Discover sound process models | Handle noisy logs with adaptive validation | Handle noisy logs with simple filtering |
+| **Noise Handling** | Pre-filtering only | Direct DFG filtering + adaptive thresholds | Direct edge frequency filtering |
+| **Main Parameter** | Activity/trace thresholds | Noise threshold | Edge threshold |
+| **DFG Approach** | Standard DFG | Filtered DFG (removes infrequent edges) | Filtered DFG (simple edge filtering) |
+| **Cut Detection** | Single attempt | Two-phase (full then filtered) | Two-phase (filtered then full) |
+| **Cut Validation** | Basic validation | Adaptive validation | Basic validation |
+| **Fallthrough** | Standard flower model | Standard flower model | Standard flower model |
+| **Best Use Case** | Clean, well-structured logs | Complex noise patterns | Simple noise filtering needs |
+| **Model Complexity** | Can be high | Reduced through filtering | Reduced through edge filtering |
+| **Information Loss** | Minimal (pre-filtering only) | Moderate (edge filtering) | Moderate (edge filtering) |
 | **Soundness** | Always sound | Always sound | Always sound |
-| **PM4Py Compatibility** | N/A | Designed to match PM4Py | Custom implementation |
+| **Ease of Use** | Simple (2 parameters) | Medium (3 parameters) | Very Simple (3 parameters, 1 main) |
+| **Documentation** | Standard | Good | Excellent (extensive guidance) |
 
 ### Choosing the Right Variant
 
@@ -199,17 +207,20 @@ miner.generate_graph(
   - Your log is relatively clean and well-structured
   - You want to preserve all behavior in the log
   - Model complexity is not a major concern
+  - You have fewer than 20 unique activities
+
+- **Use Inductive Mining Directly-Follows (IMd) when:** ⭐ **Recommended first choice for noisy logs**
+  - Your log contains noise or infrequent edges
+  - You want a simple, easy-to-configure approach
+  - The standard algorithm produces overly complex models
+  - You need predictable results with minimal parameter tuning
+  - You're new to process mining and want clear guidance
 
 - **Use Inductive Mining Infrequent when:**
-  - Your log contains noise or infrequent exceptional behavior
-  - You want to focus on the main process flow
-  - You need compatibility with PM4Py results
-
-- **Use Inductive Mining Approximate when:**
-  - Your log is very complex with many activities
-  - The standard algorithm produces overly complicated models
-  - You prefer simpler, more understandable models
-  - You can accept some loss of detail for clarity
+  - You need more advanced noise filtering than IMd provides
+  - Your log has complex noise patterns requiring adaptive validation
+  - IMd doesn't filter enough noise
+  - You need sophisticated noise handling capabilities
 
 ### Parameter Guidelines
 
@@ -217,8 +228,18 @@ miner.generate_graph(
 |---------|-----------|-------|---------------------------|---------------------|
 | All | activity_threshold | 0.0-1.0 | 0.0 | Removes more activities |
 | All | traces_threshold | 0.0-1.0 | 0.2 | Removes more traces |
-| Infrequent | noise_threshold | 0.0-1.0 | 0.2 | Filters more edges |
-| Approximate | simplification_threshold | 0.0-1.0 | 0.1 | Simplifies more aggressively |
+| Directly-Follows | edge_threshold | 0.0-1.0 | 0.1 | Filters more edges |
+| Infrequent | noise_threshold | 0.0-1.0 | 0.2 | Filters more edges adaptively |
+
+### Quick Start Guide
+
+**New to process mining?**
+1. Start with **Directly-Follows (IMd)** with `edge_threshold=0.1`
+2. If model is too complex, increase to `0.2` or `0.3`
+3. If important behavior is missing, decrease to `0.05`
+
+**Experienced user with complex noise?**
+- Try **Infrequent** with `noise_threshold=0.2` for advanced adaptive filtering
 
 ## References
 
