@@ -2,7 +2,7 @@ from ui.base_algorithm_ui.base_algorithm_controller import BaseAlgorithmControll
 from ui.inductive_miner_ui.inductive_miner_view import InductiveMinerView
 from mining_algorithms.inductive_mining import InductiveMining
 from mining_algorithms.inductive_mining_infrequent import InductiveMiningInfrequent
-from mining_algorithms.inductive_mining_approximate import InductiveMiningApproximate
+from mining_algorithms.inductive_mining_df import InductiveMiningDF
 import streamlit as st
 
 
@@ -34,12 +34,9 @@ class InductiveMinerController(BaseAlgorithmController):
         if "inductive_variant" not in st.session_state:
             st.session_state.inductive_variant = "Standard"
             
-        # Initialize approximate miner specific parameters
-        if "simplification_threshold" not in st.session_state:
-            st.session_state.simplification_threshold = 0.1
-            
-        if "min_bin_freq" not in st.session_state:
-            st.session_state.min_bin_freq = 0.2
+        # Initialize IMd (Directly-Follows) miner specific parameters
+        if "edge_threshold" not in st.session_state:
+            st.session_state.edge_threshold = 0.1
             
         # Initialize infrequent miner specific parameters
         if "noise_threshold" not in st.session_state:
@@ -49,7 +46,7 @@ class InductiveMinerController(BaseAlgorithmController):
         self.variant_classes = {
             "Standard": InductiveMining,
             "Infrequent": InductiveMiningInfrequent,
-            "Approximate": InductiveMiningApproximate
+            "Directly-Follows": InductiveMiningDF
         }
 
     def get_page_title(self) -> str:
@@ -75,15 +72,11 @@ class InductiveMinerController(BaseAlgorithmController):
                 self.mining_model.get_activity_threshold()
             )
             
-        # Handle approximate miner parameters
-        if isinstance(self.mining_model, InductiveMiningApproximate):
-            if "simplification_threshold" not in st.session_state:
-                st.session_state.simplification_threshold = getattr(
-                    self.mining_model, "simplification_threshold", 0.1
-                )
-            if "min_bin_freq" not in st.session_state:
-                st.session_state.min_bin_freq = getattr(
-                    self.mining_model, "min_bin_freq", 0.2
+        # Handle IMd (Directly-Follows) miner parameters
+        if isinstance(self.mining_model, InductiveMiningDF):
+            if "edge_threshold" not in st.session_state:
+                st.session_state.edge_threshold = getattr(
+                    self.mining_model, "edge_threshold", 0.1
                 )
                 
         # Handle infrequent miner parameters
@@ -97,8 +90,7 @@ class InductiveMinerController(BaseAlgorithmController):
         self.traces_threshold = st.session_state.traces_threshold
         self.activity_threshold = st.session_state.activity_threshold
         self.selected_variant = st.session_state.inductive_variant
-        self.simplification_threshold = st.session_state.simplification_threshold
-        self.min_bin_freq = st.session_state.min_bin_freq
+        self.edge_threshold = st.session_state.edge_threshold
         self.noise_threshold = st.session_state.noise_threshold
 
     def perform_mining(self) -> None:
@@ -135,22 +127,18 @@ class InductiveMinerController(BaseAlgorithmController):
         self.traces_threshold = max(0.0, min(1.0, self.traces_threshold))
         
         # Call generate_graph with appropriate parameters based on variant
-        if self.selected_variant == "Approximate":
-            # Validate approximate miner specific parameters
-            self.simplification_threshold = max(0.0, min(0.9, self.simplification_threshold))
-            self.min_bin_freq = max(0.0, min(0.9, self.min_bin_freq))
+        if self.selected_variant == "Directly-Follows":
+            # Validate IMd (Directly-Follows) miner specific parameters
+            self.edge_threshold = max(0.0, min(0.9, self.edge_threshold))
             
             # Ensure the mining model has the correct parameters before generation
-            if hasattr(self.mining_model, 'simplification_threshold'):
-                self.mining_model.simplification_threshold = self.simplification_threshold
-            if hasattr(self.mining_model, 'min_bin_freq'):
-                self.mining_model.min_bin_freq = self.min_bin_freq
+            if hasattr(self.mining_model, 'edge_threshold'):
+                self.mining_model.edge_threshold = self.edge_threshold
             
             self.mining_model.generate_graph(
                 self.activity_threshold, 
                 self.traces_threshold,
-                simplification_threshold=self.simplification_threshold,
-                min_bin_freq=self.min_bin_freq
+                edge_threshold=self.edge_threshold
             )
         elif self.selected_variant == "Infrequent":
             # Validate infrequent miner specific parameters
@@ -195,18 +183,17 @@ class InductiveMinerController(BaseAlgorithmController):
         # Check variant-specific parameters
         variant_params_changed = False
         
-        # Check approximate miner parameters if selected (regardless of current model type)
-        if self.selected_variant == "Approximate":
-            if isinstance(self.mining_model, InductiveMiningApproximate):
+        # Check IMd (Directly-Follows) miner parameters if selected
+        if self.selected_variant == "Directly-Follows":
+            if isinstance(self.mining_model, InductiveMiningDF):
                 variant_params_changed = (
-                    getattr(self.mining_model, "simplification_threshold", 0.1) != self.simplification_threshold
-                    or getattr(self.mining_model, "min_bin_freq", 0.2) != self.min_bin_freq
+                    getattr(self.mining_model, "edge_threshold", 0.1) != self.edge_threshold
                 )
             else:
                 # Model type doesn't match selected variant - force change
                 variant_params_changed = True
                 
-        # Check infrequent miner parameters if selected (regardless of current model type) 
+        # Check infrequent miner parameters if selected
         elif self.selected_variant == "Infrequent":
             if isinstance(self.mining_model, InductiveMiningInfrequent):
                 variant_params_changed = (
@@ -230,8 +217,7 @@ class InductiveMinerController(BaseAlgorithmController):
         sidebar_values = {
             "traces_threshold": (0.0, 1.0),
             "activity_threshold": (0.0, 1.0),
-            "simplification_threshold": (0.0, 0.9),
-            "min_bin_freq": (0.0, 0.9),
+            "edge_threshold": (0.0, 0.9),
             "noise_threshold": (0.0, 0.9),
         }
 
