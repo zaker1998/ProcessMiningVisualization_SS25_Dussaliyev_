@@ -82,10 +82,24 @@ def apply_theme():
         color: {colors["text_color"]} !important;
     }}
     
+    /* Dataframe header row - white in light theme */
     .stDataFrame th {{
-        background-color: {colors["control_bg"]} !important;
+        background-color: {colors["bg_color"]} !important;
         color: {colors["text_color"]} !important;
-        border-color: {colors["control_bg"]} !important;
+        border-color: {'#e2e8f0' if current_theme == 'light' else colors["control_bg"]} !important;
+    }}
+    
+    /* Target the header row more specifically */
+    .stDataFrame thead th {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Dataframe header cells in light theme */
+    [data-testid="stDataFrame"] th,
+    [data-testid="stDataFrame"] thead th {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
     }}
     
     .stDataFrame td {{
@@ -113,14 +127,52 @@ def apply_theme():
         color: {colors["text_color"]} !important;
     }}
     
-    /* Drag and drop area */
+    /* Drag and drop area - enhanced for Mozilla/Firefox */
     [data-testid="stFileUploadDropzone"] > div {{
         background-color: {colors["control_bg"]} !important;
         color: {colors["text_color"]} !important;
     }}
     
+    /* More specific targeting for drag-drop inner divs */
+    [data-testid="stFileUploadDropzone"] div {{
+        background-color: {colors["control_bg"]} !important;
+        color: {colors["text_color"]} !important;
+        border-color: {'#cbd5e0' if current_theme == 'light' else '#4a5568'} !important;
+    }}
+    
     /* Upload icon in drag-drop area */
     [data-testid="stFileUploadDropzone"] svg {{
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Fix drag-drop text elements */
+    [data-testid="stFileUploadDropzone"] p,
+    [data-testid="stFileUploadDropzone"] span {{
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Page header/toolbar fix for light theme */
+    header[data-testid="stHeader"] {{
+        background-color: {colors["bg_color"]} !important;
+    }}
+    
+    /* Target the specific header class mentioned */
+    .st-emotion-cache-h4xjwg,
+    [class*="st-emotion-cache"] header,
+    header > div {{
+        background-color: {colors["bg_color"]} !important;
+        color: {colors["text_color"]} !important;
+    }}
+    
+    /* Streamlit toolbar at top */
+    .stApp > header {{
+        background-color: {colors["bg_color"]} !important;
+    }}
+    
+    /* Fix for all header elements */
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"] {{
+        background-color: {colors["bg_color"]} !important;
         color: {colors["text_color"]} !important;
     }}
     </style>

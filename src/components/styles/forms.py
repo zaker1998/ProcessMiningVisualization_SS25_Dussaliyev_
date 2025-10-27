@@ -74,4 +74,25 @@ def get_form_styles(bg_color, text_color, input_bg):
         background-color: {input_bg} !important;
         color: {text_color} !important;
     }}
+    
+    /* Hide the +/- increment/decrement buttons in number inputs */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {{
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+        display: none !important;
+    }}
+    
+    input[type="number"] {{
+        -moz-appearance: textfield !important;
+    }}
+    
+    /* Hide the number input buttons in Streamlit */
+    div[data-testid="stNumberInput"] button {{
+        display: none !important;
+    }}
+    
+    div[data-testid="stNumberInput"] [data-testid="StyledThumbValue"] {{
+        display: none !important;
+    }}
     """ 

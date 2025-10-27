@@ -335,6 +335,101 @@ class BaseView(ABC):
                 background-color: var(--bg-secondary) !important;
                 color: var(--text-primary) !important;
             }}
+            
+            /* Page header/toolbar fix for light theme */
+            header[data-testid="stHeader"] {{
+                background-color: var(--main-bg) !important;
+            }}
+            
+            /* Target the specific header class */
+            .st-emotion-cache-h4xjwg,
+            [class*="st-emotion-cache"] header,
+            header > div {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Streamlit toolbar at top */
+            .stApp > header {{
+                background-color: var(--main-bg) !important;
+            }}
+            
+            /* Fix for all header elements */
+            [data-testid="stHeader"],
+            [data-testid="stToolbar"] {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Enhanced file uploader drag-drop area for Mozilla/Firefox */
+            section[data-testid="stFileUploadDropzone"] {{
+                background-color: var(--control-bg) !important;
+            }}
+            
+            section[data-testid="stFileUploadDropzone"] small {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Drag and drop inner divs */
+            [data-testid="stFileUploadDropzone"] div {{
+                background-color: var(--control-bg) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Upload icon in drag-drop area */
+            [data-testid="stFileUploadDropzone"] svg {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Fix drag-drop text elements */
+            [data-testid="stFileUploadDropzone"] p,
+            [data-testid="stFileUploadDropzone"] span {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Dataframe header row styling */
+            .stDataFrame th,
+            .stDataFrame thead th,
+            [data-testid="stDataFrame"] th,
+            [data-testid="stDataFrame"] thead th {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+                border-color: var(--form-border) !important;
+            }}
+            
+            /* Dataframe table styling */
+            .stDataFrame table {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Dataframe cells */
+            .stDataFrame td {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+                border-color: var(--form-border) !important;
+            }}
+            
+            /* Hide the +/- increment/decrement buttons in number inputs */
+            input[type="number"]::-webkit-inner-spin-button,
+            input[type="number"]::-webkit-outer-spin-button {{
+                -webkit-appearance: none !important;
+                margin: 0 !important;
+                display: none !important;
+            }}
+            
+            input[type="number"] {{
+                -moz-appearance: textfield !important;
+            }}
+            
+            /* Hide the number input buttons in Streamlit */
+            div[data-testid="stNumberInput"] button {{
+                display: none !important;
+            }}
+            
+            div[data-testid="stNumberInput"] [data-testid="StyledThumbValue"] {{
+                display: none !important;
+            }}
         </style>
         """
         
