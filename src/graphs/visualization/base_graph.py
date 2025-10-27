@@ -15,7 +15,7 @@ class Node:
         self,
         id: str | int,
         label: str = "",
-        data: dict[str, str | int | float] = None,
+        data: dict[str, str | int | float] | None = None,
     ) -> None:
         """Initializes the Node object.
 
@@ -33,7 +33,7 @@ class Node:
             self.label: str = label
         else:
             self.label: str = str(id)
-        self.__data: dict[str, str | int | float] = data
+        self.__data: dict[str, str | int | float] | None = data
 
     def get_label(self) -> str:
         """Returns the label of the node.
@@ -55,12 +55,12 @@ class Node:
         """
         return self.id
 
-    def get_data(self) -> dict[str, str | int | float]:
+    def get_data(self) -> dict[str, str | int | float] | None:
         """Returns the data of the node.
 
         Returns
         -------
-        dict[str, str | int | float]
+        dict[str, str | int | float] | None
             The data of the node.
         """
         return self.__data
@@ -92,7 +92,7 @@ class Edge:
         self,
         source: str | int,
         destination: str | int,
-        weight: int = 1,
+        weight: int | None = 1,
     ) -> None:
         """Initializes the Edge object.
 
@@ -109,12 +109,12 @@ class Edge:
         self.destination = str(destination)
         self.weight = weight
 
-    def get_edge(self) -> tuple[str, str, int]:
+    def get_edge(self) -> tuple[str, str, int | None]:
         """Returns the source, destination and weight of the edge.
 
         Returns
         -------
-        tuple[str, str, int]
+        tuple[str, str, int | None]
             The source, destination and weight of the edge.
         """
         return (self.source, self.destination, self.weight)
@@ -153,7 +153,7 @@ class BaseGraph:
         self,
         id: str | int,
         label: str = "",
-        data: dict[str, str | int | float] = None,
+        data: dict[str, str | int | float] | None = None,
         **node_attributes,
     ) -> None:
         """Adds a node to the graph. If the node id contains the colon, it is replaced with the colon substitute.
@@ -195,7 +195,7 @@ class BaseGraph:
         graphviz_id = self.substitiute_colons(node.get_id())
         self.graph.node(graphviz_id, node.get_label(), **node_attributes)
 
-    def add_start_node(self, id: str = "__START__") -> None:
+    def add_start_node(self, id: str = "Start") -> None:
         """Adds a start node to the graph.
 
         Parameters
@@ -206,7 +206,7 @@ class BaseGraph:
         if not self.contains_node(id):
             self.add_node(id, shape="circle", style="filled, bold", fillcolor="green")
 
-    def add_end_node(self, id: str = "__END__") -> None:
+    def add_end_node(self, id: str = "End") -> None:
         """Adds an end node to the graph.
 
         Parameters
@@ -220,8 +220,8 @@ class BaseGraph:
     def add_starting_edges(
         self,
         nodes: list[str | int],
-        starting_node: str = "__START__",
-        weights: list[int] = None,
+        starting_node: str = "Start",
+        weights: list[int] | None = None,
         **edge_attributes,
     ) -> None:
         """Adds edges from the start node to the nodes in the list.
@@ -255,8 +255,8 @@ class BaseGraph:
     def add_ending_edges(
         self,
         nodes: list[str | int],
-        ending_node: str = "__END__",
-        weights: list[int] = None,
+        ending_node: str = "End",
+        weights: list[int] | None = None,
         **edge_attributes,
     ) -> None:
         """Adds edges from the nodes in the list to the end node.
@@ -288,7 +288,7 @@ class BaseGraph:
         self,
         source_id: str | int,
         target_id: str | int,
-        weight: int = 1,
+        weight: int | None = 1,
         **edge_attributes,
     ) -> None:
         """Adds an edge to the graph.
@@ -486,8 +486,9 @@ class BaseGraph:
         """
         node = self.get_node(id)
         description = f"**Event:** {node.get_id()}"
-        if node.get_data():
-            for key, value in node.get_data().items():
+        node_data = node.get_data()
+        if node_data:
+            for key, value in node_data.items():
                 description += f"\n**{key}:** {value}"
         return node.get_id(), description
 
