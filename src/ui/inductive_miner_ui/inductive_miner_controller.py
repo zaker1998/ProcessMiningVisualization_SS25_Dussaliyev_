@@ -36,7 +36,7 @@ class InductiveMinerController(BaseAlgorithmController):
             
         # Initialize IMd (Directly-Follows) miner specific parameters
         if "edge_threshold" not in st.session_state:
-            st.session_state.edge_threshold = 0.1
+            st.session_state.edge_threshold = 0.0
             
         # Initialize infrequent miner specific parameters
         if "noise_threshold" not in st.session_state:
@@ -75,8 +75,9 @@ class InductiveMinerController(BaseAlgorithmController):
         # Handle IMd (Directly-Follows) miner parameters
         if isinstance(self.mining_model, InductiveMiningDF):
             if "edge_threshold" not in st.session_state:
+                # Note: IMd uses 'edge_cutoff_threshold' in the canonical implementation
                 st.session_state.edge_threshold = getattr(
-                    self.mining_model, "edge_threshold", 0.1
+                    self.mining_model, "edge_cutoff_threshold", 0.0
                 )
                 
         # Handle infrequent miner parameters
@@ -132,13 +133,14 @@ class InductiveMinerController(BaseAlgorithmController):
             self.edge_threshold = max(0.0, min(0.9, self.edge_threshold))
             
             # Ensure the mining model has the correct parameters before generation
-            if hasattr(self.mining_model, 'edge_threshold'):
-                self.mining_model.edge_threshold = self.edge_threshold
+            # Note: IMd uses 'edge_cutoff_threshold' in the canonical implementation
+            if hasattr(self.mining_model, 'edge_cutoff_threshold'):
+                self.mining_model.edge_cutoff_threshold = self.edge_threshold
             
             self.mining_model.generate_graph(
                 self.activity_threshold, 
                 self.traces_threshold,
-                edge_threshold=self.edge_threshold
+                edge_cutoff_threshold=self.edge_threshold
             )
         elif self.selected_variant == "Infrequent":
             # Validate infrequent miner specific parameters
@@ -186,9 +188,10 @@ class InductiveMinerController(BaseAlgorithmController):
         # Check IMd (Directly-Follows) miner parameters if selected
         if self.selected_variant == "Directly-Follows":
             if isinstance(self.mining_model, InductiveMiningDF):
-                variant_params_changed = (
-                    getattr(self.mining_model, "edge_threshold", 0.1) != self.edge_threshold
-                )
+                old_edge = getattr(self.mining_model, "edge_cutoff_threshold", 0.0)
+                variant_params_changed = (old_edge != self.edge_threshold)
+                if variant_params_changed:
+                    self.logger.info(f"Edge threshold changed: {old_edge} → {self.edge_threshold}")
             else:
                 # Model type doesn't match selected variant - force change
                 variant_params_changed = True
@@ -196,9 +199,10 @@ class InductiveMinerController(BaseAlgorithmController):
         # Check infrequent miner parameters if selected
         elif self.selected_variant == "Infrequent":
             if isinstance(self.mining_model, InductiveMiningInfrequent):
-                variant_params_changed = (
-                    getattr(self.mining_model, "noise_threshold", 0.2) != self.noise_threshold
-                )
+                old_noise = getattr(self.mining_model, "noise_threshold", 0.2)
+                variant_params_changed = (old_noise != self.noise_threshold)
+                if variant_params_changed:
+                    self.logger.info(f"Noise threshold changed: {old_noise} → {self.noise_threshold}")
             else:
                 # Model type doesn't match selected variant - force change
                 variant_params_changed = True
