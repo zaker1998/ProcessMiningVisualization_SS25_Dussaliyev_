@@ -3,13 +3,11 @@ import pandas as pd
 import pickle
 import base64
 import pm4py
-from pm4py.objects.log.obj import EventLog
 import tempfile
 import os
 import xml.etree.ElementTree as ET
 from exceptions.io_exceptions import UnsupportedFileTypeException, InvalidTypeException
 import logging
-from typing import cast
 
 
 class ImportOperations:
@@ -132,8 +130,8 @@ class ImportOperations:
         with open(file_path, "r") as file:
             return file.readline()
 
-    def read_xes(self, file_path: str | UploadedFile) -> EventLog:
-        """Reads an XES file and returns a PM4Py EventLog object
+    def read_xes(self, file_path: str | UploadedFile) -> pd.DataFrame:
+        """Reads an XES file and returns a pandas DataFrame
 
         Parameters
         ----------
@@ -142,8 +140,8 @@ class ImportOperations:
 
         Returns
         -------
-        EventLog
-            The XES file as a PM4Py EventLog object
+        pd.DataFrame
+            The XES file as a pandas DataFrame
             
         Raises
         ------
@@ -157,38 +155,21 @@ class ImportOperations:
                     temp_file.write(file_path.getvalue())
                     temp_path = temp_file.name
                 
-                # Read the XES file using PM4Py's xes importer directly
-                from pm4py.objects.log.importer.xes import importer as xes_importer
-                event_log = cast(EventLog, xes_importer.apply(temp_path))
+                # Read the XES file and convert to DataFrame
+                event_log = pm4py.read_xes(temp_path)  # type: ignore[arg-type]
+                df = pm4py.convert_to_dataframe(event_log)  # type: ignore[arg-type]
                 
                 # Clean up the temporary file
                 os.unlink(temp_path)
-                return event_log
+                return df
             else:
-                # Read directly from the file path using xes importer
-                from pm4py.objects.log.importer.xes import importer as xes_importer
-                return cast(EventLog, xes_importer.apply(file_path))
+                # Read directly from the file path and convert to DataFrame
+                event_log = pm4py.read_xes(file_path)  # type: ignore[arg-type]
+                return pm4py.convert_to_dataframe(event_log)  # type: ignore[arg-type]
         except Exception as e:
             logging.error(f"Error reading XES file: {str(e)}")
             raise UnsupportedFileTypeException(f"XES file format error: {str(e)}")
 
-    def xes_to_dataframe(self, event_log: EventLog) -> pd.DataFrame:
-        """Converts a PM4Py EventLog object to a pandas DataFrame
-
-        Parameters
-        ----------
-        event_log : EventLog
-            The PM4Py EventLog object
-
-        Returns
-        -------
-        pd.DataFrame
-            The event log as a pandas DataFrame
-        """
-        if not isinstance(event_log, EventLog):
-            raise InvalidTypeException("PM4Py EventLog", type(event_log))
-        return pm4py.convert_to_dataframe(event_log)
-    
     def validate_xes(self, file_path: str | UploadedFile) -> bool:
         """Validates if a file is a valid XES file
 
@@ -203,8 +184,8 @@ class ImportOperations:
             True if the file is a valid XES file, False otherwise
         """
         try:
-            event_log = self.read_xes(file_path)
-            return isinstance(event_log, EventLog) and len(event_log) > 0
+            df = self.read_xes(file_path)
+            return isinstance(df, pd.DataFrame) and len(df) > 0
         except Exception:
             return False
     
@@ -264,25 +245,23 @@ class ImportOperations:
         dict
             Dictionary containing log attributes, trace attributes, and event attributes
         """
-        event_log = self.read_xes(file_path)
+        df = self.read_xes(file_path)
         
         # Initialize attribute containers
         log_attributes = {}
         trace_attributes = set()
         event_attributes = set()
         
-        # Extract log attributes
-        for attr_key, attr_value in event_log.attributes.items():
-            log_attributes[attr_key] = attr_value
-        
-        # Extract trace and event attributes
-        for trace in event_log:
-            for attr_key in trace.attributes.keys():
-                trace_attributes.add(attr_key)
+        # Extract event attributes from DataFrame columns
+        # XES attributes are stored as columns in the DataFrame
+        if not df.empty:
+            event_attributes = set(df.columns.tolist())
             
-            for event in trace:
-                for attr_key in event.keys():
-                    event_attributes.add(attr_key)
+            # Common trace-level attributes (attributes that are constant per case)
+            # These are typically prefixed with 'case:' in XES standard
+            for col in df.columns:
+                if col.startswith('case:'):
+                    trace_attributes.add(col)
         
         return {
             'log_attributes': log_attributes,

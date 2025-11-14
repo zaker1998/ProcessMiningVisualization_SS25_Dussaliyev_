@@ -560,7 +560,10 @@ class InductiveMiningInfrequent(InductiveMining):
         logger.info(f"Noise filtering kept {len(kept_edges)}/{len(edge_freq)} unique edges "
                    f"({len(kept_edges)/len(edge_freq)*100:.1f}%)")
         
-        return filtered_log if filtered_log else log
+        #Return empty log if all traces were filtered
+        # Do NOT fall back to original log - that would undo the filtering!
+        # An empty log will result in a minimal process model (just start/end)
+        return filtered_log
 
     def _compute_edge_frequencies(self, log: Dict[Tuple[str, ...], int]) -> Dict[Tuple[str, str], int]:
         """
