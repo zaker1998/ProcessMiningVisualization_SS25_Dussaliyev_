@@ -59,7 +59,7 @@ class InductiveMinerView(BaseAlgorithmView):
             st.markdown("### Directly-Follows Miner Settings")
             
             # Get current value for dynamic guidance
-            current_edge = st.session_state.get("edge_threshold", 0.1)
+            current_edge = st.session_state.get("edge_threshold", 0.0)
             
             # Edge threshold with dynamic guidance
             number_input_slider(
@@ -113,15 +113,6 @@ class InductiveMinerView(BaseAlgorithmView):
                 - 0.2-0.4: Moderate noise filtering (good for noisy logs)
                 - >0.5: Aggressive noise filtering (may lose important behavior)""",
             )
-            # Status indicator
-            if current_noise == 0.0:
-                st.info("🔧 No filtering")
-            elif current_noise <= 0.2:
-                st.success("✅ Light filtering")
-            elif current_noise <= 0.4:
-                st.warning("⚠️ Moderate filtering")
-            else:
-                st.error("🚨 Aggressive filtering")
             
             # Noise threshold guidance
             st.markdown("**💡 Noise Threshold Tips:**")
@@ -152,7 +143,7 @@ class InductiveMinerView(BaseAlgorithmView):
         
         # Show parameter summary for non-standard variants
         if current_variant == "Directly-Follows":
-            edge_th = st.session_state.get("edge_threshold", 0.1)
+            edge_th = st.session_state.get("edge_threshold", 0.0)
             st.markdown(f"**Current Settings:** Edge Threshold: {edge_th:.2f}")
             
         elif current_variant == "Infrequent":
@@ -163,9 +154,25 @@ class InductiveMinerView(BaseAlgorithmView):
         """Override display_graph to include variant-specific key for proper refresh."""
         with self.graph_container:
             if graph is not None:
-                # Use variant-specific key to force React component refresh when switching variants
+                # Use variant-specific key PLUS all threshold values to force React component refresh
+                # when either the variant OR any threshold changes
                 variant = st.session_state.get('inductive_variant', 'Standard')
-                graph_key = f"inductiveGraph_{variant}"
+                
+                # Include ALL threshold values in the key to ensure refresh when ANY threshold changes
+                activity_threshold = st.session_state.get('activity_threshold', 0.0)
+                traces_threshold = st.session_state.get('traces_threshold', 0.0)
+                edge_threshold = st.session_state.get('edge_threshold', 0.1)
+                noise_threshold = st.session_state.get('noise_threshold', 0.2)
+                
+                # Create a unique key that includes variant and all threshold values
+                # This ensures the React component re-renders whenever ANY parameter changes
+                graph_key = (
+                    f"inductiveGraph_{variant}_"
+                    f"act{activity_threshold:.3f}_"
+                    f"trc{traces_threshold:.3f}_"
+                    f"edg{edge_threshold:.3f}_"
+                    f"noi{noise_threshold:.3f}"
+                )
                 
                 interactiveGraph(
                     graph,

@@ -28,9 +28,9 @@ class ExportView(BaseView):
         with st.sidebar:
             self.export_format_container = st.container()
             self.dpi_container = st.container()
-            export_button_col_wrapper, self.model_export_button_col = st.columns([1, 1])
-            with export_button_col_wrapper:
-                self.export_button_col = st.empty()
+            st.write("")  # Add spacing
+            self.export_button_col = st.empty()
+            self.model_export_button_col = st.container()
 
     def display_png(self, png):
         """Displays the PNG image."""
@@ -91,12 +91,13 @@ class ExportView(BaseView):
                 data=file,
                 mime=mime,
                 type="primary",
+                use_container_width=True,
             )
 
     def display_disabled_export_button(self):
         """Displays a disabled export button."""
         with self.export_button_col:
-            st.button("Export", disabled=True)
+            st.button("Export", disabled=True, use_container_width=True)
 
     def display_model_export_button(self, file_name: str, file: bytes):
         """Displays the model export button.
@@ -115,6 +116,7 @@ class ExportView(BaseView):
                 data=file,
                 mime="application/octet-stream",
                 type="primary",
+                use_container_width=True,
             )
 
     def display_loading_text(self, text):
