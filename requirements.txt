@@ -1,7 +1,9 @@
 numpy
 pandas
 graphviz
-ddcal
 streamlit==1.36.0
-# for testing
+pm4py
+
+# Development/Testing dependencies
 parameterized
+pytest

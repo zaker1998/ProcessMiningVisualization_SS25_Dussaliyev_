@@ -86,6 +86,15 @@ target/
 # save and temp folder
 saves/
 temp/
+src/temp/*
+!src/temp/.gitkeep
+
+# Generated graph files
+*.dot
+*.png
+*.svg
+!docs/**/*.png
+!docs/**/*.svg
 
 # IPython
 profile_default/

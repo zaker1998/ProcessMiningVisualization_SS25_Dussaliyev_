@@ -1,8 +1,0 @@
-numpy
-pandas
-graphviz
-ddcal
-streamlit==1.36.0
-
-# for testing
-parameterized
