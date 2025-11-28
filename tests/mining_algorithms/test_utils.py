@@ -66,103 +66,6 @@ def isProcessTreeEqual(tree1, tree2):
     return True
 
 
-def count_activities_in_tree(tree) -> int:
-    """
-    Count the number of activity nodes (leaves) in a process tree.
-    
-    Parameters
-    ----------
-    tree : tuple | str | int
-        Process tree
-        
-    Returns
-    -------
-    int
-        Number of activity nodes
-    """
-    if isinstance(tree, str):
-        return 0 if tree == "tau" else 1
-    if isinstance(tree, int):
-        return 1
-    if isinstance(tree, tuple):
-        return sum(count_activities_in_tree(child) for child in tree[1:])
-    return 0
-
-
-def get_tree_depth(tree) -> int:
-    """
-    Get the maximum depth of a process tree.
-    
-    Parameters
-    ----------
-    tree : tuple | str | int
-        Process tree
-        
-    Returns
-    -------
-    int
-        Maximum depth of the tree
-    """
-    if isinstance(tree, (str, int)):
-        return 0
-    if isinstance(tree, tuple):
-        if len(tree) <= 1:
-            return 0
-        return 1 + max(get_tree_depth(child) for child in tree[1:])
-    return 0
-
-
-def extract_activities_from_tree(tree) -> set:
-    """
-    Extract all unique activities from a process tree.
-    
-    Parameters
-    ----------
-    tree : tuple | str | int
-        Process tree
-        
-    Returns
-    -------
-    set
-        Set of all activities (excluding tau)
-    """
-    if isinstance(tree, str):
-        return set() if tree == "tau" else {tree}
-    if isinstance(tree, int):
-        return {tree}
-    if isinstance(tree, tuple):
-        activities = set()
-        for child in tree[1:]:
-            activities.update(extract_activities_from_tree(child))
-        return activities
-    return set()
-
-
-def tree_contains_operator(tree, operator: str) -> bool:
-    """
-    Check if a process tree contains a specific operator.
-    
-    Parameters
-    ----------
-    tree : tuple | str | int
-        Process tree
-    operator : str
-        Operator to search for ('seq', 'xor', 'par', 'loop')
-        
-    Returns
-    -------
-    bool
-        True if operator is found, False otherwise
-    """
-    if isinstance(tree, (str, int)):
-        return False
-    if isinstance(tree, tuple):
-        if tree[0] == operator:
-            return True
-        return any(tree_contains_operator(child, operator) for child in tree[1:])
-    return False
-
-
 class TestLogGenerator:
     """Helper class to generate test event logs with various patterns."""
     
@@ -440,29 +343,6 @@ EXPECTED_TREES = {
     'simple_loop': ('loop', 'A', 'tau'),
     'complex_nested': ('seq', 1, ('loop', ('par', 2, 3), ('seq', 5, 6)), 4),
 }
-
-
-def print_tree(tree, indent=0):
-    """
-    Pretty print a process tree (for debugging).
-    
-    Parameters
-    ----------
-    tree : tuple | str | int
-        Process tree
-    indent : int
-        Indentation level
-    """
-    prefix = "  " * indent
-    
-    if isinstance(tree, (str, int)):
-        print(f"{prefix}{tree}")
-        return
-    
-    if isinstance(tree, tuple):
-        print(f"{prefix}{tree[0]}")
-        for child in tree[1:]:
-            print_tree(child, indent + 1)
 
 
 
