@@ -3,16 +3,14 @@ import os
 import pandas as pd
 import tempfile
 import shutil
-from pm4py.objects.log.obj import EventLog, Trace, Event
-from src.io_operations.import_operations import ImportOperations
-from src.io_operations.export_operations import ExportOperations
+from io_ops.import_ import ImportOperations
+
 
 class TestXESOperations(unittest.TestCase):
     
     def setUp(self):
         """Set up the test environment before each test method runs"""
         self.importer = ImportOperations()
-        self.exporter = ExportOperations()
         
         # Create a test directory for output files
         self.test_output_dir = os.path.join(tempfile.gettempdir(), 'test_xes_output')
@@ -30,233 +28,197 @@ class TestXESOperations(unittest.TestCase):
             ])
         })
         
-        # Create a simple event log with proper datetime format
-        self.test_event_log = EventLog()
+        # Create a sample XES file for testing
+        self.sample_xes_content = '''<?xml version="1.0" encoding="UTF-8" ?>
+<log>
+    <trace>
+        <string key="concept:name" value="case1"/>
+        <event>
+            <string key="concept:name" value="activity1"/>
+            <date key="time:timestamp" value="2023-01-01T10:00:00"/>
+        </event>
+        <event>
+            <string key="concept:name" value="activity2"/>
+            <date key="time:timestamp" value="2023-01-01T11:00:00"/>
+        </event>
+    </trace>
+    <trace>
+        <string key="concept:name" value="case2"/>
+        <event>
+            <string key="concept:name" value="activity1"/>
+            <date key="time:timestamp" value="2023-01-02T10:00:00"/>
+        </event>
+        <event>
+            <string key="concept:name" value="activity3"/>
+            <date key="time:timestamp" value="2023-01-02T11:00:00"/>
+        </event>
+    </trace>
+</log>'''
         
-        # First trace
-        trace1 = Trace()
-        trace1.attributes['concept:name'] = 'case1'
-        
-        event1 = Event()
-        event1['concept:name'] = 'activity1'
-        event1['time:timestamp'] = pd.Timestamp('2023-01-01 10:00:00')
-        
-        event2 = Event()
-        event2['concept:name'] = 'activity2'
-        event2['time:timestamp'] = pd.Timestamp('2023-01-01 11:00:00')
-        
-        trace1.append(event1)
-        trace1.append(event2)
-        
-        # Second trace
-        trace2 = Trace()
-        trace2.attributes['concept:name'] = 'case2'
-        
-        event3 = Event()
-        event3['concept:name'] = 'activity1'
-        event3['time:timestamp'] = pd.Timestamp('2023-01-02 10:00:00')
-        
-        event4 = Event()
-        event4['concept:name'] = 'activity3'
-        event4['time:timestamp'] = pd.Timestamp('2023-01-02 11:00:00')
-        
-        trace2.append(event3)
-        trace2.append(event4)
-        
-        self.test_event_log.append(trace1)
-        self.test_event_log.append(trace2)
+        # Write sample XES file
+        self.sample_xes_path = os.path.join(self.test_output_dir, 'sample.xes')
+        with open(self.sample_xes_path, 'w', encoding='utf-8') as f:
+            f.write(self.sample_xes_content)
         
     def tearDown(self):
         """Clean up after each test method runs"""
         # Remove the test output directory
         shutil.rmtree(self.test_output_dir, ignore_errors=True)
     
-    def test_export_dataframe_to_xes(self):
-        """Test exporting a DataFrame to XES and then reading it back"""
-        output_file = os.path.join(self.test_output_dir, 'test_df_export.xes')
+    def test_read_xes_returns_dataframe(self):
+        """Test that reading XES file returns a DataFrame"""
+        df = self.importer.read_xes(self.sample_xes_path)
         
-        # Export DataFrame to XES
-        self.exporter.export_to_xes(self.test_df, output_file)
+        # Verify it's a DataFrame
+        self.assertIsInstance(df, pd.DataFrame)
         
-        # Check that file exists
-        self.assertTrue(os.path.exists(output_file))
-        
-        # Import the XES file
-        event_log = self.importer.read_xes(output_file)
-        
-        # Verify it's an EventLog
-        self.assertIsInstance(event_log, EventLog)
-        
-        # Verify trace count
-        self.assertEqual(len(event_log), 2)
-        
-        # Convert back to DataFrame and check some values
-        df_reimport = self.importer.xes_to_dataframe(event_log)
-        self.assertEqual(len(df_reimport), 4)
+        # Verify row count (4 events)
+        self.assertEqual(len(df), 4)
     
-    def test_export_event_log_to_xes(self):
-        """Test exporting an EventLog to XES and then reading it back"""
-        output_file = os.path.join(self.test_output_dir, 'test_event_log_export.xes')
+    def test_read_xes_has_correct_columns(self):
+        """Test that the DataFrame has expected columns"""
+        df = self.importer.read_xes(self.sample_xes_path)
         
-        # Export EventLog to XES
-        self.exporter.export_to_xes(self.test_event_log, output_file)
-        
-        # Check that file exists
-        self.assertTrue(os.path.exists(output_file))
-        
-        # Import the XES file
-        event_log = self.importer.read_xes(output_file)
-        
-        # Verify it's an EventLog
-        self.assertIsInstance(event_log, EventLog)
-        
-        # Verify trace count
-        self.assertEqual(len(event_log), 2)
-        
-        # Verify the first trace's first event's activity name
-        self.assertEqual(event_log[0][0]['concept:name'], 'activity1')
+        # Check for expected columns
+        self.assertIn('concept:name', df.columns)
+        self.assertIn('case:concept:name', df.columns)
+        self.assertIn('time:timestamp', df.columns)
     
-    def test_export_with_custom_columns(self):
-        """Test exporting a DataFrame with custom column mappings"""
-        # Create DataFrame with non-standard column names
-        custom_df = pd.DataFrame({
-            'case_id': ['case1', 'case1', 'case2', 'case2'],
-            'activity': ['activity1', 'activity2', 'activity1', 'activity3'],
-            'timestamp': pd.to_datetime([
-                '2023-01-01 10:00:00', 
-                '2023-01-01 11:00:00', 
-                '2023-01-02 10:00:00', 
-                '2023-01-02 11:00:00'
-            ])
-        })
+    def test_read_xes_case_ids(self):
+        """Test that case IDs are correctly extracted"""
+        df = self.importer.read_xes(self.sample_xes_path)
         
-        output_file = os.path.join(self.test_output_dir, 'test_custom_cols.xes')
-        
-        # Export with custom column mappings
-        self.exporter.export_dataframe_to_xes(
-            custom_df,
-            output_file,
-            case_id_col='case_id',
-            activity_col='activity',
-            timestamp_col='timestamp'
-        )
-        
-        # Check that file exists
-        self.assertTrue(os.path.exists(output_file))
-        
-        # Import the XES file
-        event_log = self.importer.read_xes(output_file)
-        
-        # Convert back to DataFrame and verify
-        df_reimport = self.importer.xes_to_dataframe(event_log)
-        
-        # Should now have standard column names
-        self.assertTrue('case:concept:name' in df_reimport.columns)
-        self.assertTrue('concept:name' in df_reimport.columns)
-        self.assertTrue('time:timestamp' in df_reimport.columns)
+        # Check case IDs
+        case_ids = df['case:concept:name'].unique().tolist()
+        self.assertIn('case1', case_ids)
+        self.assertIn('case2', case_ids)
+        self.assertEqual(len(case_ids), 2)
     
-    def test_export_with_attributes(self):
-        """Test exporting with custom log and trace attributes"""
-        output_file = os.path.join(self.test_output_dir, 'test_attributes.xes')
+    def test_read_xes_activities(self):
+        """Test that activities are correctly extracted"""
+        df = self.importer.read_xes(self.sample_xes_path)
         
-        # Custom attributes
-        log_attrs = {
-            'creator': 'Test Suite',
-            'version': '1.0'
-        }
-        
-        trace_attrs = {
-            'department': 'Testing'
-        }
-        
-        # Export with custom attributes
-        self.exporter.export_logs_with_attributes(
-            self.test_df,
-            output_file,
-            log_attributes=log_attrs,
-            trace_attributes=trace_attrs
-        )
-        
-        # Check that file exists
-        self.assertTrue(os.path.exists(output_file))
-        
-        # Import the XES file
-        event_log = self.importer.read_xes(output_file)
-        
-        # Verify log attributes
-        self.assertEqual(event_log.attributes['creator'], 'Test Suite')
-        self.assertEqual(event_log.attributes['version'], '1.0')
-        
-        # Verify trace attributes
-        self.assertEqual(event_log[0].attributes['department'], 'Testing')
+        # Check activities
+        activities = df['concept:name'].unique().tolist()
+        self.assertIn('activity1', activities)
+        self.assertIn('activity2', activities)
+        self.assertIn('activity3', activities)
     
-    def test_validate_xes(self):
-        """Test the XES validation functionality"""
-        # First create a valid XES file
-        output_file = os.path.join(self.test_output_dir, 'test_valid.xes')
-        self.exporter.export_to_xes(self.test_df, output_file)
+    def test_read_xes_with_namespace(self):
+        """Test reading XES file with namespace"""
+        xes_with_ns = '''<?xml version="1.0" encoding="UTF-8" ?>
+<log xmlns="http://www.xes-standard.org/">
+    <trace>
+        <string key="concept:name" value="case1"/>
+        <event>
+            <string key="concept:name" value="activity1"/>
+        </event>
+    </trace>
+</log>'''
         
-        # Test validation on valid file
-        self.assertTrue(self.importer.validate_xes(output_file))
+        xes_path = os.path.join(self.test_output_dir, 'with_namespace.xes')
+        with open(xes_path, 'w', encoding='utf-8') as f:
+            f.write(xes_with_ns)
         
-        # Create an invalid file (just a text file)
+        df = self.importer.read_xes(xes_path)
+        
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(len(df), 1)
+    
+    def test_read_xes_with_various_types(self):
+        """Test reading XES file with different attribute types"""
+        xes_content = '''<?xml version="1.0" encoding="UTF-8" ?>
+<log>
+    <trace>
+        <string key="concept:name" value="case1"/>
+        <event>
+            <string key="concept:name" value="activity1"/>
+            <int key="cost" value="100"/>
+            <float key="duration" value="1.5"/>
+            <boolean key="completed" value="true"/>
+        </event>
+    </trace>
+</log>'''
+        
+        xes_path = os.path.join(self.test_output_dir, 'various_types.xes')
+        with open(xes_path, 'w', encoding='utf-8') as f:
+            f.write(xes_content)
+        
+        df = self.importer.read_xes(xes_path)
+        
+        self.assertEqual(len(df), 1)
+        self.assertIn('cost', df.columns)
+        self.assertIn('duration', df.columns)
+        self.assertIn('completed', df.columns)
+        
+        # Check types
+        self.assertEqual(df['cost'].iloc[0], 100)
+        self.assertEqual(df['duration'].iloc[0], 1.5)
+        self.assertEqual(df['completed'].iloc[0], True)
+    
+    def test_validate_xes_valid_file(self):
+        """Test validation on a valid XES file"""
+        self.assertTrue(self.importer.validate_xes(self.sample_xes_path))
+    
+    def test_validate_xes_invalid_file(self):
+        """Test validation on an invalid file"""
         invalid_file = os.path.join(self.test_output_dir, 'invalid.xes')
         with open(invalid_file, 'w') as f:
-            f.write("<not>valid</xes>")
+            f.write("<not>valid xes</not>")
             
-        # Test validation on invalid file
         self.assertFalse(self.importer.validate_xes(invalid_file))
+    
+    def test_validate_xes_structure(self):
+        """Test the internal XES structure validation"""
+        self.assertTrue(self.importer._validate_xes_structure(self.sample_xes_path))
+        
+        # Create file without traces
+        no_traces = '''<?xml version="1.0" encoding="UTF-8" ?>
+<log>
+</log>'''
+        no_traces_path = os.path.join(self.test_output_dir, 'no_traces.xes')
+        with open(no_traces_path, 'w', encoding='utf-8') as f:
+            f.write(no_traces)
+        
+        self.assertFalse(self.importer._validate_xes_structure(no_traces_path))
     
     def test_get_xes_attributes(self):
         """Test getting attributes from an XES file"""
-        # First create an XES file with attributes
-        output_file = os.path.join(self.test_output_dir, 'test_get_attrs.xes')
+        attributes = self.importer.get_xes_attributes(self.sample_xes_path)
         
-        # Create event log with custom attributes
-        event_log = EventLog()
-        event_log.attributes['creator'] = 'Test'
-        
-        trace = Trace()
-        trace.attributes['concept:name'] = 'case1'
-        trace.attributes['department'] = 'Testing'
-        
-        event = Event()
-        event['concept:name'] = 'activity1'
-        event['cost'] = 100
-        
-        trace.append(event)
-        event_log.append(trace)
-        
-        # Export the event log
-        self.exporter.export_to_xes(event_log, output_file)
-        
-        # Get attributes
-        attributes = self.importer.get_xes_attributes(output_file)
-        
-        # Verify the structure and contents
+        # Verify the structure
         self.assertIn('log_attributes', attributes)
         self.assertIn('trace_attributes', attributes)
         self.assertIn('event_attributes', attributes)
         
-        self.assertEqual(attributes['log_attributes']['creator'], 'Test')
-        self.assertIn('department', attributes['trace_attributes'])
-        self.assertIn('cost', attributes['event_attributes'])
+        # Check event attributes
+        self.assertIn('concept:name', attributes['event_attributes'])
+        self.assertIn('time:timestamp', attributes['event_attributes'])
     
-    def test_export_to_xes_bytes(self):
-        """Test exporting to XES as bytes"""
-        # Export to bytes
-        xes_bytes = self.exporter.export_to_xes_bytes(self.test_df)
+    def test_read_xes_empty_trace(self):
+        """Test reading XES file with empty traces"""
+        xes_content = '''<?xml version="1.0" encoding="UTF-8" ?>
+<log>
+    <trace>
+        <string key="concept:name" value="empty_case"/>
+    </trace>
+    <trace>
+        <string key="concept:name" value="case1"/>
+        <event>
+            <string key="concept:name" value="activity1"/>
+        </event>
+    </trace>
+</log>'''
         
-        # Check we got bytes back
-        self.assertIsInstance(xes_bytes, bytes)
+        xes_path = os.path.join(self.test_output_dir, 'empty_trace.xes')
+        with open(xes_path, 'w', encoding='utf-8') as f:
+            f.write(xes_content)
         
-        # Write bytes to a file
-        temp_file = os.path.join(self.test_output_dir, 'test_bytes.xes')
-        with open(temp_file, 'wb') as f:
-            f.write(xes_bytes)
-            
-        # Read the file to ensure it's valid XES
-        self.assertTrue(self.importer.validate_xes(temp_file))
+        df = self.importer.read_xes(xes_path)
+        
+        # Should only have 1 event (from the non-empty trace)
+        self.assertEqual(len(df), 1)
+
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()
