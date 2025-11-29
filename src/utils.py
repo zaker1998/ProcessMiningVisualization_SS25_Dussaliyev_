@@ -1,45 +1,8 @@
 import streamlit as st
-import hashlib
 import pandas as pd
 import time
 from functools import wraps
 
-def cache_dataframe(func):
-    """Decorator to cache pandas dataframes to improve performance."""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Create a cache key based on function arguments
-        key_items = [func.__name__]
-        for arg in args:
-            if isinstance(arg, pd.DataFrame):
-                # For dataframes, use a hash of the first few rows
-                key_items.append(hashlib.md5(pd.util.hash_pandas_object(arg.head()).values).hexdigest())
-            else:
-                key_items.append(str(arg))
-                
-        for k, v in kwargs.items():
-            if isinstance(v, pd.DataFrame):
-                key_items.append(f"{k}:{hashlib.md5(pd.util.hash_pandas_object(v.head()).values).hexdigest()}")
-            else:
-                key_items.append(f"{k}:{v}")
-                
-        cache_key = hashlib.md5("|".join(key_items).encode()).hexdigest()
-        
-        # Check if result is in cache
-        if cache_key in st.session_state.get("df_cache", {}):
-            return st.session_state.df_cache[cache_key]
-            
-        # Not in cache, compute result
-        result = func(*args, **kwargs)
-        
-        # Store in cache
-        if "df_cache" not in st.session_state:
-            st.session_state.df_cache = {}
-        st.session_state.df_cache[cache_key] = result
-        
-        return result
-    
-    return wrapper
 
 def timed_execution(func):
     """Decorator to measure execution time of functions."""
