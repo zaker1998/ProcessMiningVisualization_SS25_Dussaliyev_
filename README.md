@@ -1,104 +1,136 @@
 ![alt text](https://github.com/MLUX-University-of-Vienna/ProcessMiningVisualization_SS24_Frauenberger/blob/master/VisuPM.jpg?raw=true)
 
-# Process-Mining-Visualization
+# Process Mining Visualization
 
-Implementation of a desktop app for importing event logs, mining and visualizing process models by using different algorithms (like alpha miner, heuristic miner, inductive miner, fuzzy miner) and metrics for filtering nodes and edges on mined process models. Mined process models can be exported as images.
+A desktop application for importing event logs, mining and visualizing process models using various algorithms (Heuristic Miner, Inductive Miner, Fuzzy Miner) with configurable metrics for filtering nodes and edges. Process models can be exported as images.
 
-# Status
+## Status
 
-This project is at version 0.2.0
-Ready for use. Hopefully no severe bugs.
+**Version:** 0.2.0  
+**Status:** Production Ready
 
-The Heuristic Miner, Fuzzy Miner and Inductive Miner algorithms have been implemented.
+### Implemented Algorithms
+- ✅ Heuristic Miner
+- ✅ Fuzzy Miner  
+- ✅ Inductive Miner (including IMf and IMd variants)
 
-# Ensure the virtual environment is installed. If it hasn't been already then
+## Project Structure
 
-Create a new directory, e.g venv and install the virtual environment using command:
-
-```bash
-pip install virtualenv
+```
+Process_Mining_Visualisation/
+├── src/                          # Source code
+│   ├── app.py                    # Main Streamlit application entry
+│   ├── config.py                 # Configuration and constants
+│   ├── core/                     # Core business logic
+│   │   ├── algorithms/           # Mining algorithm implementations
+│   │   ├── graphs/               # Graph structures (DFG, cuts)
+│   │   ├── log_processing/       # Log filters and splits
+│   │   └── analysis/             # Detection and prediction models
+│   ├── io/                       # Import/Export operations
+│   ├── ui/                       # User interface
+│   │   ├── components/           # Reusable UI components
+│   │   ├── pages/                # Page controllers and views
+│   │   │   ├── algorithms/       # Algorithm-specific UIs
+│   │   │   ├── data/             # Data handling pages
+│   │   │   └── tools/            # Utility pages
+│   │   └── theme.py              # Theme management
+│   ├── transformations/          # Data transformations
+│   ├── exceptions/               # Custom exceptions
+│   └── utils/                    # Shared utilities
+├── tests/                        # Test suite
+│   ├── fixtures/                 # Test data (CSV, logs)
+│   ├── unit/                     # Unit tests
+│   └── integration/              # Integration tests
+├── docs/                         # Documentation
+│   ├── algorithms/               # Algorithm specifications
+│   ├── diagrams/                 # Architecture diagrams
+│   ├── guides/                   # User guides
+│   └── research/                 # Academic papers
+├── data/                         # Sample data
+│   └── samples/                  # Example event logs
+├── .streamlit/                   # Streamlit configuration
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
 ```
 
-# Activate the virtual environment
+## Quick Start
 
-Navigate to the main directory and confirm its name (in this case, 'venv', the second parameter), then execute:
+### Prerequisites
 
-```bash
-python -m venv venv
-```
+- **Python** 3.10+ (tested with 3.10.7, 3.11.6, 3.12.2)
+- **Graphviz** - [Download here](https://graphviz.org/)
 
-Move to venv/Scripts/ then activate virtual environment(Windows) using command:
+### Installation
 
-```bash
-source activate
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd Process_Mining_Visualisation
+   ```
 
-# Requirements
+2. **Create virtual environment**
+   ```bash
+   python -m venv .venv
+   ```
 
-Python version 3.10.7, 3.11.6, 3.12.2 ----- Older versions likely to work as well, but not tested.
-Download Python from <www.python.org>
+3. **Activate virtual environment**
+   
+   Windows (PowerShell):
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+   
+   Windows (CMD):
+   ```cmd
+   .venv\Scripts\activate.bat
+   ```
+   
+   Linux/macOS:
+   ```bash
+   source .venv/bin/activate
+   ```
 
-Graphviz
-To install Graphviz, visit the Graphviz website (<https://graphviz.org/>) and download the appropriate installer for your operating system. Follow the installation instructions provided by the Graphviz project to install it on your system.
+4. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-After installing Graphviz, open a new terminal or command prompt and run the following command to verify if the dot command is accessible:
+5. **Verify Graphviz installation**
+   ```bash
+   dot -V
+   ```
+   
+   If not found, add Graphviz to your PATH:
+   - **Windows:** Add `C:\Program Files\Graphviz\bin` to PATH
+   - **Linux/macOS:** Add `export PATH="/path/to/graphviz/bin:$PATH"` to `.bashrc`
 
-```bash
-dot -V
-```
-
-Add Graphviz to the PATH: If the dot command is not found, you need to add the Graphviz executables directory to the system's PATH environment variable. The steps to do this depend on your operating system:
-Windows: Open the "System Properties" window and go to the "Advanced" tab. Click on the "Environment Variables" button, find the "Path" variable in the "System variables" section, and edit it. Add the directory containing the Graphviz executables (e.g., C:\Program Files\Graphviz\bin) to the list of paths. Click "OK" to save the changes.
-
-Linux/macOS: Edit the .bashrc or .bash_profile file in your home directory (or the appropriate shell configuration file for your shell). Add the following line at the end of the file, replacing /path/to/graphviz/bin with the actual path to the Graphviz executables:
-
-```bash
-export PATH="/path/to/graphviz/bin:$PATH"
-```
-
-Save the file and restart the terminal for the changes to take effect.
-
-Other required Python libraries are in requirements.txt and can be installed with
-
-```bash
-pip install -r requirements.txt
-```
-
-# Usage Interface
-
-Open a CMD in THIS folder and type
-
-```bash
-streamlit run streamlit_app.py
-```
-
-It will open the browser.
-
-## How to run unit tests?
-
-Unittest can be run by the following command:
+### Running the Application
 
 ```bash
-python -m unittest <Path To Tests>
+cd src
+streamlit run app.py
 ```
 
-in the root folder.
+The application will open in your default browser.
 
-The testing requirements need to be installed. This are written in the `tests/test_requirements.txt` file.
-These can be installed using the following command:
+## Testing
 
+### Install test dependencies
 ```bash
 pip install -r tests/test_requirements.txt
 ```
 
-If you want to run unit tests of `heuristic_mining_test.py` in the directory `tests/mining_algorithms`, just type the command below:
-
+### Run all tests
 ```bash
-python -m unittest tests.mining_algorithms.heuristic_mining_test
+python -m pytest tests/
 ```
 
-To run all tests us the following command:
-
+### Run specific test module
 ```bash
-python -m unittest tests
+python -m pytest tests/unit/core/algorithms/
+```
+
+### Run with coverage
+```bash
+python -m pytest tests/ --cov=src --cov-report=html
 ```

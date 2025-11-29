@@ -1,0 +1,167 @@
+import numpy as np
+from core.graphs.visualization.heuristic_graph import HeuristicGraph
+from core.algorithms.base import BaseMining
+from utils.logger import get_logger
+
+
+class HeuristicMining(BaseMining):
+    def __init__(self, log):
+        super().__init__(log)
+        self.logger = get_logger("HeuristicMining")
+
+        self.dependency_matrix = self.__create_dependency_matrix()
+
+        # Graph modifiers
+        self.min_edge_thickness = 1
+        self.min_frequency = 1
+        self.dependency_threshold = 0.5
+        self.max_frequency = int(np.max(self.succession_matrix))
+
+        self.edge_freq = self.succession_matrix.flatten()
+        self.edge_freq = np.unique(self.edge_freq[self.edge_freq >= 0.0])
+
+        self.edge_freq_sorted, self.edge_freq_labels_sorted = self.get_clusters(
+            self.edge_freq.tolist()
+        )
+
+    def create_dependency_graph_with_graphviz(
+        self, dependency_threshold, min_frequency
+    ):
+        dependency_graph = self.__create_dependency_graph(
+            dependency_threshold, min_frequency
+        )
+        self.dependency_threshold = dependency_threshold
+        self.min_frequency = min_frequency
+
+        # create graph
+        self.graph = HeuristicGraph()
+
+        frequent_nodes = [
+            node
+            for node in self.events
+            if self.appearance_frequency[node] >= min_frequency
+        ]
+
+        # add frequent nodes to graph
+        for node in frequent_nodes:
+            node_freq = self.appearance_frequency.get(node, 0)
+            w, h = self.calulate_node_size(node)
+            self.graph.add_event(node, node_freq, (int(w), int(h)))
+
+        # add edges to graph
+        sources, targets = np.nonzero(dependency_graph)
+        for source, target, weight in zip(
+            sources, targets, dependency_graph[sources, targets]
+        ):
+            if dependency_threshold == 0:
+                edge_thickness = 0.1
+            else:
+                edge_thickness = (
+                    self.get_edge_scale_factor(source, target) + self.min_edge_thickness
+                )
+
+            self.graph.create_edge(
+                self.events[source],
+                self.events[target],
+                weight=int(weight),
+                size=edge_thickness,
+            )
+
+        # add start and end nodes
+        self.graph.add_start_node()
+        self.graph.add_end_node()
+
+        # add starting and ending edges from the log to the graph. Only if they are frequent
+        self.graph.add_starting_edges(list(self.start_nodes.intersection(frequent_nodes)))
+        self.graph.add_ending_edges(list(self.end_nodes.intersection(frequent_nodes)))
+
+        # get frequent sources and sinks from the dependency graph
+        source_nodes = self.__get_sources_from_dependency_graph(
+            dependency_graph
+        ).intersection(frequent_nodes)
+        sink_nodes = self.__get_sinks_from_dependency_graph(
+            dependency_graph
+        ).intersection(frequent_nodes)
+
+        # add starting and ending edges from the dependency graph to the graph
+        self.graph.add_starting_edges(list(source_nodes - self.start_nodes))
+        self.graph.add_ending_edges(list(sink_nodes - self.end_nodes))
+
+    def get_max_frequency(self):
+        return self.max_frequency
+
+    def get_min_frequency(self):
+        return self.min_frequency
+
+    def get_threshold(self):
+        return self.dependency_threshold
+
+    def __create_dependency_matrix(self):
+        dependency_matrix = np.zeros(self.succession_matrix.shape)
+        np.fill_diagonal(dependency_matrix, 1.0)
+
+        non_diagonal_indices = np.where(dependency_matrix == 0)
+        # Get the number of events (first dimension of the matrix)
+        matrix_shape = dependency_matrix.shape
+        if len(matrix_shape) > 0:
+            n_events = matrix_shape[0]
+        else:
+            n_events = 0
+        diagonal_indices = np.diag_indices(n_events)
+
+        dependency_matrix[diagonal_indices] = self.succession_matrix[
+            diagonal_indices
+        ] / (self.succession_matrix[diagonal_indices] + 1)
+
+        x, y = non_diagonal_indices
+
+        dependency_matrix[x, y] = (
+            self.succession_matrix[x, y] - self.succession_matrix[y, x]
+        ) / (self.succession_matrix[x, y] + self.succession_matrix[y, x] + 1)
+        return dependency_matrix
+
+    def __create_dependency_graph(self, dependency_treshhold, min_frequency):
+        dependency_graph = np.zeros(self.dependency_matrix.shape)
+        # filter out the edges that are not frequent enough or not dependent enough
+        filter_matrix = (self.succession_matrix >= min_frequency) & (
+            self.dependency_matrix >= dependency_treshhold
+        )
+
+        dependency_graph[filter_matrix] = self.succession_matrix[filter_matrix]
+
+        return dependency_graph
+
+    def __get_sources_from_dependency_graph(self, dependency_graph):
+        indices = self.__get_all_axis_with_all_zero(dependency_graph, axis=0)
+        return set([self.events[i] for i in indices])
+
+    def __get_sinks_from_dependency_graph(self, dependency_graph):
+        indices = self.__get_all_axis_with_all_zero(dependency_graph, axis=1)
+        return set([self.events[i] for i in indices])
+
+    def __get_all_axis_with_all_zero(self, dependency_graph, axis=0):
+        filter_matrix = dependency_graph == 0
+        # edges from and to the same node are not considered
+        np.fill_diagonal(filter_matrix, True)
+        return np.where(filter_matrix.all(axis=axis))[0]
+
+    def get_edge_scale_factor(self, source, target):
+        edge_value = self.succession_matrix[source][target]
+        # Extract scalar value if it's a numpy array
+        if isinstance(edge_value, np.ndarray):
+            edge_value = edge_value.item()
+        
+        try:
+            # Handle both list and numpy array cases
+            if isinstance(self.edge_freq_sorted, np.ndarray):
+                idx = np.where(self.edge_freq_sorted == edge_value)[0]
+                if len(idx) > 0:
+                    scale_factor = self.edge_freq_labels_sorted[idx[0]]
+                else:
+                    scale_factor = 1.0
+            else:
+                idx = self.edge_freq_sorted.index(edge_value)
+                scale_factor = self.edge_freq_labels_sorted[idx]
+            return scale_factor
+        except Exception:
+            return 1.0

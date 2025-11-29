@@ -134,7 +134,7 @@ The algorithm tries cuts in this canonical order:
 ### Usage
 
 ```python
-from mining_algorithms.inductive_mining_infrequent import InductiveMiningInfrequent
+from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 # Create miner instance
 miner = InductiveMiningInfrequent(log)
@@ -218,7 +218,7 @@ This enables the algorithm to scale to massive logs.
 ### Usage
 
 ```python
-from mining_algorithms.inductive_mining_df import InductiveMiningDF
+from core.algorithms.inductive_df import InductiveMiningDF
 
 # Create miner instance
 miner = InductiveMiningDF(log)

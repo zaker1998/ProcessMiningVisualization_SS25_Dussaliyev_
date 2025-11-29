@@ -48,17 +48,20 @@ algorithm_mappings = {
     "Inductive Mining": "inductive",
 }
 # Maps the algorithm routes to the paths of the documentation files.
+# Use relative paths from the src directory (where app.py runs from)
+import os
+_docs_base = os.path.join(os.path.dirname(__file__), "..", "docs", "algorithms")
 docs_path_mappings = {
-    "heuristic": "docs/algorithms/heuristic_miner.md",
-    "fuzzy": "docs/algorithms/fuzzy_miner.md",
-    "inductive": "docs/algorithms/inductive_miner.md",
+    "heuristic": os.path.normpath(os.path.join(_docs_base, "heuristic_miner.md")),
+    "fuzzy": os.path.normpath(os.path.join(_docs_base, "fuzzy_miner.md")),
+    "inductive": os.path.normpath(os.path.join(_docs_base, "inductive_miner.md")),
 }
 
 # Import UI modules only if they can be found (i.e., not when running tests)
 try:
-    from ui.heuristic_miner_ui.heuristic_miner_controller import HeuristicMinerController
-    from ui.fuzzy_miner_ui.fuzzy_miner_controller import FuzzyMinerController
-    from ui.inductive_miner_ui.inductive_miner_controller import InductiveMinerController
+    from ui.pages.algorithms.heuristic.heuristic_miner_controller import HeuristicMinerController
+    from ui.pages.algorithms.fuzzy.fuzzy_miner_controller import FuzzyMinerController
+    from ui.pages.algorithms.inductive.inductive_miner_controller import InductiveMinerController
 
     # Maps the algorithm routes to the controllers.
     algorithm_routes = {
