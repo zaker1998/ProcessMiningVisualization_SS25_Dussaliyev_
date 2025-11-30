@@ -124,31 +124,116 @@ def apply_theme():
     }}
     
     section[data-testid="stFileUploadDropzone"] small {{
-        color: {colors["text_color"]} !important;
+        color: {'#4a5568' if current_theme == 'light' else colors["text_color"]} !important;
     }}
     
-    /* Drag and drop area - enhanced for Mozilla/Firefox */
-    [data-testid="stFileUploadDropzone"] > div {{
+    /* Drag and drop area - comprehensive targeting for all themes */
+    [data-testid="stFileUploadDropzone"] > div,
+    [data-testid="stFileUploadDropzone"] > div > div,
+    [data-testid="stFileUploadDropzone"] div,
+    [data-testid="stFileUploaderDropzone"],
+    [data-testid="stFileUploaderDropzoneInstructions"],
+    [data-testid="stFileUploaderDropzoneInstructions"] div {{
         background-color: {colors["control_bg"]} !important;
-        color: {colors["text_color"]} !important;
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+        border-color: {'#cbd5e0' if current_theme == 'light' else '#4a5568'} !important;
     }}
     
-    /* More specific targeting for drag-drop inner divs */
-    [data-testid="stFileUploadDropzone"] div {{
-        background-color: {colors["control_bg"]} !important;
-        color: {colors["text_color"]} !important;
+    /* File uploader dropzone button */
+    [data-testid="stFileUploadDropzone"] button,
+    [data-testid="baseButton-secondary"] {{
+        background-color: {colors["bg_color"]} !important;
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
         border-color: {'#cbd5e0' if current_theme == 'light' else '#4a5568'} !important;
     }}
     
     /* Upload icon in drag-drop area */
-    [data-testid="stFileUploadDropzone"] svg {{
-        color: {colors["text_color"]} !important;
+    [data-testid="stFileUploadDropzone"] svg,
+    [data-testid="stFileUploaderDropzoneInstructions"] svg {{
+        color: {'#4a5568' if current_theme == 'light' else colors["text_color"]} !important;
+        fill: {'#4a5568' if current_theme == 'light' else colors["text_color"]} !important;
     }}
     
     /* Fix drag-drop text elements */
     [data-testid="stFileUploadDropzone"] p,
-    [data-testid="stFileUploadDropzone"] span {{
-        color: {colors["text_color"]} !important;
+    [data-testid="stFileUploadDropzone"] span,
+    [data-testid="stFileUploaderDropzoneInstructions"] span,
+    [data-testid="stFileUploaderDropzoneInstructions"] p {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* File uploader limit text */
+    [data-testid="stFileUploadDropzone"] small,
+    [data-testid="stFileUploaderDropzoneInstructions"] small {{
+        color: {'#4a5568' if current_theme == 'light' else '#a0aec0'} !important;
+    }}
+    
+    /* File uploader label */
+    [data-testid="stFileUploader"] label,
+    [data-testid="stFileUploader"] > label > div {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Uploaded file name */
+    [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
+    [data-testid="stFileUploader"] .uploadedFileName {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Radio button labels */
+    [data-testid="stRadio"] label,
+    [data-testid="stRadio"] label span,
+    [data-testid="stRadio"] label p,
+    .stRadio label {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Text input fields - fix text color in light theme */
+    [data-testid="stTextInput"] input,
+    [data-testid="stTextInput"] label,
+    .stTextInput input,
+    .stTextInput label {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    [data-testid="stTextInput"] input {{
+        background-color: {'#ffffff' if current_theme == 'light' else colors["control_bg"]} !important;
+    }}
+    
+    /* General labels and markdown in light theme */
+    .stMarkdown p,
+    .stMarkdown span,
+    .stMarkdown label {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Tabs styling - fix text visibility in light theme */
+    [data-baseweb="tab-list"] button,
+    [data-baseweb="tab"] {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    [data-baseweb="tab-list"] button[aria-selected="true"],
+    [data-baseweb="tab-highlight"] {{
+        color: {'#3182ce' if current_theme == 'light' else '#63b3ed'} !important;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] button {{
+        color: {'#4a5568' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
+        color: {'#3182ce' if current_theme == 'light' else '#63b3ed'} !important;
+    }}
+    
+    /* Buttons - add border for better visibility in light theme */
+    .stButton > button {{
+        border: 1px solid {'#cbd5e0' if current_theme == 'light' else '#4a5568'} !important;
+    }}
+    
+    /* Primary buttons keep their accent styling */
+    .stButton > button[kind="primary"] {{
+        border: none !important;
     }}
     
     /* Page header/toolbar fix for light theme */
@@ -174,6 +259,39 @@ def apply_theme():
     [data-testid="stToolbar"] {{
         background-color: {colors["bg_color"]} !important;
         color: {colors["text_color"]} !important;
+    }}
+    
+    /* Error/Warning/Info notifications - fix text visibility in light theme */
+    [data-testid="stNotification"],
+    [data-testid="stAlert"],
+    .stAlert,
+    .stException,
+    div[data-baseweb="notification"] {{
+        color: #1a202c !important;
+    }}
+    
+    [data-testid="stNotification"] p,
+    [data-testid="stNotification"] span,
+    [data-testid="stAlert"] p,
+    [data-testid="stAlert"] span,
+    .stAlert p,
+    .stAlert span,
+    div[data-baseweb="notification"] p,
+    div[data-baseweb="notification"] span {{
+        color: #1a202c !important;
+    }}
+    
+    /* Error notification specific */
+    [data-testid="stNotification"][data-type="error"],
+    .stException {{
+        color: #742a2a !important;
+    }}
+    
+    [data-testid="stNotification"][data-type="error"] p,
+    [data-testid="stNotification"][data-type="error"] span,
+    .stException p,
+    .stException span {{
+        color: #742a2a !important;
     }}
     </style>
     """
