@@ -44,10 +44,7 @@ class HomeView(BaseView):
                         <span class="feature-icon">🔄</span> Interactive dependency graphs
                     </div>
                     <div class="feature-item">
-                        <span class="feature-icon">💾</span> Easy data import/export
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">🔧</span> File format converter
+                        <span class="feature-icon">💾</span> Easy data import/export & format converter
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
