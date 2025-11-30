@@ -239,12 +239,23 @@ class BaseView(ABC):
                 height: 2.8rem !important;
                 margin-top: 0.5rem !important;
                 box-shadow: 0 2px 4px var(--shadow) !important;
+                border: 1px solid var(--form-border) !important;
             }}
             
             /* Sample data button hover effect */
             .sample-data-button:hover {{
                 transform: translateY(-2px) !important;
                 box-shadow: 0 4px 8px var(--shadow) !important;
+            }}
+            
+            /* Regular buttons in light theme - add border */
+            .stButton > button {{
+                border: 1px solid var(--form-border) !important;
+            }}
+            
+            /* Primary/accent buttons keep their styling */
+            .stButton > button[kind="primary"] {{
+                border: none !important;
             }}
             
             /* Sample data header */
@@ -296,11 +307,25 @@ class BaseView(ABC):
                 transition: color 0.3s ease;
             }}
             
-            /* Other Streamlit elements */
+            /* Text input styling - fix for light theme */
             .stTextInput>div>div {{
-                background-color: var(--bg-secondary);
+                background-color: var(--main-bg);
                 color: var(--text-primary);
                 transition: background-color 0.3s ease, color 0.3s ease;
+            }}
+            
+            .stTextInput input {{
+                color: var(--text-primary) !important;
+                background-color: var(--main-bg) !important;
+            }}
+            
+            .stTextInput label {{
+                color: var(--text-primary) !important;
+            }}
+            
+            [data-testid="stTextInput"] input {{
+                color: var(--text-primary) !important;
+                background-color: var(--main-bg) !important;
             }}
             
             /* Fix for alignment of columns */
@@ -370,20 +395,64 @@ class BaseView(ABC):
                 color: var(--text-primary) !important;
             }}
             
-            /* Drag and drop inner divs */
-            [data-testid="stFileUploadDropzone"] div {{
+            /* Drag and drop inner divs - comprehensive targeting */
+            [data-testid="stFileUploadDropzone"] div,
+            [data-testid="stFileUploadDropzone"] > div,
+            [data-testid="stFileUploadDropzone"] > div > div,
+            [data-testid="stFileUploadDropzone"] [data-testid="stFileUploaderDropzone"],
+            [data-testid="stFileUploaderDropzone"],
+            [data-testid="stFileUploaderDropzoneInstructions"],
+            [data-testid="stFileUploaderDropzoneInstructions"] div {{
                 background-color: var(--control-bg) !important;
                 color: var(--text-primary) !important;
             }}
             
-            /* Upload icon in drag-drop area */
-            [data-testid="stFileUploadDropzone"] svg {{
+            /* File uploader dropzone button */
+            [data-testid="stFileUploadDropzone"] button,
+            [data-testid="baseButton-secondary"] {{
+                background-color: var(--main-bg) !important;
                 color: var(--text-primary) !important;
+                border-color: var(--form-border) !important;
+            }}
+            
+            /* Upload icon in drag-drop area */
+            [data-testid="stFileUploadDropzone"] svg,
+            [data-testid="stFileUploaderDropzoneInstructions"] svg {{
+                color: var(--text-secondary) !important;
+                fill: var(--text-secondary) !important;
             }}
             
             /* Fix drag-drop text elements */
             [data-testid="stFileUploadDropzone"] p,
-            [data-testid="stFileUploadDropzone"] span {{
+            [data-testid="stFileUploadDropzone"] span,
+            [data-testid="stFileUploaderDropzoneInstructions"] span,
+            [data-testid="stFileUploaderDropzoneInstructions"] p {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* File uploader limit text (small text) */
+            [data-testid="stFileUploadDropzone"] small,
+            [data-testid="stFileUploaderDropzoneInstructions"] small {{
+                color: var(--text-secondary) !important;
+            }}
+            
+            /* File uploader label */
+            [data-testid="stFileUploader"] label,
+            [data-testid="stFileUploader"] > label > div {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Uploaded file name */
+            [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
+            [data-testid="stFileUploader"] .uploadedFileName {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Radio button labels */
+            [data-testid="stRadio"] label,
+            [data-testid="stRadio"] label span,
+            [data-testid="stRadio"] label p,
+            .stRadio label {{
                 color: var(--text-primary) !important;
             }}
             
@@ -429,6 +498,64 @@ class BaseView(ABC):
             
             div[data-testid="stNumberInput"] [data-testid="StyledThumbValue"] {{
                 display: none !important;
+            }}
+            
+            /* Error/Warning/Info notifications - fix text visibility */
+            [data-testid="stNotification"],
+            [data-testid="stAlert"],
+            .stAlert,
+            .stException,
+            div[data-baseweb="notification"] {{
+                color: #1a202c !important;
+            }}
+            
+            [data-testid="stNotification"] p,
+            [data-testid="stNotification"] span,
+            [data-testid="stAlert"] p,
+            [data-testid="stAlert"] span,
+            div[data-baseweb="notification"] p,
+            div[data-baseweb="notification"] span {{
+                color: #1a202c !important;
+            }}
+            
+            /* Error notification - dark red text */
+            [data-testid="stNotification"][data-type="error"] p,
+            [data-testid="stNotification"][data-type="error"] span,
+            .stException p,
+            .stException span {{
+                color: #742a2a !important;
+            }}
+            
+            /* Tabs styling - fix text visibility in light theme */
+            .stTabs [data-baseweb="tab-list"] {{
+                background-color: var(--main-bg) !important;
+            }}
+            
+            .stTabs [data-baseweb="tab"],
+            .stTabs button,
+            [data-testid="stTabs"] button,
+            [role="tab"] {{
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Active/selected tab */
+            .stTabs [data-baseweb="tab"][aria-selected="true"],
+            .stTabs button[aria-selected="true"],
+            [role="tab"][aria-selected="true"] {{
+                color: var(--accent-primary) !important;
+                border-bottom-color: var(--accent-primary) !important;
+            }}
+            
+            /* Tab panel content */
+            .stTabs [data-baseweb="tab-panel"],
+            [data-testid="stTabContent"] {{
+                background-color: var(--main-bg) !important;
+                color: var(--text-primary) !important;
+            }}
+            
+            /* Tab highlight/underline */
+            .stTabs [data-baseweb="tab-highlight"] {{
+                background-color: var(--accent-primary) !important;
             }}
         </style>
         """
