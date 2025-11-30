@@ -126,9 +126,8 @@ class HomeController(BaseController):
                         if not self.import_model.validate_xes(self.uploaded_file):
                             raise UnsupportedFileTypeException("Invalid XES file format")
                         
-                        # Import XES and convert to DataFrame
-                        event_log = self.import_model.read_xes(self.uploaded_file)
-                        df = self.import_model.xes_to_dataframe(event_log)
+                        # Import XES - read_xes returns a DataFrame directly
+                        df = self.import_model.read_xes(self.uploaded_file)
                         
                         # Rename columns to more user-friendly names for consistency
                         df = df.rename(columns={
@@ -264,9 +263,8 @@ class HomeController(BaseController):
                     # Load the CSV file with comma delimiter (most common)
                     df = self.import_model.read_csv(file_path, delimiter=",")
                 elif file_type == "xes":
-                    # Load the XES file
-                    event_log = self.import_model.read_xes(file_path)
-                    df = self.import_model.xes_to_dataframe(event_log)
+                    # Load the XES file - read_xes returns a DataFrame directly
+                    df = self.import_model.read_xes(file_path)
                     
                     # Rename columns to more user-friendly names for consistency
                     df = df.rename(columns={
@@ -413,11 +411,8 @@ class HomeController(BaseController):
         """
         try:
             with st.spinner("Converting XES to CSV..."):
-                # Read the XES file
-                event_log = self.import_model.read_xes(xes_file)
-                
-                # Convert to DataFrame
-                df = self.import_model.xes_to_dataframe(event_log)
+                # Read the XES file - read_xes returns a DataFrame directly
+                df = self.import_model.read_xes(xes_file)
                 
                 # If not including all attributes, keep only the essential columns
                 if not include_all_attributes:
