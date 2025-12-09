@@ -1,7 +1,8 @@
 from abc import ABC
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from utils.logger import get_logger
 from core.graphs.visualization.base_graph import BaseGraph
+from core.clustering.ddcal_clustering import DensityDistributionClusterAlgorithm
 
 logger = get_logger("MiningInterface")
 
@@ -22,47 +23,43 @@ class MiningInterface(ABC):
         self, frequency: List[float]
     ) -> Tuple[List[float], List[float]]:
         """
-        Lightweight quantile-based bucketing for node sizing.
-        Returns original frequencies and a list of scale labels (>=1.0).
+        Use the DDCAL (Density Distribution Cluster Algorithm) to cluster frequency data.
+        
+        The clusters are used to determine a scaling factor for nodes in the graph.
+        DDCAL provides evenly distributed low-variance clusters, which is ideal for
+        process mining visualization as it avoids over-emphasizing outliers.
+        
+        Reference:
+            Lux, M., Rinderle-Ma, S. (2023):
+            DDCAL: Evenly Distributing Data into Low Variance Clusters Based on Iterative Feature Scaling.
+            Journal of Classification 40, 02. DOI: 10.1007/s00357-022-09428-6
+
+        Parameters
+        ----------
+        frequency : List[float]
+            The frequency data to be clustered
+
+        Returns
+        -------
+        Tuple[List[float], List[float]]
+            A tuple containing:
+            - sorted_data: The frequency data sorted in ascending order
+            - labels_sorted_data: The cluster labels (scale factors) for each sorted value
         """
         try:
             if not frequency:
                 return [], []
-            values = list(frequency)
-            # Remove negatives and sort
-            values_sorted = sorted(v for v in values if v >= 0)
-            if not values_sorted:
-                return values, [1.0 for _ in values]
-            # Compute simple quantiles (quartiles)
-            n = len(values_sorted)
-            def q(p: float) -> float:
-                if n == 1:
-                    return values_sorted[0]
-                idx = min(max(int(p * (n - 1)), 0), n - 1)
-                return values_sorted[idx]
-            q1 = q(0.25)
-            q2 = q(0.50)
-            q3 = q(0.75)
-            max_v = values_sorted[-1]
-            # Map each frequency to a bucket-based scale
-            labels: List[float] = []
-            for v in values:
-                if v <= q1:
-                    labels.append(1.0)
-                elif v <= q2:
-                    labels.append(1.5)
-                elif v <= q3:
-                    labels.append(2.0)
-                elif v < max_v:
-                    labels.append(2.5)
-                else:
-                    labels.append(3.0)
-            return values, labels
+            cluster = DensityDistributionClusterAlgorithm(frequency)
+            return list(cluster.sorted_data), list(cluster.labels_sorted_data)
+        except ZeroDivisionError as e:
+            self.logger.error(f"Clustering ZeroDivisionError: {e}")
+            self.logger.info("Clustering failed. Returning the original frequency.")
+            return [frequency[0]] if frequency else [], [1.0] if frequency else []
         except Exception as e:
-            self.logger.error("Clustering failed: %s", e)
-            return frequency, [1.0 for _ in frequency]
+            self.logger.error(f"Clustering failed: {e}")
+            return list(frequency), [1.0 for _ in frequency]
 
-    def get_graph(self) -> BaseGraph:
+    def get_graph(self) -> Optional[BaseGraph]:
         """
         Return the produced graph. Subclasses should set self.graph in generate_graph.
         """
