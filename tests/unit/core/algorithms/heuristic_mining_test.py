@@ -3,6 +3,7 @@ This unittest tests the integrity of the heuristic_graph_controller which holds 
 """
 
 import unittest
+from typing import Optional
 
 from core.graphs.visualization.base_graph import BaseGraph
 from core.algorithms.heuristic import HeuristicMining
@@ -87,7 +88,9 @@ class TestHeuristic(unittest.TestCase):
         heuristicMining.create_dependency_graph_with_graphviz(threshold, min_freq)
         self.__check_graph_integrity(heuristicMining.get_graph())
 
-    def __check_graph_integrity(self, graph: BaseGraph):
+    def __check_graph_integrity(self, graph: Optional[BaseGraph]):
+        self.assertIsNotNone(graph, "Graph should not be None")
+        assert graph is not None  # Type narrowing for type checker
         self.assertTrue(graph.contains_node("Start"), "Start node not found.")
         self.assertTrue(graph.contains_node("End"), "End node not found.")
 
