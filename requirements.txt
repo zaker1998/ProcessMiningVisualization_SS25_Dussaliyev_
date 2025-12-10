@@ -3,6 +3,7 @@ pandas
 graphviz
 streamlit==1.36.0
 pm4py
+ddcal
 
 # Development/Testing dependencies
 parameterized

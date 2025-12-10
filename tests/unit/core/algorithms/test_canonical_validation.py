@@ -20,6 +20,19 @@ from typing import Dict, Tuple, Any
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 from core.algorithms.inductive_df import InductiveMiningDF
 from core.algorithms.inductive import InductiveMining
+from core.analysis.metrics import (
+    QualityMetrics,
+    calculate_all_metrics,
+    calculate_fitness,
+    calculate_precision,
+    calculate_generalization,
+    calculate_simplicity,
+    count_nodes,
+    get_tree_depth,
+    extract_activities,
+    count_tau,
+    get_operator_distribution,
+)
 
 
 def is_process_tree_equal(tree1: Any, tree2: Any) -> bool:
@@ -452,6 +465,261 @@ class TestPerformanceBenchmarks(unittest.TestCase):
         
         # Should complete efficiently
         self.assertLess(execution_time, 15.0)  # 15 seconds max
+
+
+class TestFourDevilsMetrics(unittest.TestCase):
+    """
+    Test the Four Devils quality metrics implementation.
+    
+    These tests verify that the quality metrics are computed correctly
+    and produce meaningful results for different process structures.
+    """
+    
+    def setUp(self):
+        """Set up test logs with known structures."""
+        # Perfect sequential log
+        self.sequential_log = {
+            ('A', 'B', 'C'): 100,
+        }
+        
+        # Parallel log
+        self.parallel_log = {
+            ('A', 'B', 'C'): 50,
+            ('A', 'C', 'B'): 50,
+        }
+        
+        # Choice log
+        self.choice_log = {
+            ('A', 'B'): 50,
+            ('A', 'C'): 50,
+        }
+        
+        # Noisy log
+        self.noisy_log = {
+            ('A', 'B', 'C'): 100,
+            ('A', 'C', 'B'): 100,
+            ('A', 'X', 'B', 'C'): 3,
+            ('A', 'B', 'Y', 'C'): 2,
+        }
+    
+    def test_fitness_perfect_model(self):
+        """Test fitness on perfect model."""
+        miner = InductiveMining(self.sequential_log)
+        tree = miner.inductive_mining(self.sequential_log)
+        
+        fitness = calculate_fitness(tree, self.sequential_log)
+        
+        # Perfect model should have high fitness
+        self.assertGreaterEqual(fitness, 0.8)
+        self.assertLessEqual(fitness, 1.0)
+    
+    def test_fitness_parallel_model(self):
+        """Test fitness on parallel model."""
+        miner = InductiveMining(self.parallel_log)
+        tree = miner.inductive_mining(self.parallel_log)
+        
+        fitness = calculate_fitness(tree, self.parallel_log)
+        
+        # Should have good fitness
+        self.assertGreaterEqual(fitness, 0.7)
+    
+    def test_precision_sequential(self):
+        """Test precision on sequential model."""
+        miner = InductiveMining(self.sequential_log)
+        tree = miner.inductive_mining(self.sequential_log)
+        
+        precision = calculate_precision(tree, self.sequential_log)
+        
+        # Sequential models are typically precise
+        self.assertGreaterEqual(precision, 0.5)
+        self.assertLessEqual(precision, 1.0)
+    
+    def test_precision_choice(self):
+        """Test precision on choice model."""
+        miner = InductiveMining(self.choice_log)
+        tree = miner.inductive_mining(self.choice_log)
+        
+        precision = calculate_precision(tree, self.choice_log)
+        
+        # XOR models have good precision
+        self.assertGreaterEqual(precision, 0.5)
+    
+    def test_generalization_diverse_log(self):
+        """Test generalization on diverse log."""
+        miner = InductiveMining(self.parallel_log)
+        tree = miner.inductive_mining(self.parallel_log)
+        
+        generalization = calculate_generalization(tree, self.parallel_log)
+        
+        # Should have reasonable generalization
+        self.assertGreaterEqual(generalization, 0.3)
+        self.assertLessEqual(generalization, 1.0)
+    
+    def test_simplicity_sequential(self):
+        """Test simplicity on sequential model."""
+        tree = ('seq', 'A', 'B', 'C')
+        
+        simplicity = calculate_simplicity(tree, self.sequential_log)
+        
+        # Sequential models are simple
+        self.assertGreaterEqual(simplicity, 0.5)
+    
+    def test_simplicity_complex_tree(self):
+        """Test simplicity on complex model."""
+        # Complex nested tree
+        tree = ('seq', 'A', ('par', ('xor', 'B', 'C'), ('loop', 'D', 'tau')), 'E')
+        
+        simplicity = calculate_simplicity(tree)
+        
+        # Complex models should have lower simplicity
+        self.assertLessEqual(simplicity, 0.8)
+    
+    def test_all_metrics_computed(self):
+        """Test that all metrics are computed together."""
+        miner = InductiveMining(self.sequential_log)
+        tree = miner.inductive_mining(self.sequential_log)
+        
+        metrics = calculate_all_metrics(tree, self.sequential_log)
+        
+        # All fields should be populated
+        self.assertIsInstance(metrics, QualityMetrics)
+        self.assertIsNotNone(metrics.fitness)
+        self.assertIsNotNone(metrics.precision)
+        self.assertIsNotNone(metrics.generalization)
+        self.assertIsNotNone(metrics.simplicity)
+        self.assertIsNotNone(metrics.f1_score)
+        
+        # Structural metrics
+        self.assertGreater(metrics.node_count, 0)
+        self.assertGreater(metrics.tree_depth, 0)
+        self.assertGreater(metrics.activity_count, 0)
+    
+    def test_f1_score_computation(self):
+        """Test F1 score is computed correctly."""
+        miner = InductiveMining(self.sequential_log)
+        tree = miner.inductive_mining(self.sequential_log)
+        
+        metrics = calculate_all_metrics(tree, self.sequential_log)
+        
+        # F1 = 2 * (precision * fitness) / (precision + fitness)
+        expected_f1 = 2 * (metrics.fitness * metrics.precision) / (metrics.fitness + metrics.precision)
+        
+        self.assertAlmostEqual(metrics.f1_score, expected_f1, places=4)
+    
+    def test_metrics_bounds(self):
+        """Test that all metrics are within valid bounds."""
+        logs = [self.sequential_log, self.parallel_log, self.choice_log, self.noisy_log]
+        
+        for log in logs:
+            miner = InductiveMining(log)
+            tree = miner.inductive_mining(log)
+            metrics = calculate_all_metrics(tree, log)
+            
+            # All quality metrics should be between 0 and 1
+            self.assertGreaterEqual(metrics.fitness, 0.0)
+            self.assertLessEqual(metrics.fitness, 1.0)
+            self.assertGreaterEqual(metrics.precision, 0.0)
+            self.assertLessEqual(metrics.precision, 1.0)
+            self.assertGreaterEqual(metrics.generalization, 0.0)
+            self.assertLessEqual(metrics.generalization, 1.0)
+            self.assertGreaterEqual(metrics.simplicity, 0.0)
+            self.assertLessEqual(metrics.simplicity, 1.0)
+            self.assertGreaterEqual(metrics.f1_score, 0.0)
+            self.assertLessEqual(metrics.f1_score, 1.0)
+    
+    def test_operator_distribution(self):
+        """Test operator distribution counting."""
+        tree = ('seq', 'A', ('par', 'B', 'C'), ('xor', 'D', 'E'), ('loop', 'F', 'tau'))
+        
+        ops = get_operator_distribution(tree)
+        
+        self.assertEqual(ops['seq'], 1)
+        self.assertEqual(ops['par'], 1)
+        self.assertEqual(ops['xor'], 1)
+        self.assertEqual(ops['loop'], 1)
+    
+    def test_count_nodes(self):
+        """Test node counting."""
+        tree = ('seq', 'A', 'B', 'C')
+        
+        nodes = count_nodes(tree)
+        
+        # seq + 3 activities = 4 nodes
+        self.assertEqual(nodes, 4)
+    
+    def test_count_tau(self):
+        """Test tau counting."""
+        tree = ('loop', 'A', 'tau')
+        
+        taus = count_tau(tree)
+        
+        self.assertEqual(taus, 1)
+    
+    def test_extract_activities(self):
+        """Test activity extraction."""
+        tree = ('seq', 'A', ('par', 'B', 'C'), ('xor', 'D', 'tau'))
+        
+        activities = extract_activities(tree)
+        
+        self.assertEqual(activities, {'A', 'B', 'C', 'D'})
+    
+    def test_noisy_log_metrics(self):
+        """Test metrics on noisy log with different algorithms."""
+        # IMf should handle noise better
+        miner_imf = InductiveMiningInfrequent(self.noisy_log)
+        miner_imf.noise_threshold = 0.2
+        tree_imf = miner_imf.inductive_mining(self.noisy_log)
+        metrics_imf = calculate_all_metrics(tree_imf, self.noisy_log)
+        
+        # IMd standard
+        miner_imd = InductiveMiningDF(self.noisy_log)
+        tree_imd = miner_imd.inductive_mining(self.noisy_log)
+        metrics_imd = calculate_all_metrics(tree_imd, self.noisy_log)
+        
+        # Both should produce valid metrics
+        self.assertIsNotNone(metrics_imf.fitness)
+        self.assertIsNotNone(metrics_imd.fitness)
+        
+        # Print comparison for manual review
+        print(f"\n[NOISY LOG TEST]")
+        print(f"  IMf: Fitness={metrics_imf.fitness:.4f} Precision={metrics_imf.precision:.4f} "
+              f"Simplicity={metrics_imf.simplicity:.4f} Nodes={metrics_imf.node_count}")
+        print(f"  IMd: Fitness={metrics_imd.fitness:.4f} Precision={metrics_imd.precision:.4f} "
+              f"Simplicity={metrics_imd.simplicity:.4f} Nodes={metrics_imd.node_count}")
+
+
+class TestMetricsToDict(unittest.TestCase):
+    """Test QualityMetrics to_dict functionality."""
+    
+    def test_to_dict(self):
+        """Test metrics can be converted to dictionary."""
+        log = {('A', 'B', 'C'): 100}
+        miner = InductiveMining(log)
+        tree = miner.inductive_mining(log)
+        metrics = calculate_all_metrics(tree, log)
+        
+        d = metrics.to_dict()
+        
+        self.assertIsInstance(d, dict)
+        self.assertIn('fitness', d)
+        self.assertIn('precision', d)
+        self.assertIn('generalization', d)
+        self.assertIn('simplicity', d)
+        self.assertIn('f1_score', d)
+        self.assertIn('node_count', d)
+    
+    def test_to_string(self):
+        """Test metrics can be converted to string."""
+        log = {('A', 'B', 'C'): 100}
+        miner = InductiveMining(log)
+        tree = miner.inductive_mining(log)
+        metrics = calculate_all_metrics(tree, log)
+        
+        s = str(metrics)
+        
+        self.assertIsInstance(s, str)
+        self.assertIn('Fitness', s)
+        self.assertIn('Precision', s)
 
 
 # Helper function for manual PM4Py comparison

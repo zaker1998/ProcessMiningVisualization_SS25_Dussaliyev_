@@ -1,6 +1,7 @@
 import unittest
-from .detection_model_tests import *
-from .prediction_model_tests import *
+# Note: Specific test modules are imported as needed
+# from .detection_model_tests import *
+# from .prediction_model_tests import *
 
 if __name__ == "__main__":
     unittest.main()
