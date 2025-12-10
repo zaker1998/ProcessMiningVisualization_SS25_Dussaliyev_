@@ -365,13 +365,13 @@ class InductiveMiningInfrequent(InductiveMining):
             cut = self._try_all_cuts(full_dfg, log)
             if cut:
                 operator, sublogs = cut
-                logger.info(f"✓ Phase 1 SUCCESS: Found {operator} cut on full DFG")
+                logger.info(f"[OK] Phase 1 SUCCESS: Found {operator} cut on full DFG")
                 logger.debug(f"  Partitions: {len(sublogs)} sublogs with sizes "
                            f"{[len(sublog) for sublog in sublogs]}")
                 # Return in format expected by parent: (operator, sublog1, sublog2, ...)
                 return (operator, *sublogs)
             else:
-                logger.debug("✗ Phase 1 FAILED: No cut found on full DFG")
+                logger.debug("[--] Phase 1: No cut found on full DFG")
                 
         except Exception as e:
             logger.error(f"Error in Phase 1 (full DFG): {e}")
@@ -387,7 +387,7 @@ class InductiveMiningInfrequent(InductiveMining):
                 
                 # Check if filtering made any difference
                 if filtered_dfg.get_edges() == full_dfg.get_edges():
-                    logger.debug("✗ Phase 2 SKIPPED: No edges filtered")
+                    logger.debug("[--] Phase 2 SKIPPED: No edges filtered")
                     return None
                 
                 logger.debug(f"Filtered DFG: {len(filtered_dfg.get_nodes())} nodes, "
@@ -397,13 +397,13 @@ class InductiveMiningInfrequent(InductiveMining):
                 cut = self._try_all_cuts(filtered_dfg, log)
                 if cut:
                     operator, sublogs = cut
-                    logger.info(f"✓ Phase 2 SUCCESS: Found {operator} cut on filtered DFG")
+                    logger.info(f"[OK] Phase 2 SUCCESS: Found {operator} cut on filtered DFG")
                     logger.debug(f"  Partitions: {len(sublogs)} sublogs with sizes "
                                f"{[len(sublog) for sublog in sublogs]}")
                     # Return in format expected by parent: (operator, sublog1, sublog2, ...)
                     return (operator, *sublogs)
                 else:
-                    logger.debug("✗ Phase 2 FAILED: No cut found on filtered DFG")
+                    logger.debug("[--] Phase 2: No cut found on filtered DFG")
                     
             except Exception as e:
                 logger.error(f"Error in Phase 2 (filtered DFG): {e}")
@@ -473,15 +473,15 @@ class InductiveMiningInfrequent(InductiveMining):
                     
                     # Validate split quality
                     if self._validate_split(splits, log, operator):
-                        logger.debug(f"    ✓ {description} cut VALID")
+                        logger.debug(f"    [+] {description} cut VALID")
                         return (operator, splits)
                     else:
-                        logger.debug(f"    ✗ {description} cut INVALID (failed validation)")
+                        logger.debug(f"    [-] {description} cut INVALID (failed validation)")
                 else:
-                    logger.debug(f"    ✗ {description} cut not found")
+                    logger.debug(f"    [-] {description} cut not found")
                     
             except Exception as e:
-                logger.debug(f"    ✗ {description} cut error: {e}")
+                logger.debug(f"    [-] {description} cut error: {e}")
                 continue
                 
         return None
