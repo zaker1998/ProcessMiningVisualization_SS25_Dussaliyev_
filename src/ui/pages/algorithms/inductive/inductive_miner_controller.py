@@ -87,6 +87,10 @@ class InductiveMinerController(BaseAlgorithmController):
             # Create a new instance of the selected variant class
             self.mining_model = variant_class(self.mining_model.log)
             
+            # CRITICAL: Update session state with the new model instance
+            # This ensures the new model persists across Streamlit reruns
+            st.session_state.model = self.mining_model
+            
             # Clear any cached results when switching variants to prevent stale visualizations
             if hasattr(self.mining_model, '_dfg_cache'):
                 self.mining_model._dfg_cache.clear()
