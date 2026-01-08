@@ -116,9 +116,12 @@ class InductiveMiningInfrequent(InductiveMining):
         filtered_log = filter_traces(self.log, min_traces_frequency)
         filtered_log = filter_events(filtered_log, events_to_remove)
         
-        # NOTE: We do NOT filter the log based on noise threshold here.
-        # The paper-based IMf algorithm filters EDGES in the DFG during cut detection (Phase 2),
-        # not traces from the log. This is handled in calulate_cut() -> _create_filtered_dfg()
+        # Apply noise-based trace filtering for practical usability
+        # This filters traces containing infrequent edges, making the noise threshold
+        # have a visible effect on the visualization (similar to activity/traces thresholds)
+        if noise_threshold > 0.0:
+            filtered_log = self._filter_log_by_edge_frequency(filtered_log)
+            logger.info(f"After noise filtering: {len(filtered_log)} traces remaining")
         
         # Check if anything changed
         log_changed = filtered_log != self.filtered_log
