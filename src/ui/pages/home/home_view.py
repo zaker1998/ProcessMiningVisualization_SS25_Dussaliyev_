@@ -68,16 +68,6 @@ class HomeView(BaseView):
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Tools section
-            st.markdown("### 🛠️ Tools")
-            tool_col1, tool_col2 = st.columns(2)
-            
-            with tool_col1:
-                if st.button("🔬 Compare with PM4Py", use_container_width=True,
-                           help="Validate custom Inductive Miners against PM4Py reference implementations"):
-                    st.session_state.page = "VariantComparison"
-                    st.rerun()
-            
             st.divider()
 
     def display_file_upload(self, file_types: list[str]):
