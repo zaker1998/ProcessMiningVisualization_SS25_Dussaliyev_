@@ -582,17 +582,17 @@ class InductiveMiningInfrequent(InductiveMining):
         """
         try:
             if hasattr(dfg, 'start_nodes') and hasattr(dfg, 'end_nodes'):
-                start_nodes: Set[str] = {
+                start_nodes = {
                     trace[0] for trace in log.keys() if trace
                 }
-                end_nodes: Set[str] = {
+                end_nodes = {
                     trace[-1] for trace in log.keys() if trace
                 }
                 
                 # Only include nodes that are in the DFG
                 dfg_nodes = set(dfg.get_nodes())
-                dfg.start_nodes = start_nodes & dfg_nodes
-                dfg.end_nodes = end_nodes & dfg_nodes
+                dfg.start_nodes = start_nodes & dfg_nodes  # type: ignore
+                dfg.end_nodes = end_nodes & dfg_nodes  # type: ignore
                 
         except Exception as e:
             logger.debug(f"Could not preserve start/end nodes: {e}")

@@ -494,7 +494,7 @@ def is_empty_trace_frequent(
     ---------------------------------------------
     "IMi only discovers ×(τ, . . .) if ε is frequent enough compared to the number 
     of traces in the log and with respect to k. If ε is not frequent enough, IMi 
-    filters ε from L and recurses on L \ {ε}."
+    filters ε from L and recurses on L without ε."
     
     The empty trace is considered frequent if:
         freq(ε) / total_traces >= noise_threshold

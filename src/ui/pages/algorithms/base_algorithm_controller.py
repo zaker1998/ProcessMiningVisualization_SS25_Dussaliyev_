@@ -1,5 +1,6 @@
 ﻿import streamlit as st
 from abc import abstractmethod
+from typing import TYPE_CHECKING, Any, Optional
 from ui.pages.base.base_controller import BaseController
 from transformations.dataframe_transformations import DataframeTransformations
 from ui.components.buttons import to_home
@@ -7,9 +8,14 @@ from exceptions.graph_exceptions import InvalidNodeNameException, GraphException
 from exceptions.type_exceptions import TypeIsNoneException
 from utils.logger import get_logger
 
+if TYPE_CHECKING:
+    from core.algorithms.interface import MiningInterface
+
 
 class BaseAlgorithmController(BaseController):
     """Base class for the algorithm controllers. It provides the basic methods for the algorithm controllers."""
+    
+    mining_model: Optional["MiningInterface"]
 
     def __init__(
         self, views=None, mining_model_class=None, dataframe_transformations=None

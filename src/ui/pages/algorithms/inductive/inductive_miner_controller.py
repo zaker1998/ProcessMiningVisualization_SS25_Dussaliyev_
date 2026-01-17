@@ -1,3 +1,4 @@
+from typing import Optional
 from ui.pages.algorithms.base_algorithm_controller import BaseAlgorithmController
 from ui.pages.algorithms.inductive.inductive_miner_view import InductiveMinerView
 from core.algorithms.inductive import InductiveMining
@@ -6,6 +7,8 @@ import streamlit as st
 
 class InductiveMinerController(BaseAlgorithmController):
     """Controller for the Inductive Miner algorithm."""
+    
+    mining_model: Optional[InductiveMining]
 
     def __init__(
         self, views=None, mining_model_class=None, dataframe_transformations=None
@@ -42,6 +45,8 @@ class InductiveMinerController(BaseAlgorithmController):
         """Processes the algorithm parameters from the session state. The parameters are set to the instance variables.
         If the parameters are not set in the session state, the default values are used.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         # set session state from instance variables if not set
         if "traces_threshold" not in st.session_state:
             st.session_state.traces_threshold = self.mining_model.get_traces_threshold()
@@ -57,6 +62,8 @@ class InductiveMinerController(BaseAlgorithmController):
 
     def perform_mining(self) -> None:
         """Performs the mining of the Inductive Miner algorithm."""
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         # Validate parameters
         self.activity_threshold = max(0.0, min(1.0, self.activity_threshold))
         self.traces_threshold = max(0.0, min(1.0, self.traces_threshold))
@@ -71,6 +78,8 @@ class InductiveMinerController(BaseAlgorithmController):
         bool
             True if the algorithm parameters have changed, False otherwise.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         return (
             self.mining_model.get_activity_threshold() != self.activity_threshold
             or self.mining_model.get_traces_threshold() != self.traces_threshold
