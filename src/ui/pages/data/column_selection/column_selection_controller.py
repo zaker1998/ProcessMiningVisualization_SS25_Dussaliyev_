@@ -205,5 +205,16 @@ class ColumnSelectionController(BaseController):
             st.session_state.page = "ColumnSelection"
             return
 
+        # Validate time column can be converted to datetime
+        time_col = self.selected_columns.get("time_column")
+        if time_col:
+            try:
+                pd.to_datetime(self.df[time_col])
+            except Exception as e:
+                self.logger.error(f"Time column '{time_col}' could not be converted to datetime: {e}")
+                st.session_state.error = f"The selected time column '{time_col}' could not be parsed as timestamps. Please select a valid time column."
+                st.session_state.page = "ColumnSelection"
+                return
+
         st.session_state.algorithm = algorithm_mappings[self.selected_algorithm]
         st.session_state.selected_columns = self.selected_columns

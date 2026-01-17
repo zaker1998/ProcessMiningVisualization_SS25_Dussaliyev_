@@ -9,7 +9,7 @@ from exceptions.io_exceptions import (
     NotImplementedFileTypeException,
 )
 from utils.logger import get_logger
-from utils.common import validate_event_log, timed_execution
+from utils.common import timed_execution
 
 
 class HomeController(BaseController):
@@ -189,11 +189,9 @@ class HomeController(BaseController):
         with st.spinner("Reading and processing data..."):
             df = self.import_model.read_csv(self.uploaded_file, delimiter)
             
-            # Validate the event log
-            is_valid, message = validate_event_log(df)
-            if not is_valid:
-                st.session_state.error = f"Invalid event log: {message}"
-                # change routing to home
+            # Check for empty dataframe
+            if df.empty:
+                st.session_state.error = "The uploaded file contains no data"
                 st.session_state.page = "Home"
                 return
                 
@@ -275,10 +273,9 @@ class HomeController(BaseController):
                 else:
                     raise UnsupportedFileTypeException(f"Unknown file type for {file_path}")
                 
-                # Validate the event log
-                is_valid, message = validate_event_log(df)
-                if not is_valid:
-                    st.session_state.error = f"Invalid sample data: {message}"
+                # Check for empty dataframe
+                if df.empty:
+                    st.session_state.error = "Sample file contains no data"
                     return
                     
                 # Store the dataframe in session state
