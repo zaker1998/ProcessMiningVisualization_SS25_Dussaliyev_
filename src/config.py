@@ -46,6 +46,7 @@ algorithm_mappings = {
     "Heuristic Mining": "heuristic",
     "Fuzzy Mining": "fuzzy",
     "Inductive Mining": "inductive",
+    "Inductive Mining - Infrequent": "inductive_infrequent",
 }
 # Maps the algorithm routes to the paths of the documentation files.
 # Use relative paths from the src directory (where app.py runs from)
@@ -55,6 +56,7 @@ docs_path_mappings = {
     "heuristic": os.path.normpath(os.path.join(_docs_base, "heuristic_miner.md")),
     "fuzzy": os.path.normpath(os.path.join(_docs_base, "fuzzy_miner.md")),
     "inductive": os.path.normpath(os.path.join(_docs_base, "inductive_miner.md")),
+    "inductive_infrequent": os.path.normpath(os.path.join(_docs_base, "inductive_miner_infrequent.md")),
 }
 
 # Import UI modules only if they can be found (i.e., not when running tests)
@@ -62,12 +64,14 @@ try:
     from ui.pages.algorithms.heuristic.heuristic_miner_controller import HeuristicMinerController
     from ui.pages.algorithms.fuzzy.fuzzy_miner_controller import FuzzyMinerController
     from ui.pages.algorithms.inductive.inductive_miner_controller import InductiveMinerController
+    from ui.pages.algorithms.inductive_infrequent.inductive_infrequent_controller import InductiveInfrequentController
 
     # Maps the algorithm routes to the controllers.
     algorithm_routes = {
         "heuristic": HeuristicMinerController,
         "fuzzy": FuzzyMinerController,
         "inductive": InductiveMinerController,
+        "inductive_infrequent": InductiveInfrequentController,
     }
 except ImportError:
     # Define dummy controllers for testing
@@ -75,4 +79,5 @@ except ImportError:
         "heuristic": None,
         "fuzzy": None,
         "inductive": None,
+        "inductive_infrequent": None,
     }

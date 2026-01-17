@@ -6,7 +6,6 @@ from .interface import MiningInterface
 from .heuristic import HeuristicMining
 from .fuzzy import FuzzyMining
 from .inductive import InductiveMining
-from .inductive_df import InductiveMiningDF
 from .inductive_infrequent import InductiveMiningInfrequent
 
 __all__ = [
@@ -15,6 +14,5 @@ __all__ = [
     "HeuristicMining",
     "FuzzyMining",
     "InductiveMining",
-    "InductiveMiningDF",
     "InductiveMiningInfrequent",
 ]
