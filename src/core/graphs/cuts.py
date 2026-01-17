@@ -46,18 +46,49 @@ def sequence_cut(graph: DFG) -> list[set[str | int]]:
     nodes = list(graph.get_nodes())
 
     reachable_nodes = {node: graph.get_reachable_nodes(node) for node in nodes}
+    
+    # Pre-compute predecessors and successors for XOR detection
+    predecessors = {node: graph.get_predecessors(node) for node in nodes}
+    successors = {node: graph.get_successors(node) for node in nodes}
+    
+    # Get end nodes for detecting XOR at end of process
+    end_nodes = graph.get_end_nodes()
+
+    def should_merge(node_1, node_2) -> bool:
+        """Determine if two nodes should be merged into the same partition."""
+        is_j_reachable_from_i = node_2 in reachable_nodes[node_1]
+        is_i_reachable_from_j = node_1 in reachable_nodes[node_2]
+        
+        # Case 1: Mutually reachable (loop pattern)
+        if is_j_reachable_from_i and is_i_reachable_from_j:
+            return True
+            
+        # Case 2: Not reachable at all (could be parallel or XOR)
+        if not is_i_reachable_from_j and not is_j_reachable_from_i:
+            return True
+        
+        # Case 3: XOR pattern - same predecessors and at least one common successor
+        # This handles cases where nodes are alternatives coming from the same source
+        same_predecessors = predecessors[node_1] == predecessors[node_2]
+        if same_predecessors and predecessors[node_1]:
+            # Check if they share at least one common successor (the main flow continues)
+            common_successors = successors[node_1] & successors[node_2]
+            if common_successors:
+                return True
+            
+            # Case 4: Both are end nodes with same predecessors (XOR at end of process)
+            # This handles: A -> XOR(B, C) where B and C are both end activities
+            if node_1 in end_nodes and node_2 in end_nodes:
+                return True
+        
+        return False
 
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             node_1 = nodes[i]
             node_2 = nodes[j]
-            is_j_reachable_from_i = node_2 in reachable_nodes[node_1]
-            is_i_reachable_from_j = node_1 in reachable_nodes[node_2]
 
-            # merge partitions if the nodes are reachable from each other or not reachable from each other
-            if (is_j_reachable_from_i and is_i_reachable_from_j) or (
-                not is_i_reachable_from_j and not is_j_reachable_from_i
-            ):
+            if should_merge(node_1, node_2):
                 partition_1 = None
                 partition_2 = None
 
