@@ -1,5 +1,5 @@
 """
-Test suite to verify that threshold changes in IMd and IMf actually affect the output.
+Test suite to verify that threshold changes in IMf actually affect the output.
 
 This test suite is designed to catch issues where changing thresholds doesn't change
 the resulting process tree or visualization.
@@ -7,176 +7,7 @@ the resulting process tree or visualization.
 
 import pytest
 from typing import Dict, Tuple
-from core.algorithms.inductive_df import InductiveMiningDF
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
-
-
-class TestIMdThresholdFiltering:
-    """Tests for Inductive Miner - Directly-Follows (IMd) threshold filtering."""
-    
-    @pytest.fixture
-    def noisy_log(self) -> Dict[Tuple[str, ...], int]:
-        """
-        Create a log with clear main behavior and noise.
-        
-        Main behavior: A -> B -> C (frequent)
-        Noise: Various infrequent edges
-        """
-        return {
-            # Main behavior (100 traces)
-            ('A', 'B', 'C'): 100,
-            
-            # Some noise (10 traces each)
-            ('A', 'X', 'C'): 10,
-            ('A', 'Y', 'B', 'C'): 10,
-            ('A', 'B', 'Z', 'C'): 10,
-            
-            # Very rare noise (1 trace each)
-            ('A', 'B', 'B', 'C'): 1,
-            ('A', 'C'): 1,
-        }
-    
-    def test_edge_threshold_zero_keeps_all_edges(self, noisy_log):
-        """Test that edge_threshold=0.0 keeps all edges in the DFG."""
-        miner = InductiveMiningDF(noisy_log)
-        miner.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.0
-        )
-        
-        # With threshold=0.0, all edges should be present
-        # Calculate the DFG to check edge count
-        from core.graphs.dfg import DFG
-        full_dfg = DFG(noisy_log)
-        full_edges = full_dfg.get_edges()
-        
-        # The miner should have processed all edges
-        assert miner.edge_cutoff_threshold == 0.0
-        
-        # Check that the filtered log is not None
-        assert miner.filtered_log is not None
-        assert len(miner.filtered_log) > 0
-        
-        print(f"With threshold=0.0: {len(full_edges)} edges in DFG")
-    
-    def test_edge_threshold_high_filters_edges(self, noisy_log):
-        """Test that high edge_threshold filters out infrequent edges."""
-        miner = InductiveMiningDF(noisy_log)
-        
-        # First, get the max edge frequency
-        from core.graphs.dfg import DFG
-        dfg = DFG(noisy_log)
-        
-        # Compute edge frequencies
-        edge_freq = {}
-        for trace, freq in noisy_log.items():
-            if len(trace) < 2:
-                continue
-            for i in range(len(trace) - 1):
-                edge = (trace[i], trace[i + 1])
-                edge_freq[edge] = edge_freq.get(edge, 0) + freq
-        
-        max_freq = max(edge_freq.values())
-        print(f"Max edge frequency: {max_freq}")
-        print(f"All edge frequencies: {sorted(edge_freq.items(), key=lambda x: -x[1])}")
-        
-        # Use high threshold (e.g., 0.5) which should filter many edges
-        high_threshold = 0.5
-        expected_threshold_value = max_freq * high_threshold
-        
-        # Count edges that should remain
-        expected_remaining = sum(1 for freq in edge_freq.values() if freq >= expected_threshold_value)
-        
-        print(f"Expected threshold value: {expected_threshold_value}")
-        print(f"Expected remaining edges: {expected_remaining}/{len(edge_freq)}")
-        
-        miner.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=high_threshold
-        )
-        
-        assert miner.edge_cutoff_threshold == high_threshold
-        
-        # The graph should be generated
-        assert miner.graph is not None
-        
-        print(f"Graph generated successfully with high threshold")
-    
-    def test_different_thresholds_produce_different_results(self, noisy_log):
-        """Test that different edge thresholds produce different graphs."""
-        # Mine with low threshold
-        miner_low = InductiveMiningDF(noisy_log)
-        miner_low.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.0
-        )
-        graph_low = miner_low.graph
-        
-        # Mine with high threshold
-        miner_high = InductiveMiningDF(noisy_log)
-        miner_high.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.5
-        )
-        graph_high = miner_high.graph
-        
-        # The graphs should be generated
-        print(f"Graph with threshold=0.0: {graph_low}")
-        print(f"Graph with threshold=0.5: {graph_high}")
-        
-        # Verify the thresholds were applied
-        assert miner_low.edge_cutoff_threshold == 0.0
-        assert miner_high.edge_cutoff_threshold == 0.5
-        
-        # Both should have valid graphs
-        assert graph_low is not None
-        assert graph_high is not None
-    
-    def test_threshold_change_forces_regeneration(self, noisy_log):
-        """Test that changing threshold on same miner forces regeneration."""
-        miner = InductiveMiningDF(noisy_log)
-        
-        # First generation with low threshold
-        miner.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.0
-        )
-        graph1 = miner.graph
-        graph1_id = id(miner.graph)
-        graph1_str = str(miner.graph) if miner.graph else None
-        
-        # Second generation with high threshold
-        miner.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.5
-        )
-        graph2 = miner.graph
-        graph2_id = id(miner.graph)
-        graph2_str = str(miner.graph) if miner.graph else None
-        
-        # The threshold should have changed
-        assert miner.edge_cutoff_threshold == 0.5
-        
-        # The graph should be a different object (regenerated)
-        # Note: This might fail if the graph is the same object, indicating no regeneration
-        print(f"Graph 1 ID: {graph1_id}")
-        print(f"Graph 2 ID: {graph2_id}")
-        print(f"Graph 1: {graph1_str}")
-        print(f"Graph 2: {graph2_str}")
-        
-        # The graph should be regenerated (different object)
-        if graph1_id == graph2_id:
-            print("WARNING: Graph was NOT regenerated when threshold changed!")
-            print("This is the bug - changing threshold should regenerate the graph")
-        
-        # At minimum, verify that the threshold was actually updated
-        assert miner.edge_cutoff_threshold == 0.5
 
 
 class TestIMfThresholdFiltering:
@@ -334,35 +165,6 @@ class TestThresholdEffectOnCutDetection:
             ('A', 'B', 'C', 'C', 'D'): 1,
         }
     
-    def test_imd_threshold_affects_cut_detection(self, cut_sensitive_log):
-        """Test that edge_threshold affects which cuts are detected."""
-        # Low threshold - might not find optimal cuts due to noise
-        miner_low = InductiveMiningDF(cut_sensitive_log)
-        miner_low.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.0
-        )
-        
-        # High threshold - should filter noise and find cleaner cuts
-        miner_high = InductiveMiningDF(cut_sensitive_log)
-        miner_high.generate_graph(
-            activity_threshold=0.0,
-            traces_threshold=0.0,
-            edge_cutoff_threshold=0.3
-        )
-        
-        print(f"Graph with low edge threshold: {miner_low.graph}")
-        print(f"Graph with high edge threshold: {miner_high.graph}")
-        
-        # Both should produce graphs
-        assert miner_low.graph is not None
-        assert miner_high.graph is not None
-        
-        # Verify the thresholds were actually set
-        assert miner_low.edge_cutoff_threshold == 0.0
-        assert miner_high.edge_cutoff_threshold == 0.3
-    
     def test_imf_threshold_affects_cut_detection(self, cut_sensitive_log):
         """Test that noise_threshold affects which cuts are detected."""
         # Low threshold - might not find optimal cuts due to noise
@@ -396,15 +198,15 @@ class TestThresholdEffectOnCutDetection:
 class TestEdgeFrequencyCalculation:
     """Tests to verify edge frequency calculation is correct."""
     
-    def test_edge_frequency_calculation_imd(self):
-        """Test that IMd correctly calculates edge frequencies."""
+    def test_edge_frequency_calculation_imf(self):
+        """Test that IMf correctly calculates edge frequencies."""
         log = {
             ('A', 'B', 'C'): 10,
             ('A', 'B', 'D'): 5,
             ('A', 'X', 'C'): 2,
         }
         
-        miner = InductiveMiningDF(log)
+        miner = InductiveMiningInfrequent(log)
         edge_freq = miner._compute_edge_frequencies(log)
         
         # Expected frequencies:
@@ -421,53 +223,6 @@ class TestEdgeFrequencyCalculation:
         assert edge_freq[('X', 'C')] == 2
         
         print(f"Edge frequencies: {edge_freq}")
-    
-    def test_edge_frequency_calculation_imf(self):
-        """Test that IMf correctly calculates edge frequencies."""
-        log = {
-            ('A', 'B', 'C'): 10,
-            ('A', 'B', 'D'): 5,
-            ('A', 'X', 'C'): 2,
-        }
-        
-        miner = InductiveMiningInfrequent(log)
-        edge_freq = miner._compute_edge_frequencies(log)
-        
-        # Same expected frequencies as IMd
-        assert edge_freq[('A', 'B')] == 15
-        assert edge_freq[('B', 'C')] == 10
-        assert edge_freq[('B', 'D')] == 5
-        assert edge_freq[('A', 'X')] == 2
-        assert edge_freq[('X', 'C')] == 2
-        
-        print(f"Edge frequencies: {edge_freq}")
-    
-    def test_filtered_dfg_creation_imd(self):
-        """Test that IMd creates filtered DFG correctly."""
-        log = {
-            ('A', 'B', 'C'): 100,
-            ('A', 'X', 'C'): 10,
-            ('A', 'Y', 'C'): 1,
-        }
-        
-        miner = InductiveMiningDF(log)
-        miner.edge_cutoff_threshold = 0.5
-        
-        # Create filtered DFG
-        filtered_dfg = miner._create_filtered_dfg(log)
-        
-        # Max frequency is A->B: 100
-        # Threshold: 100 * 0.5 = 50
-        # Should keep: A->B (100), B->C (100)
-        # Should filter: A->X (10), X->C (10), A->Y (1), Y->C (1)
-        
-        edges = filtered_dfg.get_edges()
-        print(f"Filtered edges: {edges}")
-        
-        assert ('A', 'B') in edges
-        assert ('B', 'C') in edges
-        assert ('A', 'X') not in edges
-        assert ('A', 'Y') not in edges
     
     def test_filtered_dfg_creation_imf(self):
         """Test that IMf creates filtered DFG correctly."""
@@ -499,4 +254,3 @@ class TestEdgeFrequencyCalculation:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
-

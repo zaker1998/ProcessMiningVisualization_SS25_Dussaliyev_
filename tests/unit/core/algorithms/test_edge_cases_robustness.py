@@ -19,7 +19,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
 
 from core.algorithms.inductive import InductiveMining
-from core.algorithms.inductive_df import InductiveMiningDF
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 # Import from local utils module
@@ -39,7 +38,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with completely empty log."""
         empty_log = {}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(empty_log)
                 result = miner.inductive_mining(empty_log)
@@ -51,7 +50,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test log containing only empty traces."""
         empty_trace_log = {(): 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(empty_trace_log)
                 result = miner.inductive_mining(empty_trace_log)
@@ -62,7 +61,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with single activity occurring once."""
         single_log = {('A',): 1}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(single_log)
                 result = miner.inductive_mining(single_log)
@@ -73,7 +72,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with traces having zero frequency."""
         zero_freq_log = {('A', 'B'): 0, ('C', 'D'): 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(zero_freq_log)
                 # Should handle gracefully
@@ -90,7 +89,7 @@ class TestEdgeCases(unittest.TestCase):
         long_trace = tuple([f'Activity{i}' for i in range(100)])
         long_log = {long_trace: 1}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(long_log)
                 result = miner.inductive_mining(long_log)
@@ -103,7 +102,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with very high trace frequencies."""
         high_freq_log = {('A', 'B', 'C'): 1000000}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(high_freq_log)
                 result = miner.inductive_mining(high_freq_log)
@@ -118,7 +117,7 @@ class TestEdgeCases(unittest.TestCase):
             trace = ('Start', f'Task{i}', 'End')
             many_variants_log[trace] = 1
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(many_variants_log)
                 result = miner.inductive_mining(many_variants_log)
@@ -133,7 +132,7 @@ class TestEdgeCases(unittest.TestCase):
         trace = tuple(activities)
         many_activities_log = {trace: 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(many_activities_log)
                 result = miner.inductive_mining(many_activities_log)
@@ -152,7 +151,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with numeric activity labels."""
         numeric_log = {(1, 2, 3): 10, (1, 3, 2): 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(numeric_log)
                 result = miner.inductive_mining(numeric_log)
@@ -166,7 +165,7 @@ class TestEdgeCases(unittest.TestCase):
             ('Start!', 'Process@#$', 'End?'): 10,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(special_log)
                 result = miner.inductive_mining(special_log)
@@ -180,7 +179,7 @@ class TestEdgeCases(unittest.TestCase):
             ('🚀', '⚙️', '✅'): 5,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(unicode_log)
                 result = miner.inductive_mining(unicode_log)
@@ -193,7 +192,7 @@ class TestEdgeCases(unittest.TestCase):
         long_name = 'A' * 1000
         long_name_log = {(long_name, 'B', 'C'): 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(long_name_log)
                 result = miner.inductive_mining(long_name_log)
@@ -206,7 +205,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with threshold = 1.0 (maximum)."""
         log = {('A', 'B'): 100, ('C', 'D'): 50}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -220,7 +219,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with threshold = 0.0 (minimum)."""
         log = {('A', 'B'): 100, ('C', 'D'): 50}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -233,7 +232,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test with very small threshold value."""
         log = {('A', 'B'): 100, ('C', 'D'): 1}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -254,7 +253,7 @@ class TestEdgeCases(unittest.TestCase):
             (1, 2, 4, 3, 5, 6): 10,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(deep_log)
                 result = miner.inductive_mining(deep_log)
@@ -271,7 +270,7 @@ class TestEdgeCases(unittest.TestCase):
             trace = tuple([j % 5 for j in range(i, i + 10)])
             complex_log[trace] = 1
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(complex_log)
                 
@@ -295,7 +294,7 @@ class TestEdgeCases(unittest.TestCase):
         for perm in itertools.permutations(activities):
             concurrent_log[perm] = 10
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(concurrent_log)
                 result = miner.inductive_mining(concurrent_log)
@@ -314,7 +313,7 @@ class TestEdgeCases(unittest.TestCase):
             ('Start', 'C', 'End'): 5,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(partial_log)
                 result = miner.inductive_mining(partial_log)
@@ -327,7 +326,7 @@ class TestEdgeCases(unittest.TestCase):
     
     def test_none_input_to_mining(self):
         """Test with None as input to mining method."""
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass({('A', 'B'): 10})
                 
@@ -348,7 +347,7 @@ class TestEdgeCases(unittest.TestCase):
             ('B', 'B'): 5,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(duplicate_log)
                 result = miner.inductive_mining(duplicate_log)
@@ -362,7 +361,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test when filtering would remove all traces."""
         log = {('A', 'B'): 1, ('C', 'D'): 1}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -383,7 +382,7 @@ class TestEdgeCases(unittest.TestCase):
             ('X', 'Y', 'Z'): 1,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -396,30 +395,6 @@ class TestEdgeCases(unittest.TestCase):
                 # Should handle single activity
                 self.assertIsNotNone(miner.get_graph())
                 
-    # ===== IMd-Specific Edge Cases =====
-    
-    def test_imd_empty_dfg(self):
-        """Test IMd with log that creates empty DFG."""
-        single_activity_log = {('A',): 10, ('B',): 10}
-        
-        imd = InductiveMiningDF(single_activity_log)
-        result = imd.inductive_mining(single_activity_log)
-        
-        # Should handle DFG with no edges
-        self.assertIsNotNone(result)
-        
-    def test_imd_edge_filtering_removes_all_edges(self):
-        """Test IMd when edge filtering removes all edges."""
-        log = {('A', 'B'): 1, ('C', 'D'): 1}
-        
-        imd = InductiveMiningDF(log)
-        imd.edge_cutoff_threshold = 0.99  # Very high
-        
-        result = imd.inductive_mining(log)
-        
-        # Should handle case with no edges
-        self.assertIsNotNone(result)
-        
     # ===== IMf-Specific Edge Cases =====
     
     def test_imf_noise_filtering_removes_all_edges(self):
@@ -455,7 +430,7 @@ class TestEdgeCases(unittest.TestCase):
             trace = ('Start', f'Task{i}', 'End')
             stress_log[trace] = 10000
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(stress_log)
                 
@@ -475,7 +450,7 @@ class TestEdgeCases(unittest.TestCase):
             trace = tuple(['A'] * i)
             nested_loop_log[trace] = 20 - i
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(nested_loop_log)
                 result = miner.inductive_mining(nested_loop_log)
@@ -487,7 +462,7 @@ class TestEdgeCases(unittest.TestCase):
     
     def test_error_recovery_from_dfg_construction_failure(self):
         """Test error recovery when DFG construction fails."""
-        for MinerClass in [InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass({('A', 'B'): 10})
                 
@@ -528,7 +503,7 @@ class TestRobustness(unittest.TestCase):
             ('A', 'C', 'B'): 10,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 # Run multiple times
                 results = []
@@ -547,13 +522,6 @@ class TestRobustness(unittest.TestCase):
     def test_parameter_validation(self):
         """Test that invalid parameters are validated."""
         log = {('A', 'B'): 10}
-        
-        # Test IMd edge cutoff validation
-        imd = InductiveMiningDF(log)
-        with self.assertRaises(ValueError):
-            imd.set_edge_cutoff_threshold(-0.5)
-        with self.assertRaises(ValueError):
-            imd.set_edge_cutoff_threshold(1.5)
             
         # Test IMf noise threshold validation
         imf = InductiveMiningInfrequent(log)
@@ -569,7 +537,7 @@ class TestRobustness(unittest.TestCase):
             ('A', 'C', 'B'): 10,
         }
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 log_copy = original_log.copy()
                 miner = MinerClass(log_copy)

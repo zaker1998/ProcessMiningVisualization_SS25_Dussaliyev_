@@ -159,7 +159,8 @@ class TestBaseMining(unittest.TestCase):
         
         for event in base_mining.events:
             scale_factor = base_mining.get_scale_factor(event)
-            self.assertGreater(scale_factor, 0)
+            # Scale factor can be 0 or positive (DDCAL clustering labels start from 0)
+            self.assertGreaterEqual(scale_factor, 0)
             
         # Test with non-existent event (should return 1.0)
         scale_factor = base_mining.get_scale_factor('NonExistent')

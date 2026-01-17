@@ -1,8 +1,8 @@
 """
-Integration tests for all inductive mining algorithm variants.
+Integration tests for inductive mining algorithm variants.
 
 This module tests:
-- Comparison between IM, IMd, and IMf
+- Comparison between IM and IMf
 - Behavioral differences and similarities
 - Edge cases across all variants
 - Performance characteristics
@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
 
 from core.algorithms.inductive import InductiveMining
-from core.algorithms.inductive_df import InductiveMiningDF
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 # Import from local utils module
@@ -34,7 +33,7 @@ from tests.unit.core.algorithms.utils import (
 
 
 class TestInductiveMiningIntegration(unittest.TestCase):
-    """Integration tests comparing all three inductive mining variants."""
+    """Integration tests comparing inductive mining variants."""
     
     def setUp(self):
         """Set up common test data."""
@@ -60,18 +59,15 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['simple_sequence']
         
         im = InductiveMining(log)
-        imd = InductiveMiningDF(log)
         imf = InductiveMiningInfrequent(log)
         
         result_im = im.inductive_mining(log)
-        result_imd = imd.inductive_mining(log)
         result_imf = imf.inductive_mining(log)
         
         expected = EXPECTED_TREES['simple_sequence']
         
-        # All should produce same result
+        # Both should produce same result
         self.assertTrue(isProcessTreeEqual(result_im, expected))
-        self.assertTrue(isProcessTreeEqual(result_imd, expected))
         self.assertTrue(isProcessTreeEqual(result_imf, expected))
         
     def test_all_variants_on_clean_parallel(self):
@@ -79,18 +75,15 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['simple_parallel']
         
         im = InductiveMining(log)
-        imd = InductiveMiningDF(log)
         imf = InductiveMiningInfrequent(log)
         
         result_im = im.inductive_mining(log)
-        result_imd = imd.inductive_mining(log)
         result_imf = imf.inductive_mining(log)
         
         expected = EXPECTED_TREES['simple_parallel']
         
-        # All should produce same result on clean data
+        # Both should produce same result on clean data
         self.assertTrue(isProcessTreeEqual(result_im, expected))
-        self.assertTrue(isProcessTreeEqual(result_imd, expected))
         self.assertTrue(isProcessTreeEqual(result_imf, expected))
         
     def test_all_variants_on_clean_choice(self):
@@ -98,18 +91,15 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['simple_choice']
         
         im = InductiveMining(log)
-        imd = InductiveMiningDF(log)
         imf = InductiveMiningInfrequent(log)
         
         result_im = im.inductive_mining(log)
-        result_imd = imd.inductive_mining(log)
         result_imf = imf.inductive_mining(log)
         
         expected = EXPECTED_TREES['simple_choice']
         
-        # All should produce same result
+        # Both should produce same result
         self.assertTrue(isProcessTreeEqual(result_im, expected))
-        self.assertTrue(isProcessTreeEqual(result_imd, expected))
         self.assertTrue(isProcessTreeEqual(result_imf, expected))
         
     def test_all_variants_on_loop(self):
@@ -117,18 +107,15 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['simple_loop']
         
         im = InductiveMining(log)
-        imd = InductiveMiningDF(log)
         imf = InductiveMiningInfrequent(log)
         
         result_im = im.inductive_mining(log)
-        result_imd = imd.inductive_mining(log)
         result_imf = imf.inductive_mining(log)
         
         expected = EXPECTED_TREES['simple_loop']
         
-        # All should produce same result
+        # Both should produce same result
         self.assertTrue(isProcessTreeEqual(result_im, expected))
-        self.assertTrue(isProcessTreeEqual(result_imd, expected))
         self.assertTrue(isProcessTreeEqual(result_imf, expected))
         
     # ===== Noise Handling Comparison =====
@@ -148,30 +135,19 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         # IMf might produce cleaner result by filtering noise
         # (We don't assert equality because IMf may differ)
         
-    def test_imd_with_edge_filtering_vs_imf(self):
-        """Compare IMd with edge filtering to IMf."""
-        imd = InductiveMiningDF(self.noisy_log)
+    def test_imf_with_noise_filtering(self):
+        """Test IMf noise filtering behavior."""
         imf = InductiveMiningInfrequent(self.noisy_log)
-        
-        # IMd with edge filtering
-        imd.edge_cutoff_threshold = 0.1
-        result_imd = imd.inductive_mining(self.noisy_log)
         
         # IMf with noise filtering
         imf.noise_threshold = 0.1
         result_imf = imf.inductive_mining(self.noisy_log)
         
-        # Both should produce valid trees
-        self.assertTrue(ProcessTreeValidator.is_valid_structure(result_imd))
+        # Should produce valid tree
         self.assertTrue(ProcessTreeValidator.is_valid_structure(result_imf))
         
-        # Both should preserve main activities
-        activities_imd = extract_activities_from_tree(result_imd)
+        # Should preserve main activities
         activities_imf = extract_activities_from_tree(result_imf)
-        
-        self.assertIn('A', activities_imd)
-        self.assertIn('B', activities_imd)
-        self.assertIn('C', activities_imd)
         
         self.assertIn('A', activities_imf)
         self.assertIn('B', activities_imf)
@@ -189,7 +165,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         
         threshold = 0.5  # Should filter X and D
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(test_log)
                 miner.generate_graph(activity_threshold=threshold, traces_threshold=0.0)
@@ -208,7 +184,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         
         threshold = 0.5  # Should filter rare trace
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(test_log)
                 min_freq = miner.calulate_minimum_traces_frequency(threshold)
@@ -222,7 +198,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that all variants handle empty log correctly."""
         empty_log = {}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(empty_log)
                 result = miner.inductive_mining(empty_log)
@@ -236,7 +212,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         
         expected = ('seq', 'A', 'B', 'C')
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(single_log)
                 result = miner.inductive_mining(single_log)
@@ -247,7 +223,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that all variants handle single activity correctly."""
         single_activity_log = {('A',): 10}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(single_activity_log)
                 result = miner.inductive_mining(single_activity_log)
@@ -259,7 +235,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that all variants handle tau (empty traces) correctly."""
         tau_log = self.test_logs['with_tau']
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(tau_log)
                 result = miner.inductive_mining(tau_log)
@@ -269,7 +245,8 @@ class TestInductiveMiningIntegration(unittest.TestCase):
                 
                 # Result should contain tau or xor
                 result_str = str(result)
-                self.assertTrue('tau' in result_str or 'xor' in result_str)
+                self.assertTrue('tau' in result_str or 'xor' in result_str, 
+                               f"Expected 'tau' or 'xor' in result, got: {result_str}")
                 
     def test_flower_model_fallback_all_variants(self):
         """Test that all variants fallback to flower model appropriately."""
@@ -277,7 +254,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         
         expected_flower = ('loop', 'tau', 'A', 'B', 'C')
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(chaotic_log)
                 result = miner.inductive_mining(chaotic_log)
@@ -291,7 +268,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Compare performance of all variants on large log."""
         timings = {}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             miner = MinerClass(self.large_log)
             
             start = time.time()
@@ -304,8 +281,6 @@ class TestInductiveMiningIntegration(unittest.TestCase):
             self.assertLess(duration, 5.0)
             self.assertIsNotNone(result)
             
-        # IMd should be fastest (designed for scalability)
-        # Note: This may not always hold for small logs
         print(f"\nPerformance timings: {timings}")
         
     def test_memory_efficiency_comparison(self):
@@ -316,7 +291,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
             trace = ('Start', 'Middle', 'End')
             large_log[trace] = large_log.get(trace, 0) + 1
             
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(large_log)
                 result = miner.inductive_mining(large_log)
@@ -330,21 +305,13 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that all variants can generate graphs successfully."""
         log = self.test_logs['simple_parallel']
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
-                # Provide all required parameters
-                if MinerClass == InductiveMining:
-                    miner.generate_graph(
-                        activity_threshold=0.0,
-                        traces_threshold=0.0
-                    )
-                else:
-                    # IMd and IMf have default parameters
-                    miner.generate_graph(
-                        activity_threshold=0.0,
-                        traces_threshold=0.0
-                    )
+                miner.generate_graph(
+                    activity_threshold=0.0,
+                    traces_threshold=0.0
+                )
                 
                 graph = miner.get_graph()
                 self.assertIsNotNone(graph)
@@ -353,7 +320,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that graphs regenerate correctly when parameters change."""
         log = self.test_logs['simple_parallel']
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
@@ -382,7 +349,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         ]
         
         for log in test_logs:
-            for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+            for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
                 with self.subTest(miner=MinerClass.__name__, log=str(log)[:50]):
                     miner = MinerClass(log)
                     result = miner.inductive_mining(log)
@@ -401,18 +368,6 @@ class TestInductiveMiningIntegration(unittest.TestCase):
             with self.subTest(threshold=threshold):
                 imf.noise_threshold = threshold
                 result = imf.inductive_mining(self.noisy_log)
-                
-                self.assertTrue(ProcessTreeValidator.is_valid_structure(result))
-                
-    def test_imd_edge_cutoff_feature(self):
-        """Test IMd-specific edge cutoff feature."""
-        imd = InductiveMiningDF(self.noisy_log)
-        
-        # Test with different edge cutoff thresholds
-        for threshold in [0.0, 0.1, 0.3, 0.5]:
-            with self.subTest(threshold=threshold):
-                imd.edge_cutoff_threshold = threshold
-                result = imd.inductive_mining(self.noisy_log)
                 
                 self.assertTrue(ProcessTreeValidator.is_valid_structure(result))
                 
@@ -436,7 +391,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['complex_nested']
         expected = EXPECTED_TREES['complex_nested']
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 result = miner.inductive_mining(log)
@@ -453,7 +408,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         
         main_activities = {'A', 'B', 'C', 'D'}
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(test_log)
                 result = miner.inductive_mining(test_log)
@@ -470,10 +425,9 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         """Test that get_graph API is consistent across variants."""
         log = self.test_logs['simple_parallel']
         
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
-                # All require activity_threshold and traces_threshold
                 miner.generate_graph(
                     activity_threshold=0.0,
                     traces_threshold=0.0
@@ -491,7 +445,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         log = self.test_logs['simple_parallel']
         
         # All should have activity and traces threshold getters
-        for MinerClass in [InductiveMining, InductiveMiningDF, InductiveMiningInfrequent]:
+        for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(log)
                 
