@@ -1,16 +1,12 @@
 """
-Inductive Miner Comparison Tool: Custom Implementation vs PM4Py
+Inductive Miner Infrequent (IMf) Comparison Tool: Custom Implementation vs PM4Py
 
-This standalone script compares custom Inductive Miner implementations against
-PM4Py's reference implementations to validate algorithm correctness.
+This standalone script compares our IMf implementation against PM4Py's reference
+implementation to validate algorithm correctness.
 
 IMPORTANT: This tool is intentionally separate from the main project.
 PM4Py should NOT be added as a dependency to the main project.
 This comparison tool can be moved to a separate repository in the future.
-
-Compared Algorithms:
-- Standard Inductive Miner (IM)
-- Inductive Miner - Infrequent (IMf)
 
 Usage:
     cd Process_Mining_Visualisation
@@ -24,8 +20,7 @@ Requirements (for this tool only):
 import sys
 import os
 import logging
-import time
-from typing import Dict, Tuple, Set, Any, Optional, List
+from typing import Dict, Tuple, Any, List
 from dataclasses import dataclass
 
 # Suppress logger output for cleaner comparison output
@@ -35,8 +30,7 @@ logging.getLogger("InductiveMiningInfrequent").setLevel(logging.WARNING)
 # Add src to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-# Import custom implementations
-from core.algorithms.inductive import InductiveMining
+# Import custom implementation
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 # Try to import PM4Py
@@ -97,82 +91,62 @@ def pm4py_tree_to_tuple(tree: Any) -> Any:
 
 
 # =============================================================================
-# TREE ANALYSIS UTILITIES
+# PROCESS TREE EQUALITY (handles unordered operators like XOR, PAR)
 # =============================================================================
 
-def get_activities(tree: Any) -> Set[str]:
-    """Extract all activities from a process tree (excluding 'tau')."""
-    if isinstance(tree, str):
-        return set() if tree == 'tau' else {tree}
-    if isinstance(tree, (int, float)):
-        return {str(tree)}
-    if isinstance(tree, tuple):
-        activities = set()
-        for child in tree[1:]:
-            activities.update(get_activities(child))
-        return activities
-    return set()
+def isProcessTreeEqual(tree1: Any, tree2: Any) -> bool:
+    """
+    Check if two process trees are structurally equal.
+    
+    Handles unordered operators (xor, par) where children can appear in any order,
+    and ordered operators (seq, loop) where order matters.
+    
+    Example: xor(A, B) == xor(B, A) -> True
+    """
+    if type(tree1) != type(tree2):
+        return False
+
+    if isinstance(tree1, str) or isinstance(tree1, int):
+        return tree1 == tree2
+
+    if not isinstance(tree1, tuple):
+        return False
+
+    if len(tree1) != len(tree2):
+        return False
+
+    operation = tree1[0]
+    if operation != tree2[0]:
+        return False
+
+    # Ordered cuts - sequence must match exactly
+    if operation == "seq":
+        return all(isProcessTreeEqual(tree1[i], tree2[i]) for i in range(1, len(tree1)))
+    
+    # Loop - first child (body) must match exactly, rest are unordered
+    if operation == "loop":
+        if not isProcessTreeEqual(tree1[1], tree2[1]):
+            return False
+
+    # Unordered cuts (xor, par, and loop redo parts) - children can appear in any order
+    for i in range(1, len(tree1)):
+        foundEqual = False
+        for j in range(1, len(tree2)):
+            if isProcessTreeEqual(tree1[i], tree2[j]):
+                foundEqual = True
+                break
+        if not foundEqual:
+            return False
+
+    return True
 
 
-def count_nodes(tree: Any) -> int:
-    """Count total nodes in a process tree."""
-    if isinstance(tree, str):
-        return 1
-    if isinstance(tree, (int, float)):
-        return 1
-    if isinstance(tree, tuple) and len(tree) > 0:
-        return 1 + sum(count_nodes(child) for child in tree[1:])
-    return 1
-
-
-def get_depth(tree: Any) -> int:
-    """Get maximum depth of a process tree."""
-    if isinstance(tree, str):
-        return 1
-    if isinstance(tree, (int, float)):
-        return 1
-    if isinstance(tree, tuple) and len(tree) > 1:
-        return 1 + max(get_depth(child) for child in tree[1:])
-    return 1
-
-
-def count_operator(tree: Any, operator: str) -> int:
-    """Count occurrences of a specific operator."""
-    if isinstance(tree, (str, int, float)):
-        return 0
-    if isinstance(tree, tuple) and len(tree) > 0:
-        count = 1 if tree[0] == operator else 0
-        return count + sum(count_operator(child, operator) for child in tree[1:])
-    return 0
-
-
-def count_tau(tree: Any) -> int:
-    """Count tau (silent transition) nodes."""
-    if isinstance(tree, str):
-        return 1 if tree == 'tau' else 0
-    if isinstance(tree, (int, float)):
-        return 0
-    if isinstance(tree, tuple):
-        return sum(count_tau(child) for child in tree[1:])
-    return 0
-
-
-def format_tree(tree: Any, max_len: int = 70) -> str:
+def format_tree(tree: Any, max_len: int = 80) -> str:
     """Format tree string with truncation if too long."""
     tree_str = str(tree)
     if len(tree_str) > max_len:
         return tree_str[:max_len] + "..."
     return tree_str
-
-
-def trees_match(tree1: Any, tree2: Any) -> str:
-    """Compare two trees and return match status."""
-    if str(tree1) == str(tree2):
-        return "✅ IDENTICAL"
-    acts1, acts2 = get_activities(tree1), get_activities(tree2)
-    if acts1 == acts2:
-        return "🔶 Same activities, different structure"
-    return "❌ Different"
 
 
 # =============================================================================
@@ -226,24 +200,11 @@ TEST_LOGS = {
 # COMPARISON FUNCTIONS
 # =============================================================================
 
-def run_custom_im(log: Dict[Tuple[str, ...], int]) -> Any:
-    """Run custom Standard Inductive Miner."""
-    miner = InductiveMining(log)
-    return miner.inductive_mining(log)
-
-
 def run_custom_imf(log: Dict[Tuple[str, ...], int], noise_threshold: float = 0.2) -> Any:
     """Run custom Inductive Miner - Infrequent."""
     miner = InductiveMiningInfrequent(log)
     miner.noise_threshold = noise_threshold
     return miner.inductive_mining(log)
-
-
-def run_pm4py_im(log: Dict[Tuple[str, ...], int]) -> Any:
-    """Run PM4Py Standard Inductive Miner."""
-    pm4py_log = log_to_pm4py(log)
-    tree = inductive_miner.apply(pm4py_log, variant=inductive_miner.Variants.IM)
-    return pm4py_tree_to_tuple(tree)
 
 
 def run_pm4py_imf(log: Dict[Tuple[str, ...], int], noise_threshold: float = 0.2) -> Any:
@@ -263,203 +224,149 @@ def run_pm4py_imf(log: Dict[Tuple[str, ...], int], noise_threshold: float = 0.2)
 
 @dataclass
 class ComparisonResult:
-    """Result of comparing custom vs PM4Py for one algorithm."""
-    algorithm: str
+    """Result of comparing custom IMf vs PM4Py IMf."""
     log_name: str
+    noise_threshold: float
     custom_tree: Any
     pm4py_tree: Any
-    trees_identical: bool
-    same_activities: bool
-    custom_time_ms: float
-    pm4py_time_ms: float
-    custom_nodes: int
-    pm4py_nodes: int
-    custom_error: Optional[str] = None
-    pm4py_error: Optional[str] = None
+    is_equal: bool  # Using isProcessTreeEqual
+    custom_error: str | None = None
+    pm4py_error: str | None = None
 
 
 # =============================================================================
 # MAIN COMPARISON
 # =============================================================================
 
-def compare_single_log(log_name: str, log: Dict[Tuple[str, ...], int], noise_threshold: float = 0.2) -> List[ComparisonResult]:
-    """Run comparison for a single log."""
-    print(f"\n{'=' * 80}")
-    print(f"LOG: {log_name}")
-    print(f"     Traces: {len(log)} unique, {sum(log.values())} total cases")
-    print(f"{'=' * 80}")
+def compare_single_log(log_name: str, log: Dict[Tuple[str, ...], int], noise_threshold: float = 0.2) -> ComparisonResult:
+    """Run IMf comparison for a single log."""
+    custom_tree = None
+    pm4py_tree = None
+    custom_error = None
+    pm4py_error = None
     
-    results = []
+    # Run custom implementation
+    try:
+        custom_tree = run_custom_imf(log, noise_threshold)
+    except Exception as e:
+        custom_error = str(e)
     
-    algorithms = [
-        ("Standard IM", run_custom_im, run_pm4py_im, {}),
-        ("Infrequent IM", run_custom_imf, run_pm4py_imf, {'noise_threshold': noise_threshold}),
-    ]
-    
-    for algo_name, custom_fn, pm4py_fn, kwargs in algorithms:
-        print(f"\n  [{algo_name}] {'-' * 60}")
-        
-        custom_tree = None
-        pm4py_tree = None
-        custom_error = None
-        pm4py_error = None
-        custom_time = 0.0
-        pm4py_time = 0.0
-        
-        # Run custom implementation
+    # Run PM4Py implementation
+    if PM4PY_AVAILABLE:
         try:
-            start = time.perf_counter()
-            custom_tree = custom_fn(log, **kwargs) if kwargs else custom_fn(log)
-            custom_time = (time.perf_counter() - start) * 1000
-            print(f"  CUSTOM:  {format_tree(custom_tree)}")
-            print(f"           Nodes: {count_nodes(custom_tree)}, Depth: {get_depth(custom_tree)}, Time: {custom_time:.1f}ms")
+            pm4py_tree = run_pm4py_imf(log, noise_threshold)
         except Exception as e:
-            custom_error = str(e)
-            print(f"  CUSTOM:  ERROR - {e}")
-        
-        # Run PM4Py implementation
-        if PM4PY_AVAILABLE:
-            try:
-                start = time.perf_counter()
-                pm4py_tree = pm4py_fn(log, **kwargs) if kwargs else pm4py_fn(log)
-                pm4py_time = (time.perf_counter() - start) * 1000
-                print(f"  PM4PY:   {format_tree(pm4py_tree)}")
-                print(f"           Nodes: {count_nodes(pm4py_tree)}, Depth: {get_depth(pm4py_tree)}, Time: {pm4py_time:.1f}ms")
-            except Exception as e:
-                pm4py_error = str(e)
-                print(f"  PM4PY:   ERROR - {e}")
-        else:
-            pm4py_error = "PM4Py not installed"
-            print(f"  PM4PY:   Not available")
-        
-        # Compare
-        if custom_tree and pm4py_tree:
-            match = trees_match(custom_tree, pm4py_tree)
-            print(f"  MATCH:   {match}")
-        
-        # Store result
-        trees_identical = str(custom_tree) == str(pm4py_tree) if custom_tree and pm4py_tree else False
-        same_activities = get_activities(custom_tree) == get_activities(pm4py_tree) if custom_tree and pm4py_tree else False
-        
-        results.append(ComparisonResult(
-            algorithm=algo_name,
-            log_name=log_name,
-            custom_tree=custom_tree,
-            pm4py_tree=pm4py_tree,
-            trees_identical=trees_identical,
-            same_activities=same_activities,
-            custom_time_ms=custom_time,
-            pm4py_time_ms=pm4py_time,
-            custom_nodes=count_nodes(custom_tree) if custom_tree else 0,
-            pm4py_nodes=count_nodes(pm4py_tree) if pm4py_tree else 0,
-            custom_error=custom_error,
-            pm4py_error=pm4py_error,
-        ))
+            pm4py_error = str(e)
+    else:
+        pm4py_error = "PM4Py not installed"
     
+    # Compare using isProcessTreeEqual
+    is_equal = False
+    if custom_tree is not None and pm4py_tree is not None:
+        is_equal = isProcessTreeEqual(custom_tree, pm4py_tree)
+    
+    return ComparisonResult(
+        log_name=log_name,
+        noise_threshold=noise_threshold,
+        custom_tree=custom_tree,
+        pm4py_tree=pm4py_tree,
+        is_equal=is_equal,
+        custom_error=custom_error,
+        pm4py_error=pm4py_error,
+    )
+
+
+def run_all_comparisons(noise_threshold: float = 0.2) -> List[ComparisonResult]:
+    """Run IMf comparison on all test logs."""
+    results = []
+    for log_name, log in TEST_LOGS.items():
+        result = compare_single_log(log_name, log, noise_threshold)
+        results.append(result)
     return results
 
 
-def run_noise_threshold_test():
-    """Test IMf with different noise thresholds."""
-    print("\n" + "=" * 80)
-    print("NOISE THRESHOLD SENSITIVITY ANALYSIS")
-    print("=" * 80)
+def print_results(results: List[ComparisonResult]):
+    """Print comparison results in a clean format."""
+    print("\n" + "=" * 90)
+    print("IMf COMPARISON RESULTS: Custom Implementation vs PM4Py")
+    print("=" * 90)
     
-    noisy_log = {
-        ('A', 'B', 'C'): 100,
-        ('A', 'C', 'B'): 100,
-        ('A', 'X', 'B', 'C'): 3,  # Noise
-        ('A', 'B', 'Y', 'C'): 2,  # Noise
-    }
+    total = len(results)
+    equal_count = sum(1 for r in results if r.is_equal)
     
-    print("\nLog: Main pattern A -> (B || C) with noise activities X, Y")
-    print("Main traces: 200  |  Noisy traces: 5")
+    print(f"\nNoise Threshold: {results[0].noise_threshold if results else 0.2}")
+    print(f"Total Tests: {total}")
+    print(f"Equal (using isProcessTreeEqual): {equal_count}/{total} ({equal_count/total*100:.0f}%)")
+    
+    print(f"\n{'Log Name':<25} | {'Equal?':^8} | {'Custom Tree':<40}")
+    print(f"{'-' * 25}-+-{'-' * 8}-+-{'-' * 40}")
+    
+    for r in results:
+        status = "✅" if r.is_equal else "❌"
+        if r.custom_error:
+            tree_str = f"ERROR: {r.custom_error}"
+        else:
+            tree_str = format_tree(r.custom_tree, 40)
+        print(f"{r.log_name[:25]:<25} | {status:^8} | {tree_str}")
+    
+    # Show details for mismatches
+    mismatches = [r for r in results if not r.is_equal and r.custom_tree and r.pm4py_tree]
+    if mismatches:
+        print(f"\n{'=' * 90}")
+        print("MISMATCH DETAILS")
+        print("=" * 90)
+        for r in mismatches:
+            print(f"\n[{r.log_name}]")
+            print(f"  Custom: {format_tree(r.custom_tree, 80)}")
+            print(f"  PM4Py:  {format_tree(r.pm4py_tree, 80)}")
+
+
+def run_threshold_comparison():
+    """Compare results across different noise thresholds."""
+    print("\n" + "=" * 90)
+    print("NOISE THRESHOLD COMPARISON")
+    print("=" * 90)
     
     thresholds = [0.0, 0.1, 0.2, 0.3, 0.5]
     
-    print(f"\n{'Threshold':>10} | {'Custom Nodes':>12} | {'PM4Py Nodes':>11} | {'Match':>20}")
-    print(f"{'-' * 10}-+-{'-' * 12}-+-{'-' * 11}-+-{'-' * 20}")
+    print(f"\n{'Threshold':>10} | {'Equal/Total':>12} | {'Match Rate':>10}")
+    print(f"{'-' * 10}-+-{'-' * 12}-+-{'-' * 10}")
     
     for threshold in thresholds:
-        custom_tree = run_custom_imf(noisy_log, threshold)
-        
-        if PM4PY_AVAILABLE:
-            pm4py_tree = run_pm4py_imf(noisy_log, threshold)
-            match = "✅" if str(custom_tree) == str(pm4py_tree) else "❌"
-            pm4py_nodes = count_nodes(pm4py_tree)
-        else:
-            match = "N/A"
-            pm4py_nodes = "-"
-        
-        print(f"{threshold:>10.2f} | {count_nodes(custom_tree):>12} | {pm4py_nodes:>11} | {match:>20}")
-
-
-def print_summary(all_results: List[ComparisonResult]):
-    """Print summary table of all results."""
-    print("\n" + "=" * 90)
-    print("SUMMARY")
-    print("=" * 90)
-    
-    total = len(all_results)
-    identical = sum(1 for r in all_results if r.trees_identical)
-    same_acts = sum(1 for r in all_results if r.same_activities and not r.trees_identical)
-    different = total - identical - same_acts
-    
-    print(f"\nTotal comparisons: {total}")
-    print(f"  ✅ Identical:               {identical} ({identical/total*100:.0f}%)")
-    print(f"  🔶 Same activities:         {same_acts} ({same_acts/total*100:.0f}%)")
-    print(f"  ❌ Different:               {different} ({different/total*100:.0f}%)")
-    
-    print(f"\n{'Log':<25} | {'Algorithm':<15} | {'Match':>20} | {'Custom':>8} | {'PM4Py':>8}")
-    print(f"{'-' * 25}-+-{'-' * 15}-+-{'-' * 20}-+-{'-' * 8}-+-{'-' * 8}")
-    
-    for r in all_results:
-        if r.trees_identical:
-            match = "✅ Identical"
-        elif r.same_activities:
-            match = "🔶 Same activities"
-        else:
-            match = "❌ Different"
-        
-        print(f"{r.log_name[:25]:<25} | {r.algorithm:<15} | {match:>20} | {r.custom_nodes:>8} | {r.pm4py_nodes:>8}")
+        results = run_all_comparisons(threshold)
+        equal_count = sum(1 for r in results if r.is_equal)
+        total = len(results)
+        rate = equal_count / total * 100 if total > 0 else 0
+        print(f"{threshold:>10.2f} | {equal_count:>5}/{total:<5} | {rate:>9.0f}%")
 
 
 def main():
     """Main entry point."""
-    print("\n" + "=" * 80)
-    print("INDUCTIVE MINER COMPARISON TOOL")
-    print("Custom Implementation vs PM4Py Reference")
-    print("=" * 80)
+    print("\n" + "=" * 90)
+    print("INDUCTIVE MINER INFREQUENT (IMf) COMPARISON TOOL")
+    print("Comparing Custom Implementation vs PM4Py Reference")
+    print("Using isProcessTreeEqual for structural comparison (handles xor(A,B) == xor(B,A))")
+    print("=" * 90)
     
-    if PM4PY_AVAILABLE:
-        print("\n✅ PM4Py is installed - full comparison enabled")
-        print(f"   PM4Py version: {pm4py.__version__}")
-    else:
-        print("\n❌ PM4Py not installed - showing custom results only")
+    if not PM4PY_AVAILABLE:
+        print("\n❌ PM4Py not installed - cannot run comparison")
         print("   Install with: pip install pm4py")
         return
     
-    print("\nAlgorithms being compared:")
-    print("  • Standard Inductive Miner (IM)")
-    print("  • Inductive Miner - Infrequent (IMf)")
+    print(f"\n✅ PM4Py version: {pm4py.__version__}")
     
-    # Run comparisons
-    all_results = []
-    for log_name, log in TEST_LOGS.items():
-        results = compare_single_log(log_name, log)
-        all_results.extend(results)
+    # Run main comparison with default threshold
+    results = run_all_comparisons(noise_threshold=0.2)
+    print_results(results)
     
-    # Print summary
-    print_summary(all_results)
+    # Run threshold comparison
+    run_threshold_comparison()
     
-    # Noise threshold test
-    run_noise_threshold_test()
-    
-    print("\n" + "=" * 80)
+    print("\n" + "=" * 90)
     print("COMPARISON COMPLETE")
-    print("=" * 80 + "\n")
+    print("=" * 90 + "\n")
     
-    return all_results
+    return results
 
 
 if __name__ == "__main__":
