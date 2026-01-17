@@ -9,6 +9,7 @@ class InductiveGraph(BaseGraph):
         process_tree,
         frequency: dict[str, int] = None,
         node_sizes: dict[str, tuple[float, float]] = None,
+        hide_tau: bool = False,
     ) -> None:
         """Initialize the InductiveGraph object.
 
@@ -21,6 +22,9 @@ class InductiveGraph(BaseGraph):
             a dictionary containing the frequency of each event, by default None
         node_sizes : dict[str, tuple[float, float]], optional
             a dictionary containing the size of each node, by default None
+        hide_tau : bool, optional
+            if True, tau (silent) activities will be hidden from the visualization
+            and edges will be connected directly, by default False
         """
         super().__init__(rankdir="LR")
         self.exclusive_gates_count = 0
@@ -28,6 +32,9 @@ class InductiveGraph(BaseGraph):
         self.silent_activities_count = 0
         self.event_frequency = frequency
         self.node_sizes = node_sizes
+        self.event_count = {}  # Track count of each event for unique IDs
+        self.hide_tau = hide_tau
+        self.process_tree = process_tree  # Store for reference
 
         self.build_graph(process_tree)
 
@@ -45,14 +52,19 @@ class InductiveGraph(BaseGraph):
 
         start_node, end_node = self.add_section(process_tree)
 
-        self.add_starting_edges([start_node])
-        self.add_ending_edges([end_node])
+        # Handle case where entire tree is tau (hidden)
+        if start_node is None or end_node is None:
+            # Connect start directly to end
+            self.add_edge("Start", "End", weight=None, style="dashed")
+        else:
+            self.add_starting_edges([start_node])
+            self.add_ending_edges([end_node])
 
     def add_event(
         self,
         title: str,
         **event_data,
-    ) -> None:
+    ) -> str:
         """Add an event to the graph.
 
         Parameters
@@ -61,15 +73,32 @@ class InductiveGraph(BaseGraph):
             name of the event
         **event_data
             additional data for the event
+            
+        Returns
+        -------
+        str
+            the unique node ID for this event
         """
-        width, height = self.node_sizes.get(title, (1.5, 0.5))
-        frequency = self.event_frequency.get(title, 0)
+        # Generate unique ID for this event instance
+        title_str = str(title)
+        self.event_count[title_str] = self.event_count.get(title_str, 0) + 1
+        count = self.event_count[title_str]
+        
+        # Always use unique ID with prefix to avoid conflicts with Start/End nodes
+        node_id = f"event_{title_str}_{count}"
+        
+        width, height = (1.5, 0.5)
+        frequency = 0
+        if self.node_sizes:
+            width, height = self.node_sizes.get(title_str, (1.5, 0.5))
+        if self.event_frequency:
+            frequency = self.event_frequency.get(title_str, 0)
         if frequency > 0:
             event_data["frequency"] = frequency
 
-        label = f"{title}\n{frequency}"
+        label = f"{title_str}\n{frequency}"
         super().add_node(
-            id=title,
+            id=node_id,
             label=label,
             data=event_data,
             width=str(width),
@@ -78,6 +107,7 @@ class InductiveGraph(BaseGraph):
             style="rounded, filled",
             fillcolor="#FFFFFF",
         )
+        return node_id
 
     def add_section(self, process_tree) -> tuple:
         """Adds a section from the process tree to the graph.
@@ -93,17 +123,21 @@ class InductiveGraph(BaseGraph):
         Returns
         -------
         tuple
-            a tuple containing the start and end node of the section
+            a tuple containing the start and end node of the section.
+            Returns (None, None) if the section is a tau and hide_tau is True.
         """
         start_node, end_node = None, None
 
         if isinstance(process_tree, str) or isinstance(process_tree, int):
             if process_tree == "tau":
+                if self.hide_tau:
+                    # Return None to indicate this is a hidden tau
+                    return None, None
                 silent_activity_id = self.add_silent_activity()
                 start_node, end_node = silent_activity_id, silent_activity_id
             else:
-                self.add_event(process_tree)
-                start_node, end_node = process_tree, process_tree
+                node_id = self.add_event(process_tree)
+                start_node, end_node = node_id, node_id
 
         elif process_tree[0] == "seq":
             start_node, end_node = self.add_sequence(process_tree[1:])
@@ -136,6 +170,10 @@ class InductiveGraph(BaseGraph):
         start_node, end_node = None, None
         for section in process_tree:
             start, end = self.add_section(section)
+            
+            # Skip hidden tau nodes in sequence
+            if start is None and end is None:
+                continue
 
             if start_node is None:
                 start_node = start
@@ -164,12 +202,26 @@ class InductiveGraph(BaseGraph):
             a tuple containing the start and end node of the section
         """
         start_node, end_node = self.add_gate(gate_type)
+        has_visible_children = False
 
         for section in process_tree:
             start, end = self.add_section(section)
-
+            
+            # Skip hidden tau nodes
+            if start is None and end is None:
+                # For XOR gates with hidden tau, add direct edge from start to end gate
+                # This represents the "skip" option
+                if self.hide_tau and gate_type == "xor":
+                    self.add_edge(start_node, end_node, weight=None, style="dashed")
+                continue
+            
+            has_visible_children = True
             self.add_edge(start_node, start, weight=None)
             self.add_edge(end, end_node, weight=None)
+
+        # If no visible children (all were tau), remove gate and return None
+        if not has_visible_children:
+            return None, None
 
         return start_node, end_node
 
@@ -193,6 +245,14 @@ class InductiveGraph(BaseGraph):
 
         for section in process_tree[1:]:
             start, end = self.add_section(section)
+            
+            # Handle hidden tau in loop redo section
+            if start is None and end is None:
+                # Tau redo means direct loop back - add dashed edge to show loop
+                if self.hide_tau and end_node and start_node:
+                    self.add_edge(end_node, start_node, weight=None, style="dashed")
+                continue
+            
             # add edges to the loop section
             # the start of the redo section is the end of the loop section
             # the end of the redo section is the start of the loop section
@@ -282,7 +342,7 @@ class InductiveGraph(BaseGraph):
         return start_id, end_id
 
     def add_silent_activity(self) -> str:
-        """Add a silent activity to the graph.
+        """Add a silent activity (tau) to the graph.
 
         Returns
         -------
@@ -290,7 +350,18 @@ class InductiveGraph(BaseGraph):
             the id of the silent activity node
         """
         node_id = f"silent_activity_{self.silent_activities_count}"
-        self.add_node(id=node_id, label=" ", shape="point", fillcolor="#FFFFFF")
+        # Render tau as a small gray circle with "τ" label for visibility
+        self.add_node(
+            id=node_id, 
+            label="τ", 
+            shape="circle",
+            width="0.3",
+            height="0.3",
+            style="filled",
+            fillcolor="#E0E0E0",
+            fontsize="10",
+            fontcolor="#666666"
+        )
         self.silent_activities_count += 1
         return node_id
 
