@@ -3,4 +3,3 @@
 
 from .detection import *
 from .predictions import *
-from .metrics import *
