@@ -12,7 +12,7 @@ A desktop application for importing event logs, mining and visualizing process m
 ### Implemented Algorithms
 - ✅ Heuristic Miner
 - ✅ Fuzzy Miner  
-- ✅ Inductive Miner (including IMf and IMd variants)
+- ✅ Inductive Miner (including IMf)
 
 ## Project Structure
 
