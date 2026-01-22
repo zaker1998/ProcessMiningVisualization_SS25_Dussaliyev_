@@ -50,7 +50,7 @@ class FuzzyGraph(BaseGraph):
         source: str,
         destination: str,
         size: float,
-        weight: int = None,
+        weight: int | None = None,
         color: str = "black",
     ) -> None:
         """Create an edge between two nodes.
@@ -76,7 +76,7 @@ class FuzzyGraph(BaseGraph):
         significance: int | float,
         size: tuple[int, int],
         merged_nodes: list[str],
-        **cluster_data: dict[str, str | int | float],
+        **cluster_data: str | int | float,
     ) -> None:
         """Add a cluster to the graph.
 
@@ -91,14 +91,15 @@ class FuzzyGraph(BaseGraph):
         merged_nodes : list[str]
             list of nodes merged in the cluster
         """
-        cluster_data["significance"] = significance
-        cluster_data["nodes"] = merged_nodes
+        data: dict[str, str | int | float | list[str]] = dict(cluster_data)
+        data["significance"] = significance
+        data["nodes"] = merged_nodes  # type: ignore[assignment]
         width, height = size
         label = f"{cluster_name}\n{len(merged_nodes)} Elements\n~{significance}"
         super().add_node(
             id=cluster_name,
             label=label,
-            data=cluster_data,
+            data=data,  # type: ignore[arg-type]
             shape="octagon",
             style="filled",
             fillcolor="#6495ED",
@@ -131,6 +132,7 @@ class FuzzyGraph(BaseGraph):
             description = f"""{description}\n**Significance:** {significance}"""
 
         if nodes := node.get_data_from_key("nodes"):
-            description = f"""{description}\n**Clustered Nodes:** {", ".join(nodes)}"""
+            if isinstance(nodes, list):
+                description = f"""{description}\n**Clustered Nodes:** {", ".join(str(n) for n in nodes)}"""
 
         return node.get_id(), description

@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Optional
 from ui.pages.algorithms.base_algorithm_controller import BaseAlgorithmController
 import streamlit as st
 from core.algorithms.fuzzy import FuzzyMining
@@ -6,6 +8,8 @@ from ui.pages.algorithms.fuzzy.fuzzy_miner_view import FuzzyMinerView
 
 class FuzzyMinerController(BaseAlgorithmController):
     """Controller for the Fuzzy Miner algorithm."""
+    
+    mining_model: Optional[FuzzyMining]
 
     def __init__(
         self, views=None, mining_model_class=None, dataframe_transformations=None
@@ -43,6 +47,8 @@ class FuzzyMinerController(BaseAlgorithmController):
         """Processes the algorithm parameters from the session state. The parameters are set to the instance variables.
         If the parameters are not set in the session state, the default values are used.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         # set session state from instance variables if not set
         if "significance" not in st.session_state:
             st.session_state.significance = self.mining_model.get_significance()
@@ -64,6 +70,8 @@ class FuzzyMinerController(BaseAlgorithmController):
 
     def perform_mining(self) -> None:
         """Performs the mining of the Fuzzy Miner algorithm."""
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         self.mining_model.create_graph_with_graphviz(
             self.significance, self.correlation, self.edge_cutoff, self.utility_ratio
         )
@@ -76,6 +84,8 @@ class FuzzyMinerController(BaseAlgorithmController):
         bool
             True if the algorithm parameters have changed, False otherwise.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         return (
             self.mining_model.get_significance() != self.significance
             or self.mining_model.get_correlation() != self.correlation

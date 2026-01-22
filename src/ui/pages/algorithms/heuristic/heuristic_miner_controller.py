@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Optional
 from ui.pages.algorithms.base_algorithm_controller import BaseAlgorithmController
 from ui.pages.algorithms.heuristic.heuristic_miner_view import HeuristicMinerView
 import streamlit as st
@@ -6,6 +8,8 @@ from core.algorithms.heuristic import HeuristicMining
 
 class HeuristicMinerController(BaseAlgorithmController):
     """Controller for the Heuristic Miner algorithm."""
+    
+    mining_model: Optional[HeuristicMining]
 
     def __init__(
         self, views=None, mining_model_class=None, dataframe_transformations=None
@@ -42,6 +46,8 @@ class HeuristicMinerController(BaseAlgorithmController):
         """Processes the algorithm parameters from the session state. The parameters are set to the instance variables.
         If the parameters are not set in the session state, the default values are used.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         # set session state from instance variables if not set
         if "threshold" not in st.session_state:
             st.session_state.threshold = self.mining_model.get_threshold()
@@ -55,6 +61,8 @@ class HeuristicMinerController(BaseAlgorithmController):
 
     def perform_mining(self) -> None:
         """Performs the mining of the Heuristic Miner algorithm."""
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         self.mining_model.create_dependency_graph_with_graphviz(
             self.threshold, self.frequency
         )
@@ -67,6 +75,8 @@ class HeuristicMinerController(BaseAlgorithmController):
         bool
             True if the algorithm parameters have changed, False otherwise.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         return (
             self.mining_model.get_threshold() != self.threshold
             or self.mining_model.get_min_frequency() != self.frequency
@@ -81,6 +91,8 @@ class HeuristicMinerController(BaseAlgorithmController):
             A dictionary containing the minimum and maximum values for the sidebar sliders.
             The keys of the dictionary are equal to the keys of the sliders.
         """
+        assert self.mining_model is not None, "Mining model must be initialized"
+        
         sidebar_values = {
             "frequency": (1, self.mining_model.get_max_frequency()),
             "threshold": (0.0, 1.0),

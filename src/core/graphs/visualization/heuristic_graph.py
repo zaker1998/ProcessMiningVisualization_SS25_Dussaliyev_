@@ -49,7 +49,7 @@ class HeuristicGraph(BaseGraph):
         source: str,
         destination: str,
         size: float,
-        weight: int = None,
+        weight: int | None = None,
     ) -> None:
         """Create an edge between two nodes.
 
