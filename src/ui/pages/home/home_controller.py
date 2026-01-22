@@ -18,9 +18,9 @@ class HomeController(BaseController):
     def __init__(
         self,
         views=None,
-        detection_model: DetectionModel = None,
-        import_model: ImportOperations = None,
-        supported_file_types: list[str] = None,
+        detection_model: DetectionModel | None = None,
+        import_model: ImportOperations | None = None,
+        supported_file_types: list[str] | None = None,
     ):
         """Initializes the controller for the Home page.
 

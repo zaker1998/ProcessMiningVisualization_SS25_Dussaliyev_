@@ -1,16 +1,23 @@
+from __future__ import annotations
 import streamlit as st
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 from ui.pages.base.base_view import BaseView
 from ui.components.buttons import home_button, navigation_button
+
+if TYPE_CHECKING:
+    from ui.pages.data.column_selection.column_selection_controller import ColumnSelectionController
 
 
 class BaseColumnSelectionView(BaseView):
     """Base class for the column selection view.
     It provides the basic layout and methods for the column selection view and allows for customization by the child classes.
     """
+    
+    controller: "ColumnSelectionController | None"
 
     def __init__(
-        self, needed_columns: list[str] = None, column_styles: dict[str, str] = None
+        self, needed_columns: list[str] | None = None, column_styles: dict[str, str] | None = None
     ):
         """Initializes the BaseColumnSelectionView.
 
@@ -111,6 +118,7 @@ class BaseColumnSelectionView(BaseView):
         """Displays the mine button in the mine_col."""
         with self.mine_col:
             st.write("")
+            assert self.controller is not None, "Controller must be set before displaying mine button"
             navigation_button(
                 label="Mine",
                 route="Algorithm",

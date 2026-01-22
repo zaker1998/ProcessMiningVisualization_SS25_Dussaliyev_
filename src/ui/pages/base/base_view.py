@@ -1,13 +1,18 @@
+from __future__ import annotations
 import streamlit as st
 from abc import ABC
+from typing import TYPE_CHECKING, Any
 from exceptions.type_exceptions import InvalidTypeException
 from utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from ui.pages.base.base_controller import BaseController
 
 
 class BaseView(ABC):
     """Base class for the views. It provides the basic layout and methods for the views."""
 
-    controller = None
+    controller: "BaseController | None" = None
     logger = get_logger("BaseView")
 
     def create_layout(self):

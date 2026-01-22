@@ -1,11 +1,18 @@
+from __future__ import annotations
 import streamlit as st
+from typing import TYPE_CHECKING
 from ui.pages.base.base_view import BaseView
 from config import algorithm_mappings
 from ui.components.buttons import navigation_button
 
+if TYPE_CHECKING:
+    from ui.pages.home.home_controller import HomeController
+
 
 class HomeView(BaseView):
     """View for the Home page."""
+    
+    controller: "HomeController | None"
 
     def create_layout(self):
         """Creates the layout for the Home page."""
