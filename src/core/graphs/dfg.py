@@ -6,7 +6,7 @@ class DFG:
     """Implementation of a Directly Follows Graph (DFG)"""
 
     def __init__(
-        self, log: list[list[str]] | dict[tuple[str, ...], int] = None
+        self, log: list[list[str]] | dict[tuple[str, ...], int] | None = None
     ) -> None:
         """Initialize the DFG.
 
@@ -35,9 +35,11 @@ class DFG:
         log : list[list[str]] | dict[tuple[str, ...], int]
             A list of traces or a dictionary containing the traces and their frequencies in the log
         """
-        _log = log
+        _log: dict[tuple[str, ...], int]
         if isinstance(log, list):
             _log = cases_list_to_dict(log)
+        else:
+            _log = log
 
         for trace, frequency in _log.items():
             if len(trace) == 0:
