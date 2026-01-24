@@ -1,5 +1,11 @@
 import unittest
+import sys
+import os
 import pandas as pd
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'src'))
+
 from transformations.dataframe_transformations import DataframeTransformations
 from transformations.utils import cases_list_to_dict
 from exceptions.io_exceptions import InvalidColumnNameException

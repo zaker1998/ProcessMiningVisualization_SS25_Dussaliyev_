@@ -1,5 +1,11 @@
 import unittest
+import sys
+import os
 from unittest.mock import Mock, patch
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 

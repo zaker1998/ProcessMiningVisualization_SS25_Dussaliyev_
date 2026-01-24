@@ -9,12 +9,19 @@ BEHAVIOR:
 All thresholds should trigger graph regeneration and produce different results.
 """
 
-import pytest
+import unittest
+import sys
+import os
 from typing import Dict, Tuple
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 
-class TestThresholdChangeDetection:
+class TestThresholdChangeDetection(unittest.TestCase):
     """
     Verify that changing noise thresholds triggers graph regeneration
     and produces visibly different results.
@@ -25,16 +32,15 @@ class TestThresholdChangeDetection:
     - The graph visibly changes when thresholds change
     """
     
-    @pytest.fixture
-    def log(self) -> Dict[Tuple[str, ...], int]:
+    def setUp(self):
         """Simple log with main behavior and noise."""
-        return {
+        self.log = {
             ('A', 'B', 'C'): 100,
             ('A', 'X', 'C'): 10,
             ('A', 'Y', 'C'): 5,
         }
     
-    def test_imf_change_only_noise_threshold(self, log):
+    def test_imf_change_only_noise_threshold(self):
         """
         Test paper-based IMf behavior: Changing noise_threshold affects DFG filtering, not log filtering.
         
@@ -45,7 +51,7 @@ class TestThresholdChangeDetection:
         
         This is different from activity/traces thresholds which filter the log directly.
         """
-        miner = InductiveMiningInfrequent(log)
+        miner = InductiveMiningInfrequent(self.log)
         
         # Step 1: Generate graph with noise_threshold = 0.0
         print("\n=== Step 1: Generate with noise_threshold=0.0 ===")
@@ -78,17 +84,17 @@ class TestThresholdChangeDetection:
         
         # Paper-based IMf: Log should NOT change (filtering is at DFG level)
         # This is the key difference from the old implementation
-        assert filtered_log1 == filtered_log2, "Paper-based IMf: filtered log should remain the same (DFG filtering)"
+        self.assertEqual(filtered_log1, filtered_log2, "Paper-based IMf: filtered log should remain the same (DFG filtering)")
         print("[OK] Filtered log unchanged - paper-based IMf filters at DFG level, not log level")
         
         # The noise threshold should have changed
-        assert miner.noise_threshold == 0.9, "Noise threshold should be updated"
+        self.assertEqual(miner.noise_threshold, 0.9, "Noise threshold should be updated")
         print("[OK] Noise threshold was updated")
         
         # And the graph should be regenerated (different object)
         if graph1_id == graph2_id:
             print("[FAIL] BUG FOUND: Graph was NOT regenerated!")
-            assert False, "Graph should be regenerated when noise_threshold changes"
+            self.fail("Graph should be regenerated when noise_threshold changes")
         else:
             print("[OK] Graph was regenerated")
         
@@ -96,5 +102,5 @@ class TestThresholdChangeDetection:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-s"])
+    unittest.main()
 

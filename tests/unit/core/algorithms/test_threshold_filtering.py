@@ -5,23 +5,29 @@ This test suite is designed to catch issues where changing thresholds doesn't ch
 the resulting process tree or visualization.
 """
 
-import pytest
+import unittest
+import sys
+import os
 from typing import Dict, Tuple
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.algorithms.inductive_infrequent import InductiveMiningInfrequent
 
 
-class TestIMfThresholdFiltering:
+class TestIMfThresholdFiltering(unittest.TestCase):
     """Tests for Inductive Miner - Infrequent (IMf) noise threshold filtering."""
     
-    @pytest.fixture
-    def noisy_log(self) -> Dict[Tuple[str, ...], int]:
+    def setUp(self):
         """
         Create a log with clear main behavior and noise.
         
         Main behavior: A -> B -> C (frequent)
         Noise: Various infrequent edges
         """
-        return {
+        self.noisy_log = {
             # Main behavior (100 traces)
             ('A', 'B', 'C'): 100,
             
@@ -35,9 +41,9 @@ class TestIMfThresholdFiltering:
             ('A', 'C'): 1,
         }
     
-    def test_noise_threshold_zero_keeps_all_edges(self, noisy_log):
+    def test_noise_threshold_zero_keeps_all_edges(self):
         """Test that noise_threshold=0.0 keeps all edges in the DFG."""
-        miner = InductiveMiningInfrequent(noisy_log)
+        miner = InductiveMiningInfrequent(self.noisy_log)
         miner.generate_graph(
             activity_threshold=0.0,
             traces_threshold=0.0,
@@ -45,15 +51,15 @@ class TestIMfThresholdFiltering:
         )
         
         # With threshold=0.0, Phase 2 filtering should not be applied
-        assert miner.noise_threshold == 0.0
-        assert miner.filtered_log is not None
-        assert len(miner.filtered_log) > 0
+        self.assertEqual(miner.noise_threshold, 0.0)
+        self.assertIsNotNone(miner.filtered_log)
+        self.assertGreater(len(miner.filtered_log), 0)
         
         print(f"Graph generated successfully with noise_threshold=0.0")
     
-    def test_noise_threshold_high_filters_edges(self, noisy_log):
+    def test_noise_threshold_high_filters_edges(self):
         """Test that high noise_threshold filters out infrequent edges."""
-        miner = InductiveMiningInfrequent(noisy_log)
+        miner = InductiveMiningInfrequent(self.noisy_log)
         
         # Use high threshold (e.g., 0.5) which should filter many edges
         high_threshold = 0.5
@@ -64,15 +70,15 @@ class TestIMfThresholdFiltering:
             noise_threshold=high_threshold
         )
         
-        assert miner.noise_threshold == high_threshold
-        assert miner.graph is not None
+        self.assertEqual(miner.noise_threshold, high_threshold)
+        self.assertIsNotNone(miner.graph)
         
         print(f"Graph generated successfully with noise_threshold={high_threshold}")
     
-    def test_different_noise_thresholds_produce_different_results(self, noisy_log):
+    def test_different_noise_thresholds_produce_different_results(self):
         """Test that different noise thresholds produce different graphs."""
         # Mine with low threshold
-        miner_low = InductiveMiningInfrequent(noisy_log)
+        miner_low = InductiveMiningInfrequent(self.noisy_log)
         miner_low.generate_graph(
             activity_threshold=0.0,
             traces_threshold=0.0,
@@ -81,7 +87,7 @@ class TestIMfThresholdFiltering:
         graph_low = miner_low.graph
         
         # Mine with high threshold
-        miner_high = InductiveMiningInfrequent(noisy_log)
+        miner_high = InductiveMiningInfrequent(self.noisy_log)
         miner_high.generate_graph(
             activity_threshold=0.0,
             traces_threshold=0.0,
@@ -93,16 +99,16 @@ class TestIMfThresholdFiltering:
         print(f"Graph with noise_threshold=0.5: {graph_high}")
         
         # Verify thresholds were applied
-        assert miner_low.noise_threshold == 0.0
-        assert miner_high.noise_threshold == 0.5
+        self.assertEqual(miner_low.noise_threshold, 0.0)
+        self.assertEqual(miner_high.noise_threshold, 0.5)
         
         # Both should have valid graphs
-        assert graph_low is not None
-        assert graph_high is not None
+        self.assertIsNotNone(graph_low)
+        self.assertIsNotNone(graph_high)
     
-    def test_noise_threshold_change_forces_regeneration(self, noisy_log):
+    def test_noise_threshold_change_forces_regeneration(self):
         """Test that changing noise threshold on same miner forces regeneration."""
-        miner = InductiveMiningInfrequent(noisy_log)
+        miner = InductiveMiningInfrequent(self.noisy_log)
         
         # First generation with low threshold
         miner.generate_graph(
@@ -125,7 +131,7 @@ class TestIMfThresholdFiltering:
         graph2_str = str(miner.graph) if miner.graph else None
         
         # The threshold should have changed
-        assert miner.noise_threshold == 0.5
+        self.assertEqual(miner.noise_threshold, 0.5)
         
         # The graph should be regenerated
         print(f"Graph 1 ID: {graph1_id}")
@@ -139,21 +145,20 @@ class TestIMfThresholdFiltering:
             print("This is the bug - changing threshold should regenerate the graph")
         
         # At minimum, verify that the threshold was actually updated
-        assert miner.noise_threshold == 0.5
+        self.assertEqual(miner.noise_threshold, 0.5)
 
 
-class TestThresholdEffectOnCutDetection:
+class TestThresholdEffectOnCutDetection(unittest.TestCase):
     """Tests to verify thresholds affect cut detection in calculate_cut()."""
     
-    @pytest.fixture
-    def cut_sensitive_log(self) -> Dict[Tuple[str, ...], int]:
+    def setUp(self):
         """
         Create a log where noise prevents cut detection without filtering.
         
         Main structure: Sequence A -> (B || C) -> D
         Noise: Random edges that break the parallel cut
         """
-        return {
+        self.cut_sensitive_log = {
             # Clear parallel behavior
             ('A', 'B', 'C', 'D'): 50,
             ('A', 'C', 'B', 'D'): 50,
@@ -165,10 +170,10 @@ class TestThresholdEffectOnCutDetection:
             ('A', 'B', 'C', 'C', 'D'): 1,
         }
     
-    def test_imf_threshold_affects_cut_detection(self, cut_sensitive_log):
+    def test_imf_threshold_affects_cut_detection(self):
         """Test that noise_threshold affects which cuts are detected."""
         # Low threshold - might not find optimal cuts due to noise
-        miner_low = InductiveMiningInfrequent(cut_sensitive_log)
+        miner_low = InductiveMiningInfrequent(self.cut_sensitive_log)
         miner_low.generate_graph(
             activity_threshold=0.0,
             traces_threshold=0.0,
@@ -176,7 +181,7 @@ class TestThresholdEffectOnCutDetection:
         )
         
         # High threshold - should filter noise and find cleaner cuts
-        miner_high = InductiveMiningInfrequent(cut_sensitive_log)
+        miner_high = InductiveMiningInfrequent(self.cut_sensitive_log)
         miner_high.generate_graph(
             activity_threshold=0.0,
             traces_threshold=0.0,
@@ -187,15 +192,15 @@ class TestThresholdEffectOnCutDetection:
         print(f"Graph with high noise threshold: {miner_high.graph}")
         
         # Both should produce graphs
-        assert miner_low.graph is not None
-        assert miner_high.graph is not None
+        self.assertIsNotNone(miner_low.graph)
+        self.assertIsNotNone(miner_high.graph)
         
         # Verify the thresholds were actually set
-        assert miner_low.noise_threshold == 0.0
-        assert miner_high.noise_threshold == 0.3
+        self.assertEqual(miner_low.noise_threshold, 0.0)
+        self.assertEqual(miner_high.noise_threshold, 0.3)
 
 
-class TestEdgeFrequencyCalculation:
+class TestEdgeFrequencyCalculation(unittest.TestCase):
     """Tests to verify edge frequency calculation is correct."""
     
     def test_edge_frequency_calculation_imf(self):
@@ -216,11 +221,11 @@ class TestEdgeFrequencyCalculation:
         # A->X: 2
         # X->C: 2
         
-        assert edge_freq[('A', 'B')] == 15
-        assert edge_freq[('B', 'C')] == 10
-        assert edge_freq[('B', 'D')] == 5
-        assert edge_freq[('A', 'X')] == 2
-        assert edge_freq[('X', 'C')] == 2
+        self.assertEqual(edge_freq[('A', 'B')], 15)
+        self.assertEqual(edge_freq[('B', 'C')], 10)
+        self.assertEqual(edge_freq[('B', 'D')], 5)
+        self.assertEqual(edge_freq[('A', 'X')], 2)
+        self.assertEqual(edge_freq[('X', 'C')], 2)
         
         print(f"Edge frequencies: {edge_freq}")
     
@@ -246,11 +251,11 @@ class TestEdgeFrequencyCalculation:
         edges = filtered_dfg.get_edges()
         print(f"Filtered edges: {edges}")
         
-        assert ('A', 'B') in edges
-        assert ('B', 'C') in edges
-        assert ('A', 'X') not in edges
-        assert ('A', 'Y') not in edges
+        self.assertIn(('A', 'B'), edges)
+        self.assertIn(('B', 'C'), edges)
+        self.assertNotIn(('A', 'X'), edges)
+        self.assertNotIn(('A', 'Y'), edges)
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-s"])
+    unittest.main()

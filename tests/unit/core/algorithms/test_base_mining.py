@@ -1,6 +1,12 @@
 import unittest
+import sys
+import os
 import numpy as np
 from typing import Dict, Tuple
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.algorithms.base import BaseMining
 
 

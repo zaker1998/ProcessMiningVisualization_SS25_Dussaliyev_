@@ -1,5 +1,11 @@
 import unittest
+import sys
+import os
 from parameterized import parameterized
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.analysis.predictions import PredictionModel
 
 column_types_predictions_values = {

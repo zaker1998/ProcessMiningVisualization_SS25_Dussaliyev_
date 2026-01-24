@@ -1,4 +1,10 @@
 import unittest
+import sys
+import os
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'src'))
+
 from core.graphs.dfg import DFG
 
 

@@ -124,10 +124,6 @@ class BaseMining(MiningInterface):
             return 0
         return round(max(self.log.values()) * threshold)
 
-    # Backward-compatible method name (typo kept for external callers)
-    def calculate_minimum_traces_frequency(self, threshold: float) -> int:  # noqa: N802
-        return self.calculate_minimum_traces_frequency(threshold)
-
     # --- visualization helpers -------------------------------------------
     def calculate_node_size(self, node: str) -> Tuple[float, float]:  # keep name for compatibility
         """
