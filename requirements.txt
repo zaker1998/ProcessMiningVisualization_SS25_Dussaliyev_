@@ -7,4 +7,3 @@ ddcal
 
 # Development/Testing dependencies
 parameterized
-pytest
