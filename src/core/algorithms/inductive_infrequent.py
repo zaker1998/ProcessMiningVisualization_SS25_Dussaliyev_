@@ -377,7 +377,7 @@ class InductiveMiningInfrequent(InductiveMining):
                 if len(partitions) > 1:
                     # Use IMf filtered splitting
                     sublogs = exclusive_split_imf(
-                        log, cast(List[Set[str]], partitions), self.noise_threshold
+                        log, cast(List[Set[str]], partitions)
                     )
                     if self._validate_split(sublogs):
                         return ("xor", sublogs)
@@ -386,7 +386,7 @@ class InductiveMiningInfrequent(InductiveMining):
                 if len(partitions) > 1:
                     # Use IMf filtered splitting (optimal split)
                     sublogs = sequence_split_imf(
-                        log, cast(List[Set[str]], partitions), self.noise_threshold
+                        log, cast(List[Set[str]], partitions)
                     )
                     if self._validate_split(sublogs):
                         return ("seq", sublogs)
@@ -395,7 +395,7 @@ class InductiveMiningInfrequent(InductiveMining):
                 if len(partitions) > 1:
                     # Parallel: no filtering needed
                     sublogs = parallel_split_imf(
-                        log, cast(List[Set[str]], partitions), self.noise_threshold
+                        log, cast(List[Set[str]], partitions)
                     )
                     if self._validate_split(sublogs):
                         return ("par", sublogs)
@@ -404,7 +404,7 @@ class InductiveMiningInfrequent(InductiveMining):
                 if len(partitions) > 1:
                     # Use IMf filtered splitting (empty traces for invalid starts/ends)
                     sublogs = loop_split_imf(
-                        log, cast(List[Set[str]], partitions), self.noise_threshold
+                        log, cast(List[Set[str]], partitions)
                     )
                     if self._validate_split(sublogs):
                         return ("loop", sublogs)
@@ -628,10 +628,6 @@ class InductiveMiningInfrequent(InductiveMining):
                 return (operator, sublogs)
         
         return None
-    
-    def calculate_cut(self, log: Dict[Tuple[str, ...], int]) -> Optional[tuple]:
-        """Alias for calculate_cut (correct spelling)."""
-        return self.calculate_cut(log)
         
     def set_noise_threshold(self, threshold: float):
         """Set noise threshold (0.0 - 1.0)."""
@@ -639,25 +635,4 @@ class InductiveMiningInfrequent(InductiveMining):
             raise ValueError(f"Noise threshold must be between 0.0 and 1.0, got {threshold}")
         self.noise_threshold = threshold
 
-    def get_algorithm_info(self) -> Dict[str, Any]:
-        """Get information about the algorithm configuration."""
-        return {
-            "name": "Inductive Miner - Infrequent (IMf)",
-            "version": "2.0.0-paper-based",
-            "reference": "Leemans et al. (2014) - DOI: 10.1007/978-3-319-06257-0_6",
-            "parameters": {
-                "noise_threshold": self.noise_threshold,
-                "activity_threshold": self.activity_threshold,
-                "traces_threshold": self.traces_threshold
-            },
-            "features": {
-                "base_case_filters": True,
-                "log_splitting_filters": True,
-                "two_phase_cut_detection": True
-            },
-            "properties": {
-                "soundness": "guaranteed",
-                "rediscoverability": "yes (under noise threshold)"
-            }
-        }
 
