@@ -45,7 +45,7 @@ class HeuristicMining(BaseMining):
         # add frequent nodes to graph
         for node in frequent_nodes:
             node_freq = self.appearance_frequency.get(node, 0)
-            w, h = self.calulate_node_size(node)
+            w, h = self.calculate_node_size(node)
             self.graph.add_event(node, node_freq, (int(w), int(h)))
 
         # add edges to graph

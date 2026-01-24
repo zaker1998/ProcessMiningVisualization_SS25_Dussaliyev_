@@ -26,7 +26,7 @@ class InductiveMining(BaseMining):
         """
         super().__init__(log)
         self.logger = get_logger("InductiveMining")
-        self.node_sizes = {k: self.calulate_node_size(k) for k in self.events}
+        self.node_sizes = {k: self.calculate_node_size(k) for k in self.events}
         self.activity_threshold = 0.0
         self.traces_threshold = 0.0
         self.filtered_log = None
@@ -49,7 +49,7 @@ class InductiveMining(BaseMining):
         events_to_remove = self.get_events_to_remove(activity_threshold)
 
         self.logger.debug(f"Events to remove: {events_to_remove}")
-        min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
+        min_traces_frequency = self.calculate_minimum_traces_frequency(traces_threshold)
 
         filtered_log = filter_traces(self.log, min_traces_frequency)
         filtered_log = filter_events(filtered_log, events_to_remove)
@@ -91,7 +91,7 @@ class InductiveMining(BaseMining):
             return tree
 
         if tuple() not in log:
-            if partitions := self.calulate_cut(log):
+            if partitions := self.calculate_cut(log):
                 self.logger.debug(f"Cut: {partitions}")
                 operation = partitions[0]
                 return (operation, *list(map(self.inductive_mining, partitions[1:])))
@@ -126,7 +126,7 @@ class InductiveMining(BaseMining):
 
         return None
 
-    def calulate_cut(self, log) -> tuple | None:
+    def calculate_cut(self, log) -> tuple | None:
         """Find a partitioning of the log using the different cut methods.
         The cut methods are:
         - exclusive_cut

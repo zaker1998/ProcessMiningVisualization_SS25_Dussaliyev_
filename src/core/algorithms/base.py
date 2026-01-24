@@ -125,11 +125,11 @@ class BaseMining(MiningInterface):
         return round(max(self.log.values()) * threshold)
 
     # Backward-compatible method name (typo kept for external callers)
-    def calulate_minimum_traces_frequency(self, threshold: float) -> int:  # noqa: N802
+    def calculate_minimum_traces_frequency(self, threshold: float) -> int:  # noqa: N802
         return self.calculate_minimum_traces_frequency(threshold)
 
     # --- visualization helpers -------------------------------------------
-    def calulate_node_size(self, node: str) -> Tuple[float, float]:  # keep name for compatibility
+    def calculate_node_size(self, node: str) -> Tuple[float, float]:  # keep name for compatibility
         """
         Return (width, height) for a visual node based on cluster scaling.
         Uses event_freq_labels_sorted produced by clustering to map frequency -> scale.

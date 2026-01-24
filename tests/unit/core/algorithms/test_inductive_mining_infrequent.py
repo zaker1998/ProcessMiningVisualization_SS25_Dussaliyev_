@@ -202,7 +202,7 @@ class TestInductiveMiningInfrequent(unittest.TestCase):
         self.assertTrue(hasattr(mining, 'inductive_mining'))
         self.assertTrue(hasattr(mining, 'get_graph'))
         self.assertTrue(hasattr(mining, 'get_events_to_remove'))
-        self.assertTrue(hasattr(mining, 'calulate_minimum_traces_frequency'))
+        self.assertTrue(hasattr(mining, 'calculate_minimum_traces_frequency'))
 
     def test_complex_noisy_pattern(self):
         """Test mining complex pattern with systematic noise."""

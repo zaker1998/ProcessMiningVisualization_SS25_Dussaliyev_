@@ -122,7 +122,7 @@ class InductiveMiningInfrequent(InductiveMining):
         
         # Pre-filtering (activity and trace thresholds)
         events_to_remove = self.get_events_to_remove(activity_threshold)
-        min_traces_frequency = self.calulate_minimum_traces_frequency(traces_threshold)
+        min_traces_frequency = self.calculate_minimum_traces_frequency(traces_threshold)
         
         from core.log_processing.filters import filter_traces, filter_events
         filtered_log = filter_traces(self.log, min_traces_frequency)
@@ -606,7 +606,7 @@ class InductiveMiningInfrequent(InductiveMining):
         return self.noise_threshold
     
     # Backward compatibility methods
-    def calulate_cut(self, log: Dict[Tuple[str, ...], int]) -> Optional[tuple]:
+    def calculate_cut(self, log: Dict[Tuple[str, ...], int]) -> Optional[tuple]:
         """
         Backward compatibility: Call appropriate cut detection based on IMf state.
         This method is kept for backward compatibility with existing code.
@@ -630,8 +630,8 @@ class InductiveMiningInfrequent(InductiveMining):
         return None
     
     def calculate_cut(self, log: Dict[Tuple[str, ...], int]) -> Optional[tuple]:
-        """Alias for calulate_cut (correct spelling)."""
-        return self.calulate_cut(log)
+        """Alias for calculate_cut (correct spelling)."""
+        return self.calculate_cut(log)
         
     def set_noise_threshold(self, threshold: float):
         """Set noise threshold (0.0 - 1.0)."""

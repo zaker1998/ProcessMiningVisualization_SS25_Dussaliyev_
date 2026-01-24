@@ -176,7 +176,7 @@ class TestInductiveMiningEnhanced(unittest.TestCase):
         mining = InductiveMining(self.noisy_log)
         
         # Calculate minimum frequency for filtering
-        min_freq = mining.calulate_minimum_traces_frequency(0.5)
+        min_freq = mining.calculate_minimum_traces_frequency(0.5)
         expected_min = 50  # 0.5 * max frequency (100)
         self.assertEqual(min_freq, expected_min)
 
@@ -265,7 +265,7 @@ class TestInductiveMiningEnhanced(unittest.TestCase):
         
         # Test size calculation for different activities
         for activity in ['A', 'B', 'C']:
-            width, height = mining.calulate_node_size(activity)
+            width, height = mining.calculate_node_size(activity)
             self.assertGreater(width, 0)
             self.assertGreater(height, 0)
             self.assertEqual(height, width / 3)  # Height should be width/3
@@ -288,7 +288,7 @@ class TestInductiveMiningEnhanced(unittest.TestCase):
         mining = InductiveMining(self.parallel_log)
         
         # Test cut calculation directly (note: typo in method name is preserved in base class)
-        cut_result = mining.calulate_cut(self.parallel_log)
+        cut_result = mining.calculate_cut(self.parallel_log)
         self.assertIsNotNone(cut_result)
         
         # Should return (operator, sublog1, sublog2, ...) tuple

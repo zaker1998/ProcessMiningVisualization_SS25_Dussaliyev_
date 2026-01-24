@@ -187,7 +187,7 @@ class TestInductiveMiningIntegration(unittest.TestCase):
         for MinerClass in [InductiveMining, InductiveMiningInfrequent]:
             with self.subTest(miner=MinerClass.__name__):
                 miner = MinerClass(test_log)
-                min_freq = miner.calulate_minimum_traces_frequency(threshold)
+                min_freq = miner.calculate_minimum_traces_frequency(threshold)
                 
                 # Should require frequency >= 50 (0.5 * 100)
                 self.assertEqual(min_freq, 50)

@@ -555,7 +555,7 @@ class FuzzyMining(BaseMining):
     ):
         for node in nodes_after_first_rule:
             if node not in list_of_clustered_nodes:
-                w, h = self.calulate_node_size(node)
+                w, h = self.calculate_node_size(node)
                 node_sign = self.sign_dict.get(node)
                 self.graph.add_event(node, node_sign, (w, h))
 

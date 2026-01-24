@@ -131,11 +131,11 @@ class TestBaseMining(unittest.TestCase):
         base_mining = BaseMining(self.simple_log)
         
         # max trace frequency is 10, so threshold 0.5 should give 5
-        min_freq = base_mining.calulate_minimum_traces_frequency(0.5)
+        min_freq = base_mining.calculate_minimum_traces_frequency(0.5)
         self.assertEqual(min_freq, 5)
         
         # threshold 0.3 should give round(10 * 0.3) = 3
-        min_freq = base_mining.calulate_minimum_traces_frequency(0.3)
+        min_freq = base_mining.calculate_minimum_traces_frequency(0.3)
         self.assertEqual(min_freq, 3)
 
     def test_node_size_calculation(self):
@@ -144,7 +144,7 @@ class TestBaseMining(unittest.TestCase):
         
         # Test for each event
         for event in base_mining.events:
-            width, height = base_mining.calulate_node_size(event)
+            width, height = base_mining.calculate_node_size(event)
             
             # Width should be positive and greater than min_node_size
             self.assertGreater(width, 0)
@@ -178,7 +178,7 @@ class TestBaseMining(unittest.TestCase):
         self.assertEqual(len(base_mining.end_nodes), 0)
         
         # Test threshold calculations with empty log
-        min_freq = base_mining.calulate_minimum_traces_frequency(0.5)
+        min_freq = base_mining.calculate_minimum_traces_frequency(0.5)
         self.assertEqual(min_freq, 0)
         
         events_to_remove = base_mining.get_events_to_remove(0.5)
