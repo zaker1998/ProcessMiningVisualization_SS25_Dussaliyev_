@@ -235,8 +235,9 @@ class ImportOperations:
         df = pd.DataFrame(events_data)
         
         # Convert timestamp columns
+        # Use utc=True to handle timezone-aware datetimes from XES files
         if 'time:timestamp' in df.columns:
-            df['time:timestamp'] = pd.to_datetime(df['time:timestamp'])
+            df['time:timestamp'] = pd.to_datetime(df['time:timestamp'], utc=True)
             
         return df
     
