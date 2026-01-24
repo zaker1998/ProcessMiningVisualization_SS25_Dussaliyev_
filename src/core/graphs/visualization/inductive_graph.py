@@ -90,6 +90,9 @@ class InductiveGraph(BaseGraph):
             frequency = self.event_frequency.get(title_str, 0)
         if frequency > 0:
             event_data["frequency"] = frequency
+        
+        # Store the actual event name for display purposes
+        event_data["event_name"] = title_str
 
         label = f"{title_str}\n{frequency}"
         super().add_node(
@@ -353,10 +356,21 @@ class InductiveGraph(BaseGraph):
             return self.special_node_to_string(id)
 
         node = self.get_node(id)
-        description = f"**Event:** {node.get_id()}"
+        
+        # Get the actual event name from stored data, or extract from node ID as fallback
+        event_name = node.get_data_from_key("event_name")
+        if not event_name:
+            # Fallback: extract from node ID format "event_{name}_{count}"
+            node_id = node.get_id()
+            if node_id.startswith("event_") and "_" in node_id[6:]:
+                event_name = "_".join(node_id.split("_")[1:-1])
+            else:
+                event_name = node_id
+            
+        description = f"**Event:** {event_name}"
         if frequency := node.get_data_from_key("frequency"):
             description = f"""{description}\n**Frequency:** {frequency}"""
-        return node.get_id(), description
+        return event_name, description
 
     def special_node_to_string(self, id: str) -> tuple[str, str]:
         """Return the node name/id and description for the given special node id.
