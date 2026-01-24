@@ -23,18 +23,19 @@ Log Splitting Filters by Operator:
     
 → (Sequence): Filter activities that violate order
     - Split trace to minimize removed events
-    - Use dynamic programming for optimal split
+    - Uses greedy forward-pass approach
     
 ∧ (Parallel): No filtering needed
     - Any sequence of interleaved activities is valid
+    - Reuses standard parallel_split from splits.py
     
 ↺ (Loop): Handle invalid loop starts/ends
     - Add empty traces to body sublog for traces not starting/ending with body activities
 """
 
-from typing import Dict, Tuple, List, Set, Optional
-from collections import Counter
+from typing import Dict, Tuple, List, Set
 
+from core.log_processing.splits import parallel_split, find_correct_partition
 from utils.logger import get_logger
 
 logger = get_logger("IMfSplits")
@@ -42,8 +43,7 @@ logger = get_logger("IMfSplits")
 
 def exclusive_split_imf(
     log: Dict[Tuple[str, ...], int], 
-    partitions: List[Set[str]],
-    noise_threshold: float = 0.0
+    partitions: List[Set[str]]
 ) -> List[Dict[Tuple[str, ...], int]]:
     """
     Split log for XOR operator with infrequent behavior filtering.
@@ -62,39 +62,32 @@ def exclusive_split_imf(
     2. Assign trace to partition with most activities
     3. Keep only activities from that partition (filter others)
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     log : Dict[Tuple[str, ...], int]
         Event log with traces and frequencies
     partitions : List[Set[str]]
         XOR partitions of activities
-    noise_threshold : float
-        Noise threshold for frequency-based filtering (0.0-1.0)
         
-    Returns:
-    --------
+    Returns
+    -------
     List[Dict[Tuple[str, ...], int]]
         Split sublogs, one per partition
     """
     split_logs: List[Dict[Tuple[str, ...], int]] = [{} for _ in range(len(partitions))]
     
     for trace, frequency in log.items():
-        # Skip empty traces
         if not trace:
             continue
         
         # Count activities per partition
-        partition_counts = [0] * len(partitions)
-        for event in trace:
-            for i, partition in enumerate(partitions):
-                if event in partition:
-                    partition_counts[i] += 1
-                    break
+        partition_counts = [
+            sum(1 for event in trace if event in partition)
+            for partition in partitions
+        ]
         
-        # Find partition with most activities
         max_count = max(partition_counts)
         if max_count == 0:
-            # No activities match any partition - skip trace
             logger.debug(f"Trace {trace} has no activities matching any partition - skipping")
             continue
         
@@ -102,19 +95,17 @@ def exclusive_split_imf(
         best_partition = partitions[best_partition_idx]
         
         # Check if trace has activities from multiple partitions
-        active_partitions = sum(1 for c in partition_counts if c > 0)
-        
-        if active_partitions > 1:
+        if sum(1 for c in partition_counts if c > 0) > 1:
             # Filter: keep only activities from best partition
             filtered_trace = tuple(event for event in trace if event in best_partition)
             logger.debug(f"XOR filter: {trace} -> {filtered_trace} (partition {best_partition_idx})")
             
-            if filtered_trace:  # Only add non-empty traces
+            if filtered_trace:
                 split_logs[best_partition_idx][filtered_trace] = (
                     split_logs[best_partition_idx].get(filtered_trace, 0) + frequency
                 )
         else:
-            # Trace belongs entirely to one partition - no filtering needed
+            # Trace belongs entirely to one partition
             split_logs[best_partition_idx][trace] = (
                 split_logs[best_partition_idx].get(trace, 0) + frequency
             )
@@ -124,8 +115,7 @@ def exclusive_split_imf(
 
 def sequence_split_imf(
     log: Dict[Tuple[str, ...], int], 
-    partitions: List[Set[str]],
-    noise_threshold: float = 0.0
+    partitions: List[Set[str]]
 ) -> List[Dict[Tuple[str, ...], int]]:
     """
     Split log for Sequence operator with infrequent behavior filtering.
@@ -140,19 +130,17 @@ def sequence_split_imf(
     
     Algorithm:
     ----------
-    Use dynamic programming to find optimal split points that minimize removed events.
+    Uses greedy forward-pass approach to assign events to partitions.
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     log : Dict[Tuple[str, ...], int]
         Event log with traces and frequencies
     partitions : List[Set[str]]
         Sequence partitions of activities (ordered)
-    noise_threshold : float
-        Noise threshold (not used for sequence, order is strict)
         
-    Returns:
-    --------
+    Returns
+    -------
     List[Dict[Tuple[str, ...], int]]
         Split sublogs, one per partition (in order)
     """
@@ -179,19 +167,19 @@ def _optimal_sequence_split(
     """
     Find optimal way to split trace into sequence partitions minimizing removed events.
     
-    Uses dynamic programming approach:
-    - dp[i][j] = minimum events removed to assign trace[0:i] to partitions[0:j+1]
-    - Backtrack to find the optimal assignment
+    Uses a greedy forward-pass approach:
+    - Assign events to the earliest valid partition (current or later)
+    - Events that would go backward (violate sequence order) are removed as infrequent
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     trace : Tuple[str, ...]
         Input trace
     partitions : List[Set[str]]
         Ordered sequence partitions
         
-    Returns:
-    --------
+    Returns
+    -------
     List[Tuple[str, ...]]
         Subtraces for each partition
     """
@@ -241,63 +229,13 @@ def _optimal_sequence_split(
     return [tuple(st) for st in sub_traces]
 
 
-def parallel_split_imf(
-    log: Dict[Tuple[str, ...], int], 
-    partitions: List[Set[str]],
-    noise_threshold: float = 0.0
-) -> List[Dict[Tuple[str, ...], int]]:
-    """
-    Split log for Parallel operator - NO filtering needed.
-    
-    Paper Reference (Section 3.3 - ∧):
-    ----------------------------------
-    "A parallel operator allows for any sequence of behaviour of its subtrees. 
-    Therefore, no behaviour violates ∧ and infrequent behaviour can be neither 
-    detected nor ﬁltered while splitting the log."
-    
-    This is identical to standard parallel split.
-    
-    Parameters:
-    -----------
-    log : Dict[Tuple[str, ...], int]
-        Event log
-    partitions : List[Set[str]]
-        Parallel partitions
-    noise_threshold : float
-        Not used (no filtering for parallel)
-        
-    Returns:
-    --------
-    List[Dict[Tuple[str, ...], int]]
-        Split sublogs (standard projection)
-    """
-    # Use standard parallel split - no filtering needed
-    split_logs: List[Dict[Tuple[str, ...], int]] = [{} for _ in range(len(partitions))]
-    
-    for trace, frequency in log.items():
-        if not trace:
-            continue
-            
-        # Project trace onto each partition
-        sub_traces: List[List[str]] = [[] for _ in range(len(partitions))]
-        for event in trace:
-            for i, partition in enumerate(partitions):
-                if event in partition:
-                    sub_traces[i].append(event)
-                    break
-        
-        # Add projected traces to split logs
-        for i, sub_trace in enumerate(sub_traces):
-            t = tuple(sub_trace)
-            split_logs[i][t] = split_logs[i].get(t, 0) + frequency
-    
-    return split_logs
+# Parallel split needs no filtering - reuse from splits.py
+parallel_split_imf = parallel_split
 
 
 def loop_split_imf(
     log: Dict[Tuple[str, ...], int], 
-    partitions: List[Set[str]],
-    noise_threshold: float = 0.0
+    partitions: List[Set[str]]
 ) -> List[Dict[Tuple[str, ...], int]]:
     """
     Split log for Loop operator with infrequent behavior filtering.
@@ -318,17 +256,15 @@ def loop_split_imf(
     4. If trace doesn't end with body activity -> add empty trace to body
     5. Split rest normally, alternating between body and redo parts
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     log : Dict[Tuple[str, ...], int]
         Event log
     partitions : List[Set[str]]
         Loop partitions: [body, redo1, redo2, ...]
-    noise_threshold : float
-        Noise threshold (not directly used, but kept for interface consistency)
         
-    Returns:
-    --------
+    Returns
+    -------
     List[Dict[Tuple[str, ...], int]]
         Split sublogs: [body_log, redo1_log, redo2_log, ...]
     """
@@ -345,62 +281,41 @@ def loop_split_imf(
         # Check if trace ends with body activity
         ends_with_body = trace[-1] in body_partition
         
-        # Track empty traces to add to body
-        empty_traces_for_body = 0
+        # Add empty traces to body for violations
+        empty_traces_count = (0 if starts_with_body else 1) + (0 if ends_with_body else 1)
         
-        if not starts_with_body:
-            # Trace doesn't start with body - add empty trace to body
-            empty_traces_for_body += 1
-            logger.debug(f"Loop filter: trace {trace} doesn't start with body, adding empty to body")
-        
-        if not ends_with_body:
-            # Trace doesn't end with body - add empty trace to body
-            empty_traces_for_body += 1
-            logger.debug(f"Loop filter: trace {trace} doesn't end with body, adding empty to body")
-        
-        # Add empty traces to body sublog
-        if empty_traces_for_body > 0:
+        if empty_traces_count > 0:
             empty_trace = tuple()
             split_logs[0][empty_trace] = (
-                split_logs[0].get(empty_trace, 0) + frequency * empty_traces_for_body
+                split_logs[0].get(empty_trace, 0) + frequency * empty_traces_count
             )
+            logger.debug(f"Loop filter: trace {trace} violations, adding {empty_traces_count} empty to body")
         
-        # Now split the trace normally
+        # Split the trace - switch partitions when event changes
         sub_trace: List[str] = []
-        current_partition_idx = 0
-        current_partition = partitions[0]
+        current_idx = 0
         
         for event in trace:
-            # Find which partition this event belongs to
-            event_partition_idx = -1
-            for p_idx, partition in enumerate(partitions):
-                if event in partition:
-                    event_partition_idx = p_idx
-                    break
+            event_idx, _ = find_correct_partition(event, partitions)
             
-            if event_partition_idx == -1:
-                # Event not in any partition - skip
+            if event_idx == -1:
                 continue
             
-            if event_partition_idx != current_partition_idx:
+            if event_idx != current_idx and sub_trace:
                 # Switching partitions - save current subtrace
-                if sub_trace:
-                    t = tuple(sub_trace)
-                    split_logs[current_partition_idx][t] = (
-                        split_logs[current_partition_idx].get(t, 0) + frequency
-                    )
-                    sub_trace = []
-                current_partition_idx = event_partition_idx
-                current_partition = partitions[current_partition_idx]
+                t = tuple(sub_trace)
+                split_logs[current_idx][t] = split_logs[current_idx].get(t, 0) + frequency
+                sub_trace = []
+                current_idx = event_idx
+            elif event_idx != current_idx:
+                current_idx = event_idx
             
             sub_trace.append(event)
         
-        # Don't forget the last subtrace
+        # Save last subtrace
         if sub_trace:
             t = tuple(sub_trace)
-            split_logs[current_partition_idx][t] = (
-                split_logs[current_partition_idx].get(t, 0) + frequency
-            )
+            split_logs[current_idx][t] = split_logs[current_idx].get(t, 0) + frequency
     
     return split_logs
 
@@ -421,21 +336,25 @@ def is_single_activity_frequent(
     "a is only discovered by IMi if the average number of occurrences per trace 
     of a in the log is close enough to 1, dependent on the relative threshold k."
     
-    If avg occurrences > 1 / (1 - k), the loop model is more appropriate.
-    If avg occurrences ≈ 1, the single activity is appropriate.
+    The activity is frequent (single) if:
+        lower_bound <= avg_occurrences <= upper_bound
     
-    Parameters:
-    -----------
+    Where:
+        - upper_bound = 1 / (1 - k) for k < 1, infinity for k = 1
+        - lower_bound = 1 - k (activity must appear at least this often on average)
+    
+    Parameters
+    ----------
     log : Dict[Tuple[str, ...], int]
         Log containing only one unique activity
     noise_threshold : float
-        The relative threshold k from the paper
+        The relative threshold k from the paper (0.0 to 1.0)
         
-    Returns:
-    --------
+    Returns
+    -------
     bool
         True if single activity should be discovered (avg close to 1)
-        False if flower/loop model should be discovered (avg > threshold)
+        False if flower/loop model should be discovered
     """
     if not log:
         return True
@@ -464,21 +383,23 @@ def is_single_activity_frequent(
     
     avg_occurrences = total_occurrences / total_traces
     
-    # Paper formula: discover 'a' if avg close to 1
-    # Threshold: 1 / (1 - k) where k is noise_threshold
-    # For k=0.2: threshold = 1/(1-0.2) = 1.25
-    # For k=0.5: threshold = 1/(1-0.5) = 2.0
+    # Calculate bounds based on noise threshold
+    # Upper bound: 1 / (1 - k) - allows more deviation at higher thresholds
+    # Lower bound: 1 - k - activity must appear often enough
     
     if noise_threshold >= 1.0:
-        threshold = float('inf')
+        upper_bound = float('inf')
     else:
-        threshold = 1.0 / (1.0 - noise_threshold)
+        upper_bound = 1.0 / (1.0 - noise_threshold)
     
-    is_frequent = avg_occurrences <= threshold
+    lower_bound = 1.0 - noise_threshold
+    
+    # Activity is frequent if average is within bounds (close to 1)
+    is_frequent = lower_bound <= avg_occurrences <= upper_bound
     
     logger.debug(f"Single activity filter: activity={activity}, "
-                f"avg_occurrences={avg_occurrences:.2f}, threshold={threshold:.2f}, "
-                f"is_single_activity={is_frequent}")
+                f"avg={avg_occurrences:.2f}, bounds=[{lower_bound:.2f}, {upper_bound:.2f}], "
+                f"is_single={is_frequent}")
     
     return is_frequent
 
@@ -497,23 +418,23 @@ def is_empty_trace_frequent(
     filters ε from L and recurses on L without ε."
     
     The empty trace is considered frequent if:
-        freq(ε) / total_traces >= noise_threshold
+        freq(ε) / total_traces > noise_threshold
     
-    Parameters:
-    -----------
+    Parameters
+    ----------
     log : Dict[Tuple[str, ...], int]
         Event log potentially containing empty traces
     noise_threshold : float
         The relative threshold k from the paper
         
-    Returns:
-    --------
+    Returns
+    -------
     bool
         True if empty trace is frequent (should model with XOR(tau, ...))
         False if empty trace is infrequent (should filter and continue)
     """
     if tuple() not in log:
-        return False  # No empty trace
+        return False
     
     empty_freq = log.get(tuple(), 0)
     total_traces = sum(log.values())
@@ -523,9 +444,8 @@ def is_empty_trace_frequent(
     
     empty_ratio = empty_freq / total_traces
     
-    # Empty trace is frequent if its ratio >= threshold
-    # With noise_threshold = 0.2, empty traces need to be >= 20% of total
-    is_frequent = empty_ratio >= noise_threshold
+    # Empty trace is frequent if ratio > threshold (strict inequality for pm4py match)
+    is_frequent = empty_ratio > noise_threshold
     
     logger.debug(f"Empty trace filter: empty_freq={empty_freq}, total={total_traces}, "
                 f"ratio={empty_ratio:.2%}, threshold={noise_threshold:.0%}, "
