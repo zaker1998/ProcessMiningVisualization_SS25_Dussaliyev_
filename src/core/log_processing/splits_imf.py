@@ -167,9 +167,12 @@ def _optimal_sequence_split(
     """
     Find optimal way to split trace into sequence partitions minimizing removed events.
     
-    Uses a greedy forward-pass approach:
-    - Assign events to the earliest valid partition (current or later)
-    - Events that would go backward (violate sequence order) are removed as infrequent
+    Paper Reference (Section 3.3 - →):
+    "Filtering infrequent behaviour is an optimisation problem: the trace is to be 
+    split in the least-events-removing way."
+    
+    Uses dynamic programming to find the optimal split point between consecutive 
+    partitions that maximizes the number of kept events.
     
     Parameters
     ----------
@@ -189,42 +192,81 @@ def _optimal_sequence_split(
     if n == 0:
         return [tuple() for _ in range(m)]
     
-    # assignment[i] = partition index for trace[i], or -1 if removed
-    assignment = [-1] * n
+    if m == 1:
+        # Single partition: keep all events that belong to it
+        sub_trace = tuple(e for e in trace if e in partitions[0])
+        return [sub_trace]
     
-    # Greedy approach with backtracking for violations
-    # Start with partition 0
-    current_partition = 0
-    
-    for i, event in enumerate(trace):
-        # Find which partition contains this event
-        event_partition = -1
-        for p_idx, partition in enumerate(partitions):
+    # Map each event to its partition index (-1 if not in any partition)
+    event_partitions = []
+    for event in trace:
+        p_idx = -1
+        for idx, partition in enumerate(partitions):
             if event in partition:
-                event_partition = p_idx
+                p_idx = idx
                 break
-        
-        if event_partition == -1:
-            # Event not in any partition - mark as removed
-            assignment[i] = -1
-            continue
-        
-        if event_partition >= current_partition:
-            # Valid: event is in current or later partition
-            assignment[i] = event_partition
-            current_partition = event_partition
-        else:
-            # Violation: event is from earlier partition
-            # This is infrequent behavior - mark as removed
-            assignment[i] = -1
-            logger.debug(f"Sequence filter: removing {event} at position {i} "
-                        f"(partition {event_partition} < current {current_partition})")
+        event_partitions.append(p_idx)
     
-    # Build subtraces from assignment
+    # Use DP to find optimal split points
+    # dp[i][j] = max events we can keep considering trace[0:i] with current partition <= j
+    # We need to find split points between partitions
+    
+    # For m partitions, we need m-1 split points
+    # split_points[k] = index in trace where partition k+1 starts (0 <= k < m-1)
+    # Events before split_points[0] go to partition 0
+    # Events between split_points[k-1] and split_points[k] go to partition k
+    
+    # Count events for each partition in ranges
+    # prefix_count[p][i] = count of events belonging to partition p in trace[0:i]
+    prefix_count = [[0] * (n + 1) for _ in range(m)]
+    for i, ep in enumerate(event_partitions):
+        for p in range(m):
+            prefix_count[p][i + 1] = prefix_count[p][i] + (1 if ep == p else 0)
+    
+    def count_in_range(partition: int, start: int, end: int) -> int:
+        """Count events of partition in trace[start:end]."""
+        return prefix_count[partition][end] - prefix_count[partition][start]
+    
+    # DP: dp[k][i] = max events kept when using partitions 0..k for trace[0:i]
+    # Transition: dp[k][i] = max over all j <= i of (dp[k-1][j] + count_in_range(k, j, i))
+    
+    # Initialize: dp[0][i] = count of partition 0 events in trace[0:i]
+    dp = [[0] * (n + 1) for _ in range(m)]
+    parent = [[-1] * (n + 1) for _ in range(m)]  # For backtracking
+    
+    for i in range(n + 1):
+        dp[0][i] = count_in_range(0, 0, i)
+        parent[0][i] = 0  # Always starts at 0
+    
+    # Fill DP table
+    for k in range(1, m):
+        for i in range(n + 1):
+            best_val = -1
+            best_j = 0
+            for j in range(i + 1):
+                val = dp[k - 1][j] + count_in_range(k, j, i)
+                if val > best_val:
+                    best_val = val
+                    best_j = j
+            dp[k][i] = best_val
+            parent[k][i] = best_j
+    
+    # Backtrack to find split points
+    split_points = [0] * m  # split_points[k] = start index for partition k
+    current_end = n
+    for k in range(m - 1, 0, -1):
+        split_points[k] = parent[k][current_end]
+        current_end = split_points[k]
+    split_points[0] = 0
+    
+    # Build subtraces based on split points
     sub_traces: List[List[str]] = [[] for _ in range(m)]
-    for i, event in enumerate(trace):
-        if assignment[i] >= 0:
-            sub_traces[assignment[i]].append(event)
+    for k in range(m):
+        start = split_points[k]
+        end = split_points[k + 1] if k < m - 1 else n
+        for i in range(start, end):
+            if event_partitions[i] == k:
+                sub_traces[k].append(trace[i])
     
     return [tuple(st) for st in sub_traces]
 
