@@ -129,13 +129,6 @@ class HomeController(BaseController):
                         # Import XES - read_xes returns a DataFrame directly
                         df = self.import_model.read_xes(self.uploaded_file)
                         
-                        # Rename columns to more user-friendly names for consistency
-                        df = df.rename(columns={
-                            'case:concept:name': 'case_id',
-                            'concept:name': 'activity',
-                            'time:timestamp': 'timestamp'
-                        })
-                        
                         # Store dataframe in session state
                         st.session_state.df = df
                         
@@ -263,13 +256,6 @@ class HomeController(BaseController):
                 elif file_type == "xes":
                     # Load the XES file - read_xes returns a DataFrame directly
                     df = self.import_model.read_xes(file_path)
-                    
-                    # Rename columns to more user-friendly names for consistency
-                    df = df.rename(columns={
-                        'case:concept:name': 'case_id',
-                        'concept:name': 'activity',
-                        'time:timestamp': 'timestamp'
-                    })
                 else:
                     raise UnsupportedFileTypeException(f"Unknown file type for {file_path}")
                 
@@ -331,36 +317,51 @@ class HomeController(BaseController):
                 preview_df = df[[case_id_col, activity_col, timestamp_col]].head()
                 st.dataframe(preview_df, use_container_width=True)
                 
-                # Rename columns to standard XES format
-                df = df.rename(columns={
-                    case_id_col: 'case:concept:name',
-                    activity_col: 'concept:name',
-                    timestamp_col: 'time:timestamp'
-                })
+                # Build column mapping - only rename if different from XES standard
+                column_mapping = {}
+                xes_case_col = 'case:concept:name'
+                xes_activity_col = 'concept:name'
+                xes_timestamp_col = 'time:timestamp'
+                
+                if case_id_col != xes_case_col:
+                    column_mapping[case_id_col] = xes_case_col
+                if activity_col != xes_activity_col:
+                    column_mapping[activity_col] = xes_activity_col
+                if timestamp_col != xes_timestamp_col:
+                    column_mapping[timestamp_col] = xes_timestamp_col
+                
+                # Only rename if there's something to rename
+                if column_mapping:
+                    df = df.rename(columns=column_mapping)
                 
                 # Ensure proper data types for XES format
                 import pandas as pd
                 
                 # Convert case ID to string (required for XES)
-                df['case:concept:name'] = df['case:concept:name'].astype(str)
+                df[xes_case_col] = df[xes_case_col].astype(str)
                 
                 # Convert activity to string (required for XES)
-                df['concept:name'] = df['concept:name'].astype(str)
+                df[xes_activity_col] = df[xes_activity_col].astype(str)
                 
                 # Convert timestamp column to datetime if it's not already
-                if not pd.api.types.is_datetime64_any_dtype(df['time:timestamp']):
+                if not pd.api.types.is_datetime64_any_dtype(df[xes_timestamp_col]):
                     try:
-                        df['time:timestamp'] = pd.to_datetime(df['time:timestamp'])
+                        df[xes_timestamp_col] = pd.to_datetime(df[xes_timestamp_col])
                     except Exception as e:
                         st.error(f"Error converting timestamp column: {str(e)}")
                         return
                 
                 # Remove any rows with null values in critical columns
-                df = df.dropna(subset=['case:concept:name', 'concept:name', 'time:timestamp'])
+                original_len = len(df)
+                df = df.dropna(subset=[xes_case_col, xes_activity_col, xes_timestamp_col])
+                dropped_rows = original_len - len(df)
                 
                 if len(df) == 0:
                     st.error("No valid data remaining after processing. Please check your data for missing values.")
                     return
+                
+                if dropped_rows > 0:
+                    st.warning(f"⚠️ Removed {dropped_rows} rows with missing values in required columns.")
                 
                 # Export to XES bytes
                 from io_ops.export import ExportOperations
@@ -376,10 +377,10 @@ class HomeController(BaseController):
                 
                 # Show conversion summary
                 st.info(f"📊 Conversion Summary:\n"
-                        f"- Cases: {df['case:concept:name'].nunique()}\n"
-                        f"- Activities: {df['concept:name'].nunique()}\n"
+                        f"- Cases: {df[xes_case_col].nunique()}\n"
+                        f"- Activities: {df[xes_activity_col].nunique()}\n"
                         f"- Events: {len(df)}\n"
-                        f"- Date range: {df['time:timestamp'].min()} to {df['time:timestamp'].max()}")
+                        f"- Date range: {df[xes_timestamp_col].min()} to {df[xes_timestamp_col].max()}")
                 
                 st.download_button(
                     label="📥 Download XES File",
@@ -404,30 +405,53 @@ class HomeController(BaseController):
         csv_delimiter : str
             The delimiter to use for CSV output
         include_all_attributes : bool
-            Whether to include all attributes in the CSV
+            Whether to include all attributes in the CSV. If True, preserves original XES column names.
+            If False, keeps only essential columns with user-friendly names.
         """
         try:
             with st.spinner("Converting XES to CSV..."):
                 # Read the XES file - read_xes returns a DataFrame directly
                 df = self.import_model.read_xes(xes_file)
                 
-                # If not including all attributes, keep only the essential columns
-                if not include_all_attributes:
-                    # Standard columns to keep
-                    standard_cols = ['case:concept:name', 'concept:name', 'time:timestamp']
+                if df.empty:
+                    st.error("The XES file contains no event data.")
+                    return
+                
+                # Standard XES columns
+                xes_case_col = 'case:concept:name'
+                xes_activity_col = 'concept:name'
+                xes_timestamp_col = 'time:timestamp'
+                
+                if include_all_attributes:
+                    # Keep all attributes with original XES column names
+                    # Reorder columns to put standard ones first
+                    standard_cols = [xes_case_col, xes_activity_col, xes_timestamp_col]
+                    existing_standard = [col for col in standard_cols if col in df.columns]
+                    other_cols = [col for col in df.columns if col not in standard_cols]
+                    df = df[existing_standard + other_cols]
+                    
+                    st.info("📝 **Note:** Original XES column names preserved. This CSV can be converted back to XES without data loss.")
+                else:
+                    # Keep only essential columns with user-friendly names
+                    standard_cols = [xes_case_col, xes_activity_col, xes_timestamp_col]
                     
                     # Find which standard columns exist in the DataFrame
                     existing_standard_cols = [col for col in standard_cols if col in df.columns]
                     
-                    if existing_standard_cols:
-                        df = df[existing_standard_cols]
+                    if not existing_standard_cols:
+                        st.error("Could not find standard XES columns in the file.")
+                        return
+                    
+                    df = df[existing_standard_cols]
                     
                     # Rename to more user-friendly names
                     df = df.rename(columns={
-                        'case:concept:name': 'case_id',
-                        'concept:name': 'activity',
-                        'time:timestamp': 'timestamp'
+                        xes_case_col: 'case_id',
+                        xes_activity_col: 'activity',
+                        xes_timestamp_col: 'timestamp'
                     })
+                    
+                    st.warning("⚠️ Only essential columns exported with simplified names. Additional XES attributes were not included.")
                 
                 # Convert DataFrame to CSV
                 csv_buffer = df.to_csv(sep=csv_delimiter, index=False)
@@ -438,6 +462,17 @@ class HomeController(BaseController):
                 
                 # Display success message and download button
                 st.success("✅ XES successfully converted to CSV format!")
+                
+                # Show data summary
+                case_col = xes_case_col if include_all_attributes else 'case_id'
+                activity_col = xes_activity_col if include_all_attributes else 'activity'
+                
+                if case_col in df.columns and activity_col in df.columns:
+                    st.info(f"📊 Data Summary:\n"
+                            f"- Columns: {len(df.columns)}\n"
+                            f"- Cases: {df[case_col].nunique()}\n"
+                            f"- Activities: {df[activity_col].nunique()}\n"
+                            f"- Events: {len(df)}")
                 
                 # Show preview of the data
                 st.subheader("📋 Data Preview:")
