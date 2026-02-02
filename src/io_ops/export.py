@@ -329,21 +329,29 @@ class ExportOperations:
         value : Any
             The attribute value
         """
-        if isinstance(value, bool):
+        import numpy as np
+        
+        # Handle numpy bool before regular bool (numpy.bool_ is also instance of bool in some cases)
+        if isinstance(value, (np.bool_, bool)):
             elem = ET.SubElement(parent, "boolean")
             elem.set("key", key)
-            elem.set("value", str(value).lower())
-        elif isinstance(value, int):
+            elem.set("value", str(bool(value)).lower())
+        elif isinstance(value, (np.integer, int)):
             elem = ET.SubElement(parent, "int")
             elem.set("key", key)
-            elem.set("value", str(value))
-        elif isinstance(value, float):
+            elem.set("value", str(int(value)))
+        elif isinstance(value, (np.floating, float)):
+            # Check for NaN/inf
+            if np.isnan(value) or np.isinf(value):
+                return  # Skip NaN/inf values
             elem = ET.SubElement(parent, "float")
             elem.set("key", key)
-            elem.set("value", str(value))
-        elif isinstance(value, (datetime, pd.Timestamp)):
+            elem.set("value", str(float(value)))
+        elif isinstance(value, (datetime, pd.Timestamp, np.datetime64)):
             elem = ET.SubElement(parent, "date")
             elem.set("key", key)
+            if isinstance(value, np.datetime64):
+                value = pd.Timestamp(value)
             elem.set("value", value.isoformat() if hasattr(value, 'isoformat') else str(value))
         else:
             elem = ET.SubElement(parent, "string")
