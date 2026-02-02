@@ -261,13 +261,20 @@ def apply_theme():
         color: {colors["text_color"]} !important;
     }}
     
-    /* Error/Warning/Info notifications - fix text visibility in light theme */
+    /* Info/Warning/Error notifications - fix text visibility in both themes */
     [data-testid="stNotification"],
     [data-testid="stAlert"],
     .stAlert,
-    .stException,
     div[data-baseweb="notification"] {{
-        color: #1a202c !important;
+        color: {'#1a202c' if current_theme == 'light' else '#e2e8f0'} !important;
+    }}
+    
+    /* Info box styling for both themes */
+    [data-testid="stAlert"][data-baseweb="notification"][kind="info"],
+    div[data-baseweb="notification"][kind="info"],
+    .stAlert {{
+        background-color: {'#e8f4fd' if current_theme == 'light' else '#1a365d'} !important;
+        border-left-color: {'#3182ce' if current_theme == 'light' else '#63b3ed'} !important;
     }}
     
     [data-testid="stNotification"] p,
@@ -278,20 +285,64 @@ def apply_theme():
     .stAlert span,
     div[data-baseweb="notification"] p,
     div[data-baseweb="notification"] span {{
-        color: #1a202c !important;
+        color: {'#1a202c' if current_theme == 'light' else '#e2e8f0'} !important;
+    }}
+    
+    /* Exception/Error styling */
+    .stException {{
+        color: {'#742a2a' if current_theme == 'light' else '#fed7d7'} !important;
     }}
     
     /* Error notification specific */
     [data-testid="stNotification"][data-type="error"],
     .stException {{
-        color: #742a2a !important;
+        color: {'#742a2a' if current_theme == 'light' else '#fed7d7'} !important;
     }}
     
     [data-testid="stNotification"][data-type="error"] p,
     [data-testid="stNotification"][data-type="error"] span,
     .stException p,
     .stException span {{
-        color: #742a2a !important;
+        color: {'#742a2a' if current_theme == 'light' else '#fed7d7'} !important;
+    }}
+    
+    /* Checkbox labels - fix visibility in both themes */
+    [data-testid="stCheckbox"] label,
+    [data-testid="stCheckbox"] label span,
+    [data-testid="stCheckbox"] label p,
+    .stCheckbox label,
+    .stCheckbox label span {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Sidebar info box - fix visibility in dark theme */
+    [data-testid="stSidebar"] [data-testid="stAlert"],
+    [data-testid="stSidebar"] .stAlert,
+    [data-testid="stSidebar"] div[data-baseweb="notification"] {{
+        background-color: {'#e8f4fd' if current_theme == 'light' else '#1a365d'} !important;
+        border-color: {'#90cdf4' if current_theme == 'light' else '#2b6cb0'} !important;
+    }}
+    
+    [data-testid="stSidebar"] [data-testid="stAlert"] p,
+    [data-testid="stSidebar"] [data-testid="stAlert"] span,
+    [data-testid="stSidebar"] .stAlert p,
+    [data-testid="stSidebar"] .stAlert span,
+    [data-testid="stSidebar"] div[data-baseweb="notification"] p,
+    [data-testid="stSidebar"] div[data-baseweb="notification"] span {{
+        color: {'#2b6cb0' if current_theme == 'light' else '#90cdf4'} !important;
+    }}
+    
+    /* Selectbox labels - fix visibility */
+    [data-testid="stSelectbox"] label,
+    [data-testid="stSelectbox"] label span,
+    .stSelectbox label {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
+    }}
+    
+    /* Selectbox dropdown text */
+    [data-testid="stSelectbox"] > div > div,
+    [data-baseweb="select"] > div {{
+        color: {'#1a202c' if current_theme == 'light' else colors["text_color"]} !important;
     }}
     </style>
     """
