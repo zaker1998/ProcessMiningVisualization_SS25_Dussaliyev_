@@ -382,8 +382,8 @@ def is_single_activity_frequent(
         lower_bound <= avg_occurrences <= upper_bound
     
     Where:
-        - upper_bound = 1 / (1 - k) for k < 1, infinity for k = 1
-        - lower_bound = 1 - k (activity must appear at least this often on average)
+        - upper_bound = 1 + k (symmetric tolerance above 1)
+        - lower_bound = 1 - k (symmetric tolerance below 1)
     
     Parameters
     ----------
@@ -426,14 +426,8 @@ def is_single_activity_frequent(
     avg_occurrences = total_occurrences / total_traces
     
     # Calculate bounds based on noise threshold
-    # Upper bound: 1 / (1 - k) - allows more deviation at higher thresholds
-    # Lower bound: 1 - k - activity must appear often enough
-    
-    if noise_threshold >= 1.0:
-        upper_bound = float('inf')
-    else:
-        upper_bound = 1.0 / (1.0 - noise_threshold)
-    
+    # Symmetric bounds around 1: [1-k, 1+k]
+    upper_bound = 1.0 + noise_threshold
     lower_bound = 1.0 - noise_threshold
     
     # Activity is frequent if average is within bounds (close to 1)
