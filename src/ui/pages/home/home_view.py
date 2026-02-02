@@ -372,23 +372,20 @@ class HomeView(BaseView):
                         return
                     # Options for CSV output
                     st.markdown("**CSV Output Options:**")
-                    csv_col1, csv_col2 = st.columns(2)
                     
-                    with csv_col1:
-                        csv_delimiter = st.selectbox(
-                            "CSV Delimiter:",
-                            [",", ";", "\t", "|"],
-                            key="xes_csv_delimiter",
-                            format_func=lambda x: {"," : "Comma (,)", ";" : "Semicolon (;)", "\t" : "Tab", "|" : "Pipe (|)"}[x]
-                        )
+                    csv_delimiter = st.selectbox(
+                        "CSV Delimiter:",
+                        [",", ";", "\t", "|"],
+                        key="xes_csv_delimiter",
+                        format_func=lambda x: {"," : "Comma (,)", ";" : "Semicolon (;)", "\t" : "Tab", "|" : "Pipe (|)"}[x]
+                    )
                     
-                    with csv_col2:
-                        include_all_attributes = st.checkbox(
-                            "Include all attributes",
-                            value=False,
-                            key="include_all_attrs",
-                            help="Include all event and case attributes in the CSV output"
-                        )
+                    include_all_attributes = st.checkbox(
+                        "Include all attributes (preserve XES column names)",
+                        value=True,
+                        key="include_all_attrs",
+                        help="Keep all event/case attributes with original XES column names. Recommended for round-trip conversion."
+                    )
                     
                     # Convert button
                     if st.button("🔄 Convert to CSV", key="convert_xes_to_csv", use_container_width=True):
